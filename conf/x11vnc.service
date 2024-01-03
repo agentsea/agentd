@@ -4,9 +4,15 @@ After=display-manager.service network.target syslog.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/x11vnc -forever -display :0 -auth guess -passwd AgentSea123
+User=agentsea
+Environment="XAUTHORITY=/run/user/1000/gdm/Xauthority" "DISPLAY=:0"
+ExecStartPre=/bin/sleep 10
+ExecStart=/usr/bin/x11vnc -forever -display :0 -auth /run/user/1000/gdm/Xauthority -passwd AgentSea123
 ExecStop=/usr/bin/killall x11vnc
 Restart=on-failure
+RestartSec=11s
+StartLimitBurst=5
+StartLimitIntervalSec=60s
 
 [Install]
 WantedBy=multi-user.target
