@@ -6,7 +6,7 @@ After=network.target
 User=agentsea
 Environment="DISPLAY=:0"
 WorkingDirectory=/home/agentsea/agentd
-ExecStart=uvicorn agentd.server:app --host 0.0.0.0 --port 8000 --reload
+ExecStart=/home/agentsea/.local/bin/uvicorn agentd.server:app --host 0.0.0.0 --port 8000 --reload
 Restart=always
 
 [Install]
