@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "agentd"
+version = "0.1.0"
+description = "A daemon that makes a desktop OS accessible to AI agents"
+authors = ["Patrick Barker <patrickbarkerco@gmail.com>"]
+license = "Apache 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = {extras = ["all"], version = "^0.108.0"}
+pyautogui = "^0.9.54"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

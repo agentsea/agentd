@@ -1,0 +1,12 @@
+[Unit]
+Description=Websockify Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/websockify 6080 localhost:5900
+Restart=on-failure
+User=nobody
+Group=nogroup
+
+[Install]
+WantedBy=multi-user.target

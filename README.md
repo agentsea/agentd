@@ -1,2 +1,3 @@
 # agentd
-A daemon that makes a Debian OS accessible to AI agents
+
+A daemon that makes a desktop OS accessible to AI agents
