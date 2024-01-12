@@ -6,6 +6,7 @@ import base64
 
 from fastapi import FastAPI, HTTPException
 import pyautogui
+from mss import mss
 
 from .models import (
     MoveMouseToModel,
@@ -137,8 +138,9 @@ async def take_screenshot() -> ScreenshotResponseModel:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = os.path.join(screenshots_dir, f"screenshot_{timestamp}.png")
 
-        # Take the screenshot and save it
-        pyautogui.screenshot(file_path)
+        with mss(with_cursor=True) as sct:
+            # Save to the picture file
+            sct.shot(output=file_path)
 
         # Read and encode the image
         with open(file_path, "rb") as image_file:
