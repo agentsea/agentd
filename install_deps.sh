@@ -1,0 +1,1 @@
+pip install mss "fastapi[all]" pyautogui

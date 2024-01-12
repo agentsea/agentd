@@ -1,5 +1,4 @@
 #!/bin/bash
-pip install mss "fastapi[all]" pyautogui
 
 cp ./conf/agentd.service /etc/systemd/system/agentd.service
 cp ./conf/websockify.service /etc/systemd/system/websockify.service
