@@ -39,3 +39,8 @@ class ScreenshotResponseModel(BaseModel):
     status: str
     image: str
     file_path: str
+
+
+class CoordinatesModel(BaseModel):
+    x: int
+    y: int

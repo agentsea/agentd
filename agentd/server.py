@@ -17,6 +17,7 @@ from .models import (
     DragMouseModel,
     ScreenshotResponseModel,
     OpenURLModel,
+    CoordinatesModel,
 )
 from .chromium import is_chromium_running, is_chromium_window_open
 
@@ -31,6 +32,12 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/mouse_coordinates")
+async def mouse_coordinates() -> CoordinatesModel:
+    x, y = pyautogui.position()
+    return CoordinatesModel(x, y)
 
 
 @app.post("/open_url")
