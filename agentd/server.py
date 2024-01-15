@@ -26,7 +26,7 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to autoguid!"}
+    return {"message": "Agent in the shell"}
 
 
 @app.get("/health")
@@ -37,7 +37,7 @@ async def health():
 @app.get("/mouse_coordinates")
 async def mouse_coordinates() -> CoordinatesModel:
     x, y = pyautogui.position()
-    return CoordinatesModel(x, y)
+    return CoordinatesModel(x=x, y=y)
 
 
 @app.post("/open_url")
