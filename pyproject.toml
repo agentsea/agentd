@@ -11,6 +11,7 @@ python = "^3.10"
 fastapi = {extras = ["all"], version = "^0.108.0"}
 pyautogui = "^0.9.54"
 mss = "^9.0.1"
+pynput = "^1.7.6"
 
 
 [build-system]

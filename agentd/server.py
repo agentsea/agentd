@@ -3,6 +3,7 @@ import random
 import os
 from datetime import datetime
 import base64
+import uuid
 
 from fastapi import FastAPI, HTTPException
 import pyautogui
@@ -18,8 +19,13 @@ from .models import (
     ScreenshotResponseModel,
     OpenURLModel,
     CoordinatesModel,
+    Recording,
+    RecordResponse,
+    Recordings,
+    RecordRequest,
 )
 from .chromium import is_chromium_running, is_chromium_window_open
+from .recording import RecordingSession, lock, sessions
 
 app = FastAPI()
 
@@ -161,3 +167,53 @@ async def take_screenshot() -> ScreenshotResponseModel:
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/recordings", response_model=RecordResponse)
+async def start_recording(request: RecordRequest):
+    session_id = str(uuid.uuid4())
+    with lock:
+        session = RecordingSession(session_id, request.description)
+        sessions[session_id] = session
+        session.start()
+    return RecordResponse(session_id=session_id)
+
+
+@app.get("/recordings", response_model=Recordings)
+async def list_recordings():
+    out = await RecordingSession.list_recordings()
+    return Recordings(recordings=out)
+
+
+@app.post("/recordings/{session_id}/stop")
+async def stop_recording(session_id: str):
+    with lock:
+        session: RecordingSession = sessions.get(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        session.stop()
+        path = session.save_to_file()
+        print("Saved recording to file:", path)
+        del sessions[session_id]
+    return
+
+
+@app.get("/recordings/{session_id}", response_model=Recording)
+async def get_actions(session_id: str):
+    if session_id in sessions:
+        with lock:
+            session: RecordingSession = sessions.get(session_id)
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
+            return session.get_record()
+    else:
+        return RecordingSession.load_from_file(session_id)
+
+
+@app.get("/active_sessions", response_model=Recordings)
+async def list_sessions():
+    out = []
+    for id, _ in sessions.items():
+        out.append(id)
+
+    return Recordings(recordings=out)

@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from pydantic import BaseModel
 
 
@@ -44,3 +46,48 @@ class ScreenshotResponseModel(BaseModel):
 class CoordinatesModel(BaseModel):
     x: int
     y: int
+
+
+class RecordRequest(BaseModel):
+    description: str
+
+
+class RecordResponse(BaseModel):
+    session_id: str
+
+
+class ClickData(BaseModel):
+    x: int
+    y: int
+    button: str
+    pressed: bool
+
+
+class KeyData(BaseModel):
+    key: str
+
+
+class ScrollData(BaseModel):
+    x: int
+    y: int
+    dx: int
+    dy: int
+
+
+class RecordedEvent(BaseModel):
+    type: str
+    timestamp: float
+    click_data: Optional[ClickData]
+    key_data: Optional[KeyData]
+
+
+class Recording(BaseModel):
+    id: str
+    description: str
+    start_time: float
+    end_time: float
+    events: List[RecordedEvent] = []
+
+
+class Recordings(BaseModel):
+    recordings: List[str]

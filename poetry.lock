@@ -104,6 +104,16 @@ dnspython = ">=2.0.0"
 idna = ">=2.0.0"
 
 [[package]]
+name = "evdev"
+version = "1.6.1"
+description = "Bindings to the Linux input handling subsystem"
+optional = false
+python-versions = "*"
+files = [
+    {file = "evdev-1.6.1.tar.gz", hash = "sha256:299db8628cc73b237fc1cc57d3c2948faa0756e2a58b6194b5bf81dc2081f1e3"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -741,6 +751,24 @@ files = [
 ]
 
 [[package]]
+name = "pynput"
+version = "1.7.6"
+description = "Monitor and control user input devices"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pynput-1.7.6-py2.py3-none-any.whl", hash = "sha256:19861b2a0c430d646489852f89500e0c9332e295f2c020e7c2775e7046aa2e2f"},
+    {file = "pynput-1.7.6.tar.gz", hash = "sha256:3a5726546da54116b687785d38b1db56997ce1d28e53e8d22fc656d8b92e533c"},
+]
+
+[package.dependencies]
+evdev = {version = ">=1.3", markers = "sys_platform in \"linux\""}
+pyobjc-framework-ApplicationServices = {version = ">=8.0", markers = "sys_platform == \"darwin\""}
+pyobjc-framework-Quartz = {version = ">=8.0", markers = "sys_platform == \"darwin\""}
+python-xlib = {version = ">=0.17", markers = "sys_platform in \"linux\""}
+six = "*"
+
+[[package]]
 name = "pyobjc-core"
 version = "10.1"
 description = "Python<->ObjC Interoperability Module"
@@ -755,6 +783,28 @@ files = [
     {file = "pyobjc_core-10.1-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:2d43205d3a784aa87055b84c0ec0dfa76498e5f18d1ad16bdc58a3dcf5a7d5d0"},
     {file = "pyobjc_core-10.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:0aa9799b5996a893944999a2f1afcf1de119cab3551c169ad9f54d12e1d38c99"},
 ]
+
+[[package]]
+name = "pyobjc-framework-applicationservices"
+version = "10.1"
+description = "Wrappers for the framework ApplicationServices on macOS"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyobjc-framework-ApplicationServices-10.1.tar.gz", hash = "sha256:bb780eabadad0fbf36a128041dccfd71e30bbeb6b110852d37fd5c98f4a2ec04"},
+    {file = "pyobjc_framework_ApplicationServices-10.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:a74a0922b48ad5ac4e402a1ac5dda5d6ee0d177870b7e244be61bc95d639ba85"},
+    {file = "pyobjc_framework_ApplicationServices-10.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ff352c33cad3f7bf8dd9b955ebb5db02d451d88eb04478d83edf0edd0cc8bf5d"},
+    {file = "pyobjc_framework_ApplicationServices-10.1-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:6d0706d5d9436298c8d619a1bb5be11a1f4ff9f4733797a393c6a706568de110"},
+    {file = "pyobjc_framework_ApplicationServices-10.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:95bd111583c3bf20656393c2a056a457b0cf08c76c0ab27cfcaedf92f707e8a9"},
+    {file = "pyobjc_framework_ApplicationServices-10.1-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:90a2350ddae3d9fb7b2e35e3b672b64854edae497fda8d7d4d798679c8280fed"},
+    {file = "pyobjc_framework_ApplicationServices-10.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:8bc830ac60b73a4cab24d1b1fdd8b044f25fe02e0af63a92cd96c43a51808c96"},
+]
+
+[package.dependencies]
+pyobjc-core = ">=10.1"
+pyobjc-framework-Cocoa = ">=10.1"
+pyobjc-framework-CoreText = ">=10.1"
+pyobjc-framework-Quartz = ">=10.1"
 
 [[package]]
 name = "pyobjc-framework-cocoa"
@@ -774,6 +824,27 @@ files = [
 
 [package.dependencies]
 pyobjc-core = ">=10.1"
+
+[[package]]
+name = "pyobjc-framework-coretext"
+version = "10.1"
+description = "Wrappers for the framework CoreText on macOS"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyobjc-framework-CoreText-10.1.tar.gz", hash = "sha256:b6a112e2ae8720be42af19e0fe9b866b43d7e9196726caa366d61d18294e6248"},
+    {file = "pyobjc_framework_CoreText-10.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:6ea2920c126a8a39e8a13b6de731b78b391300cec242812c9fbcf65a66ae40cf"},
+    {file = "pyobjc_framework_CoreText-10.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:37b203d832dd82bd9566c72eea815eb89f00f128a4c9a2f352843914da4effec"},
+    {file = "pyobjc_framework_CoreText-10.1-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:083700483b18f337b0c43bdfaafc43467846f8555075669d4962d460d9d6cd00"},
+    {file = "pyobjc_framework_CoreText-10.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:59472cd1a33e83803fa62b3db20ac0e899f5ed706d22704ea81129d3f49ff0c7"},
+    {file = "pyobjc_framework_CoreText-10.1-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:cc1a63ca2c6921768b1c794ce60e2a278e0177731aa4bf8f620fdde857e4835e"},
+    {file = "pyobjc_framework_CoreText-10.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:fbbdde4ce747bcad45c2aded36167ad00fead309a265d89ab22289c221038e57"},
+]
+
+[package.dependencies]
+pyobjc-core = ">=10.1"
+pyobjc-framework-Cocoa = ">=10.1"
+pyobjc-framework-Quartz = ">=10.1"
 
 [[package]]
 name = "pyobjc-framework-quartz"
@@ -858,6 +929,20 @@ files = [
 
 [package.extras]
 dev = ["atomicwrites (==1.2.1)", "attrs (==19.2.0)", "coverage (==6.5.0)", "hatch", "invoke (==1.7.3)", "more-itertools (==4.3.0)", "pbr (==4.3.0)", "pluggy (==1.0.0)", "py (==1.11.0)", "pytest (==7.2.0)", "pytest-cov (==4.0.0)", "pytest-timeout (==2.1.0)", "pyyaml (==5.1)"]
+
+[[package]]
+name = "python-xlib"
+version = "0.33"
+description = "Python X Library"
+optional = false
+python-versions = "*"
+files = [
+    {file = "python-xlib-0.33.tar.gz", hash = "sha256:55af7906a2c75ce6cb280a584776080602444f75815a7aff4d287bb2d7018b32"},
+    {file = "python_xlib-0.33-py2.py3-none-any.whl", hash = "sha256:c3534038d42e0df2f1392a1b30a15a4ff5fdc2b86cfa94f072bf11b10a164398"},
+]
+
+[package.dependencies]
+six = ">=1.10.0"
 
 [[package]]
 name = "python3-xlib"
@@ -952,6 +1037,17 @@ files = [
 [package.extras]
 dev = ["pre-commit (==3.5.0)", "pytest (==7.4.2)", "pytest-tldr (==0.2.5)", "setuptools-scm[toml] (==8.0.4)", "tox (==4.11.3)"]
 docs = ["furo (==2023.9.10)", "pyenchant (==3.2.2)", "sphinx (==7.1.2)", "sphinx (==7.2.6)", "sphinx-autobuild (==2021.3.14)", "sphinx-copybutton (==0.5.2)", "sphinx-tabs (==3.4.1)", "sphinxcontrib-spelling (==8.0.0)"]
+
+[[package]]
+name = "six"
+version = "1.16.0"
+description = "Python 2 and 3 compatibility utilities"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
+    {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
 
 [[package]]
 name = "sniffio"
@@ -1307,4 +1403,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "7e4b1a42fc8d42f92aa0fb155dd473811c9a4b53c6ad915cfdebc6de822867e3"
+content-hash = "921f86af2249f21868989654b49bad9bbc00a43156145f40bcb1eacdeaa1b0ba"

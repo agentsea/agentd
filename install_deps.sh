@@ -1,1 +1,1 @@
-pip install mss "fastapi[all]" pyautogui
+pip install mss "fastapi[all]" pyautogui pynput
