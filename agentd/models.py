@@ -79,7 +79,7 @@ class RecordedEvent(BaseModel):
     screenshot_b64: Optional[str]
     click_data: Optional[ClickData]
     key_data: Optional[KeyData]
-    scroll_data = Optional[ScrollData]
+    scroll_data: Optional[ScrollData]
 
 
 class Recording(BaseModel):
