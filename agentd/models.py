@@ -57,8 +57,6 @@ class RecordResponse(BaseModel):
 
 
 class ClickData(BaseModel):
-    x: int
-    y: int
     button: str
     pressed: bool
 
@@ -68,18 +66,20 @@ class KeyData(BaseModel):
 
 
 class ScrollData(BaseModel):
-    x: int
-    y: int
     dx: int
     dy: int
 
 
 class RecordedEvent(BaseModel):
+    id: str
     type: str
     timestamp: float
+    coordinates: CoordinatesModel
+    screenshot_path: Optional[str]
+    screenshot_b64: Optional[str]
     click_data: Optional[ClickData]
-    screenshot_path: str
     key_data: Optional[KeyData]
+    scroll_data = Optional[ScrollData]
 
 
 class Recording(BaseModel):

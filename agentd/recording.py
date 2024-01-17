@@ -1,14 +1,24 @@
-from typing import List
+from typing import List, Optional
 from threading import Lock
 import time
 import json
 import os
+import uuid
+import base64
 from datetime import datetime
 
 from pynput import keyboard, mouse
 from mss import mss
+import pyautogui
 
-from .models import Recording, RecordedEvent, KeyData, ClickData, ScrollData
+from .models import (
+    Recording,
+    RecordedEvent,
+    KeyData,
+    ClickData,
+    ScrollData,
+    CoordinatesModel,
+)
 
 sessions = {}
 lock = Lock()
@@ -27,7 +37,15 @@ class RecordingSession:
         self.mouse_listener = mouse.Listener(
             on_click=self.on_click, on_scroll=self.on_scroll
         )
-        self._data: List[RecordedEvent] = []
+        x, y = pyautogui.position()
+        initial_event = RecordedEvent(
+            id=str(uuid.uuid4()),
+            type="init",
+            timestamp=time.time(),
+            screenshot_path=self.take_screenshot(),
+            coordinates=CoordinatesModel(x=x, y=y),
+        )
+        self._data: List[RecordedEvent] = [initial_event]
         self._end_time = 0
 
     def start(self):
@@ -40,29 +58,36 @@ class RecordingSession:
         self._end_time = time.time()
 
     def on_press(self, key: str):
+        x, y = pyautogui.position()
         event = RecordedEvent(
+            id=str(uuid.uuid4()),
             type="key",
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
+            coordinates=CoordinatesModel(x=x, y=y),
             key_data=KeyData(key=key),
         )
         self._data.append(event)
 
     def on_click(self, x, y, button, pressed):
         event = RecordedEvent(
+            id=str(uuid.uuid4()),
             type="mouse",
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
-            key_data=ClickData(key=button, pressed=pressed, x=x, y=y),
+            coordinates=CoordinatesModel(x=x, y=y),
+            key_data=ClickData(key=button, pressed=pressed),
         )
         self._data.append(event)
 
     def on_scroll(self, x, y, dx, dy):
         event = RecordedEvent(
+            id=str(uuid.uuid4()),
             type="scroll",
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
-            key_data=ScrollData(x=x, y=y, dx=dx, dy=dy),
+            coordinates=CoordinatesModel(x=x, y=y),
+            key_data=ScrollData(dx=dx, dy=dy),
         )
         self._data.append(event)
 
@@ -75,15 +100,28 @@ class RecordingSession:
             events=self._data,
         )
 
+    def get_event(self, event_id: str) -> Optional[RecordedEvent]:
+        for event in self._data:
+            if event.id == event_id:
+                with open(event.screenshot_path, "rb") as image_file:
+                    encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+                    event.screenshot_b64 = encoded_image
+                return event
+        return None
+
     def save_to_file(self) -> str:
-        session_dir = os.path.join(RECORDINGS_DIR, self._id)
+        session_dir = self._dir()
         os.makedirs(session_dir, exist_ok=True)
+
         filepath = os.path.join(session_dir, f"session.json")
         with open(filepath, "w") as file:
             record = self.get_record()
             json.dump(record.model_dump(), file, indent=4)
 
         return filepath
+
+    def _dir(self) -> str:
+        return os.path.join(RECORDINGS_DIR, self._id)
 
     @classmethod
     async def list_recordings(cls) -> List[str]:
@@ -109,15 +147,104 @@ class RecordingSession:
             return recording
 
     async def take_screenshot(self) -> str:
-        session_dir = os.path.join(RECORDINGS_DIR, self._id)
+        session_dir = self._dir()
         os.makedirs(session_dir, exist_ok=True)
 
-        # Generate a unique file name based on the current timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = os.path.join(session_dir, f"screenshot_{timestamp}.png")
 
         with mss(with_cursor=True) as sct:
-            # Save to the picture file
             sct.shot(output=file_path)
 
         return file_path
+
+    def encode_image_to_base64(image_path: str) -> str:
+        with open(image_path, "rb") as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+        return encoded_image
+
+    def as_actions(self) -> List[dict]:
+        actions = []
+        text_buffer = ""
+        last_event_type = None
+        previous_screenshot_encoded = None
+        previous_coordinates = None
+
+        for event in self._data:
+            if event.type == "init":
+                # Skip the first event and encode its screenshot
+                previous_screenshot_encoded = self.encode_image_to_base64(
+                    event.screenshot_path
+                )
+                previous_coordinates = {
+                    "x": event.coordinates.x,
+                    "y": event.coordinates.y,
+                }
+                continue
+
+            if event.type == "key" and last_event_type == "key":
+                text_buffer += event.key_data.key
+            else:
+                if text_buffer:
+                    actions.append(
+                        {
+                            "action": {
+                                "name": "type_text",
+                                "parameters": {
+                                    "text": text_buffer,
+                                },
+                                "screenshot": previous_screenshot_encoded,
+                                "previous_coordinates": previous_coordinates,
+                            }
+                        }
+                    )
+                    text_buffer = ""
+
+                if event.type == "mouse":
+                    if event.click_data.pressed:
+                        actions.append(
+                            {
+                                "action": {
+                                    "name": "click",
+                                    "parameters": {"button": event.click_data.button},
+                                    "screenshot": previous_screenshot_encoded,
+                                    "previous_coordinates": previous_coordinates,
+                                }
+                            }
+                        )
+                elif event.type == "scroll":
+                    actions.append(
+                        {
+                            "action": {
+                                "name": "scroll",
+                                "parameters": {"clicks": event.scroll_data.dy},
+                                "screenshot": previous_screenshot_encoded,
+                                "previous_coordinates": previous_coordinates,
+                            }
+                        }
+                    )
+
+            last_event_type = event.type
+            previous_screenshot_encoded = self.encode_image_to_base64(
+                event.screenshot_path
+            )
+            previous_coordinates = {
+                "x": event.coordinates.x,
+                "y": event.coordinates.y,
+            }
+
+        if text_buffer:
+            actions.append(
+                {
+                    "action": {
+                        "name": "type_text",
+                        "parameters": {
+                            "text": text_buffer,
+                        },
+                        "screenshot": previous_screenshot_encoded,
+                        "previous_coordinates": previous_coordinates,
+                    }
+                }
+            )
+
+        return actions

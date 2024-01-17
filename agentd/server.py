@@ -26,6 +26,7 @@ from .models import (
 )
 from .chromium import is_chromium_running, is_chromium_window_open
 from .recording import RecordingSession, lock, sessions
+from .storage import upload_directory_to_gcs
 
 app = FastAPI()
 
@@ -194,6 +195,12 @@ async def stop_recording(session_id: str):
         session.stop()
         path = session.save_to_file()
         print("Saved recording to file:", path)
+
+        print("uploading to gcs")
+        bucket_name = "agentdesk-temp"
+        destination_blob_prefix = f"recordings/{session_id}"
+        upload_directory_to_gcs(bucket_name, session._dir(), destination_blob_prefix)
+
         del sessions[session_id]
     return
 
