@@ -3,9 +3,10 @@ from threading import Lock
 import time
 import json
 import os
-import glob
+from datetime import datetime
 
 from pynput import keyboard, mouse
+from mss import mss
 
 from .models import Recording, RecordedEvent, KeyData, ClickData, ScrollData
 
@@ -42,6 +43,7 @@ class RecordingSession:
         event = RecordedEvent(
             type="key",
             timestamp=time.time(),
+            screenshot_path=self.take_screenshot(),
             key_data=KeyData(key=key),
         )
         self._data.append(event)
@@ -50,6 +52,7 @@ class RecordingSession:
         event = RecordedEvent(
             type="mouse",
             timestamp=time.time(),
+            screenshot_path=self.take_screenshot(),
             key_data=ClickData(key=button, pressed=pressed, x=x, y=y),
         )
         self._data.append(event)
@@ -58,6 +61,7 @@ class RecordingSession:
         event = RecordedEvent(
             type="scroll",
             timestamp=time.time(),
+            screenshot_path=self.take_screenshot(),
             key_data=ScrollData(x=x, y=y, dx=dx, dy=dy),
         )
         self._data.append(event)
@@ -72,7 +76,9 @@ class RecordingSession:
         )
 
     def save_to_file(self) -> str:
-        filepath = os.path.join(RECORDINGS_DIR, f"{self._id}.json")
+        session_dir = os.path.join(RECORDINGS_DIR, self._id)
+        os.makedirs(session_dir, exist_ok=True)
+        filepath = os.path.join(session_dir, f"session.json")
         with open(filepath, "w") as file:
             record = self.get_record()
             json.dump(record.model_dump(), file, indent=4)
@@ -81,16 +87,18 @@ class RecordingSession:
 
     @classmethod
     async def list_recordings(cls) -> List[str]:
-        pattern = os.path.join(RECORDINGS_DIR, "*.json")
-        files = glob.glob(pattern)
-        sessions = [os.path.basename(f).replace(".json", "") for f in files]
-        return sessions
+        directory_names = [
+            name
+            for name in os.listdir(RECORDINGS_DIR)
+            if os.path.isdir(os.path.join(RECORDINGS_DIR, name))
+        ]
+        return directory_names
 
     @classmethod
     def load_from_file(cls, session_id: str) -> Recording:
         """Loads a recording session from a file given the session ID."""
 
-        file_path = os.path.join(RECORDINGS_DIR, f"{session_id}.json")
+        file_path = os.path.join(RECORDINGS_DIR, session_id, f"session.json")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"No recording found for session ID {session_id}")
 
@@ -99,3 +107,17 @@ class RecordingSession:
             Recording.model_validate(data)
             recording = Recording(**data)
             return recording
+
+    async def take_screenshot(self) -> str:
+        session_dir = os.path.join(RECORDINGS_DIR, self._id)
+        os.makedirs(session_dir, exist_ok=True)
+
+        # Generate a unique file name based on the current timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = os.path.join(session_dir, f"screenshot_{timestamp}.png")
+
+        with mss(with_cursor=True) as sct:
+            # Save to the picture file
+            sct.shot(output=file_path)
+
+        return file_path

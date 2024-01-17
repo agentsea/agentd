@@ -78,6 +78,7 @@ class RecordedEvent(BaseModel):
     type: str
     timestamp: float
     click_data: Optional[ClickData]
+    screenshot_path: str
     key_data: Optional[KeyData]
 
 
