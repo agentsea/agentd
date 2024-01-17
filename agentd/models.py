@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from pydantic import BaseModel
 
@@ -92,3 +92,7 @@ class Recording(BaseModel):
 
 class Recordings(BaseModel):
     recordings: List[str]
+
+
+class Actions(BaseModel):
+    actions: List[Dict[str, Any]]

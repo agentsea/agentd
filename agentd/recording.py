@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List, Optional
 from threading import Lock
 import time
@@ -91,7 +92,7 @@ class RecordingSession:
         )
         self._data.append(event)
 
-    def get_record(self) -> Recording:
+    def as_schema(self) -> Recording:
         return Recording(
             id=self._id,
             description=self._description,
@@ -115,7 +116,7 @@ class RecordingSession:
 
         filepath = os.path.join(session_dir, f"session.json")
         with open(filepath, "w") as file:
-            record = self.get_record()
+            record = self.as_schema()
             json.dump(record.model_dump(), file, indent=4)
 
         return filepath
@@ -133,7 +134,21 @@ class RecordingSession:
         return directory_names
 
     @classmethod
-    def load_from_file(cls, session_id: str) -> Recording:
+    def from_schema(cls, data: Recording) -> RecordingSession:
+        session = cls.__new__(RecordingSession)
+        session._start_time = data.start_time
+        session._id = data.id
+        session._description = data.description
+        session.keyboard_listener = keyboard.Listener(on_press=session.on_press)
+        session.mouse_listener = mouse.Listener(
+            on_click=session.on_click, on_scroll=session.on_scroll
+        )
+        session._data: List[RecordedEvent] = data.events
+        session._end_time = data.end_time
+        return session
+
+    @classmethod
+    def load(cls, session_id: str) -> RecordingSession:
         """Loads a recording session from a file given the session ID."""
 
         file_path = os.path.join(RECORDINGS_DIR, session_id, f"session.json")
@@ -144,7 +159,7 @@ class RecordingSession:
             data = json.load(file)
             Recording.model_validate(data)
             recording = Recording(**data)
-            return recording
+            return cls.from_schema(recording)
 
     async def take_screenshot(self) -> str:
         session_dir = self._dir()
@@ -157,6 +172,12 @@ class RecordingSession:
             sct.shot(output=file_path)
 
         return file_path
+
+    def find_event(self, id: str) -> Optional[RecordedEvent]:
+        for event in self._data:
+            if event.id == id:
+                return event
+        return None
 
     def encode_image_to_base64(image_path: str) -> str:
         with open(image_path, "rb") as image_file:
@@ -193,9 +214,9 @@ class RecordingSession:
                                 "parameters": {
                                     "text": text_buffer,
                                 },
-                                "screenshot": previous_screenshot_encoded,
-                                "previous_coordinates": previous_coordinates,
-                            }
+                            },
+                            "screenshot": previous_screenshot_encoded,
+                            "previous_coordinates": previous_coordinates,
                         }
                     )
                     text_buffer = ""
@@ -205,11 +226,15 @@ class RecordingSession:
                         actions.append(
                             {
                                 "action": {
-                                    "name": "click",
-                                    "parameters": {"button": event.click_data.button},
-                                    "screenshot": previous_screenshot_encoded,
-                                    "previous_coordinates": previous_coordinates,
-                                }
+                                    "name": "click_coords",
+                                    "parameters": {
+                                        "x": event.coordinates.x,
+                                        "y": event.coordinates.y,
+                                        "button": event.click_data.button,
+                                    },
+                                },
+                                "screenshot": previous_screenshot_encoded,
+                                "previous_coordinates": previous_coordinates,
                             }
                         )
                 elif event.type == "scroll":
@@ -218,9 +243,9 @@ class RecordingSession:
                             "action": {
                                 "name": "scroll",
                                 "parameters": {"clicks": event.scroll_data.dy},
-                                "screenshot": previous_screenshot_encoded,
-                                "previous_coordinates": previous_coordinates,
-                            }
+                            },
+                            "screenshot": previous_screenshot_encoded,
+                            "previous_coordinates": previous_coordinates,
                         }
                     )
 
@@ -241,9 +266,9 @@ class RecordingSession:
                         "parameters": {
                             "text": text_buffer,
                         },
-                        "screenshot": previous_screenshot_encoded,
-                        "previous_coordinates": previous_coordinates,
-                    }
+                    },
+                    "screenshot": previous_screenshot_encoded,
+                    "previous_coordinates": previous_coordinates,
                 }
             )
 

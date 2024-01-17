@@ -23,6 +23,8 @@ from .models import (
     RecordResponse,
     Recordings,
     RecordRequest,
+    RecordedEvent,
+    Actions,
 )
 from .chromium import is_chromium_running, is_chromium_window_open
 from .recording import RecordingSession, lock, sessions
@@ -206,15 +208,32 @@ async def stop_recording(session_id: str):
 
 
 @app.get("/recordings/{session_id}", response_model=Recording)
-async def get_actions(session_id: str):
+async def get_recording(session_id: str):
     if session_id in sessions:
         with lock:
             session: RecordingSession = sessions.get(session_id)
             if not session:
                 raise HTTPException(status_code=404, detail="Session not found")
-            return session.get_record()
+            return session.as_schema()
     else:
-        return RecordingSession.load_from_file(session_id)
+        return RecordingSession.load(session_id).as_schema()
+
+
+@app.get("/recordings/{session_id}/event/{event_id}", response_model=RecordedEvent)
+async def get_event(session_id: str, event_id: str):
+    if session_id in sessions:
+        with lock:
+            session: RecordingSession = sessions.get(session_id)
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
+
+    else:
+        session: RecordingSession = RecordingSession.load(session_id)
+
+    event = session.find_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return event
 
 
 @app.get("/active_sessions", response_model=Recordings)
@@ -224,3 +243,17 @@ async def list_sessions():
         out.append(id)
 
     return Recordings(recordings=out)
+
+
+@app.get("/recordings/{session_id}/actions", response_model=Actions)
+async def get_actions(session_id: str):
+    if session_id in sessions:
+        with lock:
+            session: RecordingSession = sessions.get(session_id)
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
+
+    else:
+        session = RecordingSession.load(session_id)
+
+    return Actions(actions=session.as_actions())
