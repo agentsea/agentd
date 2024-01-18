@@ -69,7 +69,7 @@ class RecordingSession:
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
             coordinates=CoordinatesModel(x=x, y=y),
-            key_data=KeyData(key=key.value),
+            key_data=KeyData(key=str(key)),
         )
         self._data.append(event)
 
