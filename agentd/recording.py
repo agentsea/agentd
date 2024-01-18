@@ -80,7 +80,7 @@ class RecordingSession:
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
             coordinates=CoordinatesModel(x=x, y=y),
-            key_data=ClickData(key=button, pressed=pressed),
+            key_data=ClickData(button=button, pressed=pressed),
         )
         self._data.append(event)
 
