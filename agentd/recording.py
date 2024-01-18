@@ -161,7 +161,7 @@ class RecordingSession:
             recording = Recording(**data)
             return cls.from_schema(recording)
 
-    async def take_screenshot(self) -> str:
+    def take_screenshot(self) -> str:
         session_dir = self._dir()
         os.makedirs(session_dir, exist_ok=True)
 
