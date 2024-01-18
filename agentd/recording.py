@@ -82,7 +82,7 @@ class RecordingSession:
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
             coordinates=CoordinatesModel(x=x, y=y),
-            key_data=ClickData(button=button, pressed=pressed),
+            click_data=ClickData(button=button, pressed=pressed),
         )
         self._data.append(event)
 
@@ -95,7 +95,7 @@ class RecordingSession:
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
             coordinates=CoordinatesModel(x=x, y=y),
-            key_data=ScrollData(dx=dx, dy=dy),
+            scroll_data=ScrollData(dx=dx, dy=dy),
         )
         self._data.append(event)
 
