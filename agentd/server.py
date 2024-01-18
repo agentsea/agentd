@@ -6,6 +6,8 @@ import base64
 import uuid
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 import pyautogui
 from mss import mss
 
@@ -32,6 +34,14 @@ from .recording import RecordingSession, lock, sessions
 # from .storage import upload_directory_to_gcs
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
