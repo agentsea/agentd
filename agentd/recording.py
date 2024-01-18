@@ -59,6 +59,8 @@ class RecordingSession:
         self._end_time = time.time()
 
     def on_press(self, key: str):
+        print("pressed key: ", key)
+        print("type key: ", type(key))
         x, y = pyautogui.position()
         event = RecordedEvent(
             id=str(uuid.uuid4()),
@@ -71,6 +73,7 @@ class RecordingSession:
         self._data.append(event)
 
     def on_click(self, x, y, button, pressed):
+        print("clicked button: ", x, y, button, pressed)
         event = RecordedEvent(
             id=str(uuid.uuid4()),
             type="mouse",
@@ -82,6 +85,7 @@ class RecordingSession:
         self._data.append(event)
 
     def on_scroll(self, x, y, dx, dy):
+        print("scrolled: ", x, y, dx, dy)
         event = RecordedEvent(
             id=str(uuid.uuid4()),
             type="scroll",
