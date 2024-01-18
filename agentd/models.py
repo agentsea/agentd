@@ -75,11 +75,11 @@ class RecordedEvent(BaseModel):
     type: str
     timestamp: float
     coordinates: CoordinatesModel
-    screenshot_path: Optional[str]
-    screenshot_b64: Optional[str]
-    click_data: Optional[ClickData]
-    key_data: Optional[KeyData]
-    scroll_data: Optional[ScrollData]
+    screenshot_path: Optional[str] = None
+    screenshot_b64: Optional[str] = None
+    click_data: Optional[ClickData] = None
+    key_data: Optional[KeyData] = None
+    scroll_data: Optional[ScrollData] = None
 
 
 class Recording(BaseModel):
