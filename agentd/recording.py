@@ -6,6 +6,7 @@ import json
 import os
 import uuid
 import base64
+from enum import Enum
 from datetime import datetime
 
 from pynput import keyboard, mouse
@@ -58,7 +59,7 @@ class RecordingSession:
         self.mouse_listener.stop()
         self._end_time = time.time()
 
-    def on_press(self, key: str):
+    def on_press(self, key: Enum):
         print("pressed key: ", key)
         print("type key: ", type(key))
         x, y = pyautogui.position()
@@ -68,12 +69,13 @@ class RecordingSession:
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
             coordinates=CoordinatesModel(x=x, y=y),
-            key_data=KeyData(key=key),
+            key_data=KeyData(key=key.value),
         )
         self._data.append(event)
 
     def on_click(self, x, y, button, pressed):
         print("clicked button: ", x, y, button, pressed)
+        print("type: ", type(x), type(y), type(button), type(pressed))
         event = RecordedEvent(
             id=str(uuid.uuid4()),
             type="mouse",
@@ -86,6 +88,7 @@ class RecordingSession:
 
     def on_scroll(self, x, y, dx, dy):
         print("scrolled: ", x, y, dx, dy)
+        print("types: ", type(x), type(y), type(dx), type(dy))
         event = RecordedEvent(
             id=str(uuid.uuid4()),
             type="scroll",

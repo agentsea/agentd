@@ -71,7 +71,9 @@ async def open_url(request: OpenURLModel):
             print("Chromium is not running. Starting it...")
 
         # os.system(f'chromium-browser --kiosk --no-first-run "{request.url}" &')
-        os.system(f'chromium-browser --no-first-run "{request.url}" &')
+        os.system(
+            f'chromium-browser --no-first-run --start-maximized "{request.url}" &'
+        )
 
         while not is_chromium_window_open():
             time.sleep(1)
