@@ -7,7 +7,7 @@ class OpenURLModel(BaseModel):
     url: str
 
 
-class MoveMouseToModel(BaseModel):
+class MoveMouseModel(BaseModel):
     x: int
     y: int
     duration: float = 1.0
@@ -16,7 +16,7 @@ class MoveMouseToModel(BaseModel):
 
 class ClickModel(BaseModel):
     button: str = "left"
-    location: Optional[MoveMouseToModel] = None
+    location: Optional[MoveMouseModel] = None
 
 
 class TypeTextModel(BaseModel):

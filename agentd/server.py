@@ -12,7 +12,7 @@ import pyautogui
 from mss import mss
 
 from .models import (
-    MoveMouseToModel,
+    MoveMouseModel,
     ClickModel,
     TypeTextModel,
     PressKeyModel,
@@ -86,8 +86,8 @@ async def open_url(request: OpenURLModel):
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/move_mouse_to")
-async def move_mouse_to(request: MoveMouseToModel):
+@app.post("/move_mouse")
+async def move_mouse_to(request: MoveMouseModel):
     try:
         tween_func = getattr(pyautogui, request.tween, pyautogui.linear)
         pyautogui.moveTo(
