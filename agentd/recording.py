@@ -10,6 +10,7 @@ from enum import Enum
 from datetime import datetime
 
 from pynput import keyboard, mouse
+from pynput.keyboard import Key, Listener, KeyCode
 from mss import mss
 import pyautogui
 
@@ -17,6 +18,7 @@ from .models import (
     Recording,
     RecordedEvent,
     KeyData,
+    TextData,
     ClickData,
     ScrollData,
     CoordinatesModel,
@@ -48,37 +50,91 @@ class RecordingSession:
             coordinates=CoordinatesModel(x=x, y=y),
         )
         self._data: List[RecordedEvent] = [initial_event]
+        self._status = "initialized"
         self._end_time = 0
+        self.text_buffer = ""
+        self.shift_pressed = False
+        self.caps_lock_on = False
 
     def start(self):
         self.keyboard_listener.start()
         self.mouse_listener.start()
+        self._status = "running"
 
     def stop(self):
         self.keyboard_listener.stop()
         self.mouse_listener.stop()
         self._end_time = time.time()
+        self._status = "stopped"
 
-    def on_press(self, key: Enum):
-        print("pressed key: ", key)
-        print("type key: ", type(key))
-        x, y = pyautogui.position()
-        event = RecordedEvent(
-            id=str(uuid.uuid4()),
-            type="key",
-            timestamp=time.time(),
-            screenshot_path=self.take_screenshot(),
-            coordinates=CoordinatesModel(x=x, y=y),
-            key_data=KeyData(key=str(key)),
-        )
-        self._data.append(event)
+    def on_press(self, key: Key):
+        # Handle shift and caps lock keys
+        if key in [Key.shift, Key.shift_r, Key.shift_l]:
+            self.shift_pressed = True
+            return
+        if key == Key.caps_lock:
+            self.caps_lock_on = not self.caps_lock_on
+            return
+
+        # Handle backspace
+        if key == Key.backspace:
+            self.text_buffer = self.text_buffer[:-1] if self.text_buffer else ""
+            return
+
+        # Handle regular character keys
+        if isinstance(key, KeyCode):
+            char = key.char
+            if char:
+                # Apply shift or caps lock modification for alphabetical characters
+                if (self.shift_pressed or self.caps_lock_on) and char.isalpha():
+                    char = char.upper() if char.islower() else char.lower()
+                self.text_buffer += char
+
+        # Handle Enter key to finalize text event
+        elif key == Key.enter:
+            # Create a text event only when Enter is pressed
+            if self.text_buffer:
+                event = RecordedEvent(
+                    id=str(uuid.uuid4()),
+                    type="text",
+                    timestamp=time.time(),
+                    screenshot_path=self.take_screenshot(),
+                    coordinates=CoordinatesModel(x=pyautogui.position()),
+                    text_data=TextData(text=self.text_buffer),
+                )
+                self._data.append(event)
+                self.text_buffer = ""  # Clear the text buffer
+
+        # Handle special keys
+        else:
+            if key not in [
+                Key.shift,
+                Key.shift_r,
+                Key.shift_l,
+                Key.caps_lock,
+                Key.backspace,
+            ]:
+                # Create a special key event
+                special_key_event = RecordedEvent(
+                    id=str(uuid.uuid4()),
+                    type="key",
+                    timestamp=time.time(),
+                    screenshot_path=self.take_screenshot(),
+                    coordinates=CoordinatesModel(x=pyautogui.position()),
+                    key_data=KeyData(text=str(key)),
+                )
+                self._data.append(special_key_event)
+
+    def on_release(self, key):
+        if key in [Key.shift, Key.shift_r, Key.shift_l]:
+            self.shift_pressed = False
 
     def on_click(self, x, y, button, pressed):
         print("clicked button: ", x, y, button, pressed)
         print("type: ", type(x), type(y), type(button), type(pressed))
         event = RecordedEvent(
             id=str(uuid.uuid4()),
-            type="mouse",
+            type="click",
             timestamp=time.time(),
             screenshot_path=self.take_screenshot(),
             coordinates=CoordinatesModel(x=x, y=y),
@@ -87,17 +143,21 @@ class RecordingSession:
         self._data.append(event)
 
     def on_scroll(self, x, y, dx, dy):
-        print("scrolled: ", x, y, dx, dy)
-        print("types: ", type(x), type(y), type(dx), type(dy))
-        event = RecordedEvent(
-            id=str(uuid.uuid4()),
-            type="scroll",
-            timestamp=time.time(),
-            screenshot_path=self.take_screenshot(),
-            coordinates=CoordinatesModel(x=x, y=y),
-            scroll_data=ScrollData(dx=dx, dy=dy),
-        )
-        self._data.append(event)
+        if self._data and self._data[-1].type == "scroll":
+            # Update the last scroll event
+            self._data[-1].scroll_data.dx += dx
+            self._data[-1].scroll_data.dy += dy
+        else:
+            # Add a new scroll event
+            event = RecordedEvent(
+                id=str(uuid.uuid4()),
+                type="scroll",
+                timestamp=time.time(),
+                screenshot_path=self.take_screenshot(),
+                coordinates=CoordinatesModel(x=x, y=y),
+                scroll_data=ScrollData(dx=dx, dy=dy),
+            )
+            self._data.append(event)
 
     def as_schema(self) -> Recording:
         return Recording(
@@ -192,9 +252,12 @@ class RecordingSession:
         return encoded_image
 
     def as_actions(self) -> List[dict]:
+        """Convert to tool schema actions that can be used with Agent Desk
+
+        Returns:
+            List[dict]: A list of action schemas
+        """
         actions = []
-        text_buffer = ""
-        last_event_type = None
         previous_screenshot_encoded = None
         previous_coordinates = None
 
@@ -210,73 +273,65 @@ class RecordingSession:
                 }
                 continue
 
-            if event.type == "key" and last_event_type == "key":
-                text_buffer += event.key_data.key
-            else:
-                if text_buffer:
-                    actions.append(
-                        {
-                            "action": {
-                                "name": "type_text",
-                                "parameters": {
-                                    "text": text_buffer,
-                                },
+            if event.type == "text":
+                # Handle text events
+                actions.append(
+                    {
+                        "action": {
+                            "name": "type_text",
+                            "parameters": {
+                                "text": event.text_data.text,
                             },
-                            "screenshot": previous_screenshot_encoded,
-                            "previous_coordinates": previous_coordinates,
-                        }
-                    )
-                    text_buffer = ""
-
-                if event.type == "mouse":
-                    if event.click_data.pressed:
-                        actions.append(
-                            {
-                                "action": {
-                                    "name": "click_coords",
-                                    "parameters": {
-                                        "x": event.coordinates.x,
-                                        "y": event.coordinates.y,
-                                        "button": event.click_data.button,
-                                    },
-                                },
-                                "screenshot": previous_screenshot_encoded,
-                                "previous_coordinates": previous_coordinates,
-                            }
-                        )
-                elif event.type == "scroll":
-                    actions.append(
-                        {
-                            "action": {
-                                "name": "scroll",
-                                "parameters": {"clicks": event.scroll_data.dy},
+                        },
+                        "screenshot": previous_screenshot_encoded,
+                        "previous_coordinates": previous_coordinates,
+                    }
+                )
+            elif event.type == "click":
+                # Handle click events
+                actions.append(
+                    {
+                        "action": {
+                            "name": "click",
+                            "parameters": {
+                                "x": event.coordinates.x,
+                                "y": event.coordinates.y,
+                                "button": event.click_data.button,
                             },
-                            "screenshot": previous_screenshot_encoded,
-                            "previous_coordinates": previous_coordinates,
-                        }
-                    )
+                        },
+                        "screenshot": previous_screenshot_encoded,
+                        "previous_coordinates": previous_coordinates,
+                    }
+                )
+            elif event.type == "scroll":
+                # Handle scroll events
+                actions.append(
+                    {
+                        "action": {
+                            "name": "scroll",
+                            "parameters": {"clicks": event.scroll_data.dy},
+                        },
+                        "screenshot": previous_screenshot_encoded,
+                        "previous_coordinates": previous_coordinates,
+                    }
+                )
+            elif event.type == "key":
+                # Handle special key events
+                actions.append(
+                    {
+                        "action": {
+                            "name": "press_key",
+                            "parameters": {"key": event.key_data.text},
+                        },
+                        "screenshot": previous_screenshot_encoded,
+                        "previous_coordinates": previous_coordinates,
+                    }
+                )
 
-            last_event_type = event.type
+            # Update the previous screenshot and coordinates for the next event
             previous_screenshot_encoded = self.encode_image_to_base64(
                 event.screenshot_path
             )
-            previous_coordinates = {
-                "x": event.coordinates.x,
-                "y": event.coordinates.y,
-            }
-
-        if text_buffer:
-            actions.append(
-                {
-                    "action": {
-                        "name": "type_text",
-                        "parameters": {
-                            "text": text_buffer,
-                        },
-                    },
-                    "screenshot": previous_screenshot_encoded,
-                    "previous_coordinates": previous_coordinates,
-                }
-            )
+            previous_coordinates = {"x": event.coordinates.x, "y": event.coordinates.y}
 
         return actions

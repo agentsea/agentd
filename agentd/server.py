@@ -100,6 +100,14 @@ async def move_mouse_to(request: MoveMouseToModel):
 
 @app.post("/click")
 async def click(request: ClickModel):
+    if request.location:
+        tween_func = getattr(pyautogui, request.location.tween, pyautogui.linear)
+        pyautogui.moveTo(
+            request.location.x,
+            request.location.y,
+            duration=request.location.duration,
+            tween=tween_func,
+        )
     try:
         pyautogui.click(button=request.button)
         return {"status": "success"}

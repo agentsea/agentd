@@ -16,6 +16,7 @@ class MoveMouseToModel(BaseModel):
 
 class ClickModel(BaseModel):
     button: str = "left"
+    location: Optional[MoveMouseToModel] = None
 
 
 class TypeTextModel(BaseModel):
@@ -65,6 +66,10 @@ class KeyData(BaseModel):
     key: str
 
 
+class TextData(BaseModel):
+    text: str
+
+
 class ScrollData(BaseModel):
     dx: int
     dy: int
@@ -80,6 +85,7 @@ class RecordedEvent(BaseModel):
     click_data: Optional[ClickData] = None
     key_data: Optional[KeyData] = None
     scroll_data: Optional[ScrollData] = None
+    text_data: Optional[TextData] = None
 
 
 class Recording(BaseModel):
