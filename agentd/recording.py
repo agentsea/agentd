@@ -93,13 +93,14 @@ class RecordingSession:
         # Handle Enter key to finalize text event
         elif key == Key.enter:
             # Create a text event only when Enter is pressed
+            x, y = pyautogui.position()
             if self.text_buffer:
                 event = RecordedEvent(
                     id=str(uuid.uuid4()),
                     type="text",
                     timestamp=time.time(),
                     screenshot_path=self.take_screenshot(),
-                    coordinates=CoordinatesModel(x=pyautogui.position()),
+                    coordinates=CoordinatesModel(x=x, y=y),
                     text_data=TextData(text=self.text_buffer),
                 )
                 self._data.append(event)
@@ -114,13 +115,14 @@ class RecordingSession:
                 Key.caps_lock,
                 Key.backspace,
             ]:
+                x, y = pyautogui.position()
                 # Create a special key event
                 special_key_event = RecordedEvent(
                     id=str(uuid.uuid4()),
                     type="key",
                     timestamp=time.time(),
                     screenshot_path=self.take_screenshot(),
-                    coordinates=CoordinatesModel(x=pyautogui.position()),
+                    coordinates=CoordinatesModel(x=x, y=y),
                     key_data=KeyData(text=str(key)),
                 )
                 self._data.append(special_key_event)
