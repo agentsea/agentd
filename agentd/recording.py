@@ -71,7 +71,6 @@ class RecordingSession:
 
     def on_press(self, key: Key):
         print("\npressed key: ", key)
-        print("shift pressed: ", self.shift_pressed)
         # Handle shift and caps lock keys
         if key in [Key.shift, Key.shift_r, Key.shift_l]:
             self.shift_pressed = True
@@ -95,7 +94,6 @@ class RecordingSession:
         # Handle regular character keys
         if isinstance(key, KeyCode):
             char = key.char
-            print("appending char: ", char)
             if char:
                 # Apply shift modification for the next character
                 if self.shift_pressed and char.isalpha():
@@ -200,6 +198,14 @@ class RecordingSession:
                     encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
                     event.screenshot_b64 = encoded_image
                 return event
+        return None
+
+    def delete_event(self, event_id: str) -> None:
+        out = []
+        for event in self._data:
+            if event.id != event_id:
+                out.append(event)
+        self._data = out
         return None
 
     def save_to_file(self) -> str:

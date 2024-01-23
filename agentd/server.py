@@ -263,6 +263,23 @@ async def get_event(session_id: str, event_id: str):
     return event
 
 
+@app.delete("/recordings/{session_id}/event/{event_id}", response_model=Recording)
+async def delete_event(session_id: str, event_id: str):
+    with lock:
+        # Retrieve the session
+        session: RecordingSession = sessions.get(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Delete the event from the session
+        session.delete_event(event_id)
+
+        # Save the updated session
+        session.save_to_file()
+
+        return session.as_schema()
+
+
 @app.get("/active_sessions", response_model=Recordings)
 async def list_sessions():
     out = []
