@@ -37,7 +37,9 @@ class RecordingSession:
         self._start_time = time.time()
         self._id = id
         self._description = description
-        self.keyboard_listener = keyboard.Listener(on_press=self.on_press)
+        self.keyboard_listener = keyboard.Listener(
+            on_press=self.on_press, on_release=self.on_release
+        )
         self.mouse_listener = mouse.Listener(
             on_click=self.on_click, on_scroll=self.on_scroll
         )
