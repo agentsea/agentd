@@ -68,6 +68,7 @@ class RecordingSession:
         self._status = "stopped"
 
     def on_press(self, key: Key):
+        print("\npressed key: ", key)
         # Handle shift and caps lock keys
         if key in [Key.shift, Key.shift_r, Key.shift_l]:
             self.shift_pressed = True
@@ -78,7 +79,9 @@ class RecordingSession:
 
         # Handle backspace
         if key == Key.backspace:
-            self.text_buffer = self.text_buffer[:-1] if self.text_buffer else ""
+            if self.text_buffer:
+                self.text_buffer = self.text_buffer[:-1]
+                self.update_last_text_event()
             return
 
         # Handle regular character keys
@@ -89,22 +92,11 @@ class RecordingSession:
                 if (self.shift_pressed or self.caps_lock_on) and char.isalpha():
                     char = char.upper() if char.islower() else char.lower()
                 self.text_buffer += char
+                self.update_last_text_event()
 
         # Handle Enter key to finalize text event
         elif key == Key.enter:
-            # Create a text event only when Enter is pressed
-            x, y = pyautogui.position()
-            if self.text_buffer:
-                event = RecordedEvent(
-                    id=str(uuid.uuid4()),
-                    type="text",
-                    timestamp=time.time(),
-                    screenshot_path=self.take_screenshot(),
-                    coordinates=CoordinatesModel(x=x, y=y),
-                    text_data=TextData(text=self.text_buffer),
-                )
-                self._data.append(event)
-                self.text_buffer = ""  # Clear the text buffer
+            self.text_buffer = ""
 
         # Handle special keys
         else:
@@ -126,6 +118,23 @@ class RecordingSession:
                     key_data=KeyData(key=str(key)),
                 )
                 self._data.append(special_key_event)
+
+    def update_last_text_event(self):
+        x, y = pyautogui.position()
+        if self._data and self._data[-1].type == "text":
+            # Update the last text event
+            self._data[-1].text_data.text = self.text_buffer
+        else:
+            # Add a new text event
+            event = RecordedEvent(
+                id=str(uuid.uuid4()),
+                type="text",
+                timestamp=time.time(),
+                screenshot_path=self.take_screenshot(),
+                coordinates=CoordinatesModel(x=x, y=y),
+                text_data=TextData(text=self.text_buffer),
+            )
+            self._data.append(event)
 
     def on_release(self, key):
         if key in [Key.shift, Key.shift_r, Key.shift_l]:
