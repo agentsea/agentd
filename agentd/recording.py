@@ -71,12 +71,18 @@ class RecordingSession:
 
     def on_press(self, key: Key):
         print("\npressed key: ", key)
+        print("shift pressed: ", self.shift_pressed)
         # Handle shift and caps lock keys
         if key in [Key.shift, Key.shift_r, Key.shift_l]:
             self.shift_pressed = True
             return
         if key == Key.caps_lock:
             self.caps_lock_on = not self.caps_lock_on
+            return
+
+        if key == Key.space:
+            self.text_buffer += " "
+            self.update_last_text_event()
             return
 
         # Handle backspace
@@ -124,10 +130,11 @@ class RecordingSession:
     def update_last_text_event(self):
         x, y = pyautogui.position()
         if self._data and self._data[-1].type == "text":
-            # Update the last text event
-            self._data[-1].text_data.text = self.text_buffer
-        else:
-            # Add a new text event
+            # Update the last text event if it's not empty
+            if self.text_buffer.strip():
+                self._data[-1].text_data.text = self.text_buffer
+        elif self.text_buffer.strip():
+            # Add a new text event if the text buffer is not just whitespace
             event = RecordedEvent(
                 id=str(uuid.uuid4()),
                 type="text",

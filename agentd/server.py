@@ -234,11 +234,14 @@ async def get_recording(session_id: str):
     if session_id in sessions:
         with lock:
             session: RecordingSession = sessions.get(session_id)
+            print("got in-mem session: ", session)
             if not session:
                 raise HTTPException(status_code=404, detail="Session not found")
             return session.as_schema()
     else:
-        return RecordingSession.load(session_id).as_schema()
+        session = RecordingSession.load(session_id).as_schema()
+        print("got disk session: ", session)
+        return session
 
 
 @app.get("/recordings/{session_id}/event/{event_id}", response_model=RecordedEvent)
@@ -246,11 +249,13 @@ async def get_event(session_id: str, event_id: str):
     if session_id in sessions:
         with lock:
             session: RecordingSession = sessions.get(session_id)
+            print("got in-mem session: ", session)
             if not session:
                 raise HTTPException(status_code=404, detail="Session not found")
 
     else:
         session: RecordingSession = RecordingSession.load(session_id)
+        print("got disk session: ", session)
 
     event = session.find_event(event_id)
     if not event:
