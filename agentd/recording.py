@@ -95,10 +95,15 @@ class RecordingSession:
         # Handle regular character keys
         if isinstance(key, KeyCode):
             char = key.char
+            print("appending char: ", char)
             if char:
-                # Apply shift or caps lock modification for alphabetical characters
-                if (self.shift_pressed or self.caps_lock_on) and char.isalpha():
+                # Apply shift modification for the next character
+                if self.shift_pressed and char.isalpha():
+                    char = char.upper()
+                    self.shift_pressed = False  # Reset shift state after applying
+                elif self.caps_lock_on and char.isalpha():
                     char = char.upper() if char.islower() else char.lower()
+
                 self.text_buffer += char
                 self.update_last_text_event()
 
