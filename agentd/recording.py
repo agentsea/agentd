@@ -320,20 +320,21 @@ class RecordingSession:
                 )
             elif event.type == "click":
                 # Handle click events
-                actions.append(
-                    {
-                        "action": {
-                            "name": "click",
-                            "parameters": {
-                                "x": event.coordinates.x,
-                                "y": event.coordinates.y,
-                                "button": event.click_data.button,
+                if event.click_data.pressed:
+                    actions.append(
+                        {
+                            "action": {
+                                "name": "click",
+                                "parameters": {
+                                    "x": event.coordinates.x,
+                                    "y": event.coordinates.y,
+                                    "button": event.click_data.button,
+                                },
                             },
-                        },
-                        "screenshot": previous_screenshot_encoded,
-                        "previous_coordinates": previous_coordinates,
-                    }
-                )
+                            "screenshot": previous_screenshot_encoded,
+                            "previous_coordinates": previous_coordinates,
+                        }
+                    )
             elif event.type == "scroll":
                 # Handle scroll events
                 actions.append(
@@ -358,6 +359,8 @@ class RecordingSession:
                         "previous_coordinates": previous_coordinates,
                     }
                 )
+            else:
+                raise ValueError(f"Unknown event type '{event.type}'")
 
             # Update the previous screenshot and coordinates for the next event
             previous_screenshot_encoded = self.encode_image_to_base64(
