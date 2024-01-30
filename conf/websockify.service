@@ -1,6 +1,6 @@
 [Unit]
 Description=Websockify Service
-After=x11vnc.service network.target
+After=x11vnc.service network.target xvfb.service
 
 [Service]
 ExecStart=/usr/bin/websockify 6080 localhost:5900

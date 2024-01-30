@@ -1,13 +1,13 @@
 [Unit]
 Description=x11vnc service
-After=display-manager.service network.target syslog.target
+After=display-manager.service network.target syslog.target xvfb.service
 
 [Service]
 Type=simple
 User=agentsea
-Environment="XAUTHORITY=/run/user/1000/gdm/Xauthority" "DISPLAY=:0"
+Environment="XAUTHORITY=/run/user/1000/gdm/Xauthority" "DISPLAY=:1"
 ExecStartPre=/bin/sleep 10
-ExecStart=/usr/bin/x11vnc -forever -display :0 -auth /run/user/1000/gdm/Xauthority -passwd AgentSea123
+ExecStart=/usr/bin/x11vnc -forever -display :1 -auth /run/user/1000/gdm/Xauthority -localhost -nopw
 ExecStop=/usr/bin/killall x11vnc
 Restart=on-failure
 RestartSec=11s
