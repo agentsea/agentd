@@ -7,7 +7,7 @@ fi
 
 echo "installing base packages..."
 apt update
-apt install -y openssh-server cloud-init
+apt install -y openssh-server cloud-init ubuntu-desktop
 systemctl start ssh
 systemctl enable ssh
 
