@@ -19,3 +19,9 @@ curl -sSL https://raw.githubusercontent.com/agentsea/agentd/main/remote_install.
 ```
 
 We also provide a cloud-init config in [user-data.tpl.yaml](user-data.tpl.yaml)
+
+To run from this repo
+
+```bash
+make run-jammy
+```

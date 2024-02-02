@@ -5,4 +5,4 @@ if [ "$(whoami)" != "agentsea" ]; then
     exit 1
 fi
 
-pip install mss "fastapi[all]" pyautogui pynput
+pip install mss "fastapi[all]" pyautogui pynput uvicorn

@@ -1,13 +1,14 @@
 VMS_DIR := .vms
 JAMMY := $(VMS_DIR)/jammy.img
 META_DIR := ./meta
-TEMPLATE_FILE := user-data.tpl.yaml
+TEMPLATE_FILE := user-data
 OUTPUT_FILE := $(META_DIR)/user-data
 SSH_KEY_FILE := $(shell [ -f ~/.ssh/id_rsa.pub ] && echo ~/.ssh/id_rsa.pub || echo ~/.ssh/id_ed25519.pub)
 
 $(JAMMY):
 	@mkdir -p $(VMS_DIR)
 	@test -f $(JAMMY) || (echo "Downloading jammy..." && curl -o $(JAMMY) https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img && echo "Download complete.")
+	qemu-img resize $(JAMMY) +10G
 
 .PHONY: download-jammy
 download-jammy: $(JAMMY)
@@ -16,7 +17,7 @@ download-jammy: $(JAMMY)
 prepare-user-data:
 	@mkdir -p $(META_DIR)
 	@SSH_KEY=$$(cat $(SSH_KEY_FILE)); \
-	 sed "s|{ ssh_key }|$$SSH_KEY|" $(TEMPLATE_FILE) > $(OUTPUT_FILE)
+	 sed "s|{{ ssh_public_key }}|$$SSH_KEY|" $(TEMPLATE_FILE) > $(OUTPUT_FILE)
 	@echo "User-data file prepared at $(OUTPUT_FILE)."
 
 .PHONY: run-meta
