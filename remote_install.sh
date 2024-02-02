@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define where to clone the repository
-INSTALL_DIR="${HOME}/agentdesk"
+INSTALL_DIR="/home/agentsea/agentd"
 if [ -d "$INSTALL_DIR" ]; then
     echo "$INSTALL_DIR already exists. Consider removing it first if you want a fresh install."
     exit 1
@@ -9,7 +9,7 @@ fi
 
 # Clone the repository
 echo "Cloning repository into $INSTALL_DIR..."
-git clone https://github.com/agentsea/agentdesk.git "$INSTALL_DIR"
+git clone https://github.com/agentsea/agentd.git "$INSTALL_DIR"
 
 # Check if git clone was successful
 if [ $? -ne 0 ]; then

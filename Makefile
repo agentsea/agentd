@@ -19,13 +19,12 @@ prepare-user-data:
 	 sed "s|{ ssh_key }|$$SSH_KEY|" $(TEMPLATE_FILE) > $(OUTPUT_FILE)
 	@echo "User-data file prepared at $(OUTPUT_FILE)."
 
+.PHONY: run-meta
+run-meta:
+	python3 -m http.server 8060 --directory ./meta
 
-.PHONY: build-jammy
-run-jammy: download-jammy
-	@echo "Starting HTTP server on port 8060 in the background..."
-	@python3 -m http.server 8060 --directory . > /dev/null 2>&1 & \
-	SERVER_PID=$$!; \
-	trap "echo 'Stopping HTTP server...'; kill $$SERVER_PID" EXIT; \
+.PHONY: run-jammy
+run-jammy: download-jammy prepare-user-data
 	echo "Running QEMU..."; \
 	qemu-system-x86_64 -nographic -hda $(JAMMY) \
 	-m 4G -smp 2 -netdev user,id=vmnet,hostfwd=tcp::6080-:6080,hostfwd=tcp::8000-:8000,hostfwd=tcp::2222-:22 \

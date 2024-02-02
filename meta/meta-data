@@ -1,2 +1,2 @@
-instance-id: {name}
-local-hostname: {name}
+instance-id: agentd
+local-hostname: agentd
