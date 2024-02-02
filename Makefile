@@ -1,7 +1,7 @@
 VMS_DIR := .vms
 JAMMY := $(VMS_DIR)/jammy.img
 META_DIR := ./meta
-TEMPLATE_FILE := user-data
+TEMPLATE_FILE := user-data.tpl
 OUTPUT_FILE := $(META_DIR)/user-data
 SSH_KEY_FILE := $(shell [ -f ~/.ssh/id_rsa.pub ] && echo ~/.ssh/id_rsa.pub || echo ~/.ssh/id_ed25519.pub)
 
@@ -35,3 +35,8 @@ run-jammy: download-jammy prepare-user-data
 .PHONY: clean
 clean:
 	rm -rf $(VMS_DIR)
+
+
+.PHONY: pack
+pack:
+	packer build img_init.pkr.hcl

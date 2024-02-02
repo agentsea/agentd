@@ -23,7 +23,6 @@ cd "$INSTALL_DIR"
 # Assuming your script uses other scripts or configurations from the repo
 # Execute a specific script from the cloned repository
 echo "Running installation script from the cloned repository..."
-su agentsea -c "bash install_deps.sh"
 bash install.sh # Replace with the actual script you need to run
 
 echo "Installation completed."

@@ -7,9 +7,9 @@ fi
 
 echo "installing base packages..."
 apt update
-apt install -y openssh-server cloud-init ubuntu-desktop
-systemctl start ssh
-systemctl enable ssh
+apt install -y ubuntu-desktop uvicorn xvfb x11vnc websockify python3-pip python3-dev python3-venv
+
+su agentsea -c "bash install_deps.sh"
 
 echo "copying services..."
 cp ./conf/agentd.service /etc/systemd/system/agentd.service
