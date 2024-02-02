@@ -1,0 +1,10 @@
+#cloud-config
+password: ubuntu
+ssh_pwauth: true
+chpasswd:
+  expire: false
+# users:
+#   - name: agentsea
+#     sudo: ALL=(ALL) NOPASSWD:ALL
+#     groups: sudo
+#     shell: /bin/bash

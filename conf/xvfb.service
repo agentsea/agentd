@@ -1,12 +1,11 @@
 [Unit]
-Description=x11vnc Server
-After=network.target xvfb.service
+Description=X Virtual Frame Buffer Service
+After=network.target
 
 [Service]
-Environment="DISPLAY=:1"
-Environment="XAUTHORITY=/run/user/1000/gdm/Xauthority"
-ExecStart=/usr/bin/x11vnc -display :1 -auth /run/user/1000/gdm/Xauthority -forever -loop -noxdamage -repeat -rfbauth /path/to/passwd -rfbport 5900 -shared
-User=nobody
+ExecStart=/usr/bin/Xvfb :99 -screen 0 1280x1024x24
+Environment="XAUTHORITY=/home/agentsea/.Xauthority" "DISPLAY=:99"
+User=agentsea
 Restart=on-failure
 RestartSec=2
 

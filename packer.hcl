@@ -29,7 +29,7 @@ build {
   sources = ["source.qemu.ubuntu"]
 
   provisioner "file" {
-    content     = templatefile("${path.root}/user-data", { ssh_public_key = local.ssh_public_key_content })
+    content     = templatefile("${path.root}/user-data.tpl", { ssh_public_key = local.ssh_public_key_content })
     destination = "/tmp/user-data"
   }
 

@@ -4,7 +4,7 @@ After=network.target xvfb.service
 
 [Service]
 User=agentsea
-Environment="DISPLAY=:1" "XAUTHORITY=/run/user/1000/gdm/Xauthority"
+Environment="DISPLAY=:99" "XAUTHORITY=/run/user/1000/gdm/Xauthority"
 WorkingDirectory=/home/agentsea/agentd
 ExecStart=/home/agentsea/.local/bin/uvicorn agentd.server:app --host 0.0.0.0 --port 8000 --reload
 Restart=always

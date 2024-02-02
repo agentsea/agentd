@@ -160,5 +160,9 @@ cython_debug/
 #.idea/
 
 .vms
-user-data
+meta/user-data
 log
+output-*
+artifacts
+cidata.iso
+cidata_root.iso

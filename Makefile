@@ -4,6 +4,7 @@ META_DIR := ./meta
 TEMPLATE_FILE := user-data.tpl
 OUTPUT_FILE := $(META_DIR)/user-data
 SSH_KEY_FILE := $(shell [ -f ~/.ssh/id_rsa.pub ] && echo ~/.ssh/id_rsa.pub || echo ~/.ssh/id_ed25519.pub)
+JAMMY_LATEST := ./.vms/jammy/latest/jammy.qcow2
 
 $(JAMMY):
 	@mkdir -p $(VMS_DIR)
@@ -25,18 +26,22 @@ run-meta:
 	python3 -m http.server 8060 --directory ./meta
 
 .PHONY: run-jammy
-run-jammy: download-jammy prepare-user-data
-	echo "Running QEMU..."; \
-	qemu-system-x86_64 -nographic -hda $(JAMMY) \
+run-jammy: prepare-user-data
+	xorriso -as mkisofs -o cidata.iso -V "cidata" -J -r -iso-level 3 meta/
+	qemu-system-x86_64 -nographic -hda $(JAMMY_LATEST) \
 	-m 4G -smp 2 -netdev user,id=vmnet,hostfwd=tcp::6080-:6080,hostfwd=tcp::8000-:8000,hostfwd=tcp::2222-:22 \
-	-device e1000,netdev=vmnet -smbios type=1,serial=ds='nocloud;s=http://10.0.2.2:8060/'; \
-	echo "QEMU has exited."
+	-device e1000,netdev=vmnet -cdrom cidata.iso 
+ # -smbios type=1,serial=ds='nocloud;s=http://10.0.2.2:8060/';
 
 .PHONY: clean
 clean:
 	rm -rf $(VMS_DIR)
 
-
 .PHONY: pack
-pack:
-	packer build img_init.pkr.hcl
+pack: user-data
+	./pack.sh
+
+.PHONY: user-data
+user-data:
+	# hdiutil makehybrid -o cidata.iso -hfs -joliet -iso -default-volume-name cidata root_meta/
+	xorriso -as mkisofs -o cidata_root.iso -V "cidata" -J -r -iso-level 3 root_meta/

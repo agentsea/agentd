@@ -1,6 +1,8 @@
 # agentd
 
-A daemon that makes a desktop OS accessible to AI agents
+A daemon that makes a desktop OS accessible to AI agents.
+
+For a higher level interface see [AgentDesk](https://github.com/agentsea/agentdesk)
 
 ## Install
 
@@ -18,10 +20,14 @@ If you want to install on a fresh Ubuntu VM, use the a [cloud images base](https
 curl -sSL https://raw.githubusercontent.com/agentsea/agentd/main/remote_install.sh | sudo bash
 ```
 
-We also provide a cloud-init config in [user-data.tpl.yaml](user-data.tpl.yaml)
-
 To run from this repo
 
 ```bash
 make run-jammy
+```
+
+To pack a fresh set of images
+
+```bash
+make pack
 ```

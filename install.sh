@@ -5,9 +5,17 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+echo "creating user..."
+adduser --disabled-password --gecos '' agentsea
+touch /home/agentsea/.bashrc
+chown -R agentsea:agentsea /home/agentsea
+echo 'agentsea ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/agentsea
+su agentsea -c "xauth generate :99 . trusted"
+
 echo "installing base packages..."
-apt update
-apt install -y ubuntu-desktop uvicorn xvfb x11vnc websockify python3-pip python3-dev python3-venv
+apt-get update
+apt-get install -y xvfb ubuntu-desktop x11vnc websockify python3-pip python3-dev python3-venv
+snap install chromium
 
 su agentsea -c "bash install_deps.sh"
 
