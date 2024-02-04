@@ -47,4 +47,6 @@ cp "${OUTPUT_DIRECTORY}/packer-jammy" "${BASE_DIR}/latest/jammy.qcow2"
 
 echo "copying artifacts to GCS..."
 gsutil cp "${BASE_DIR}/latest/jammy.qcow2" "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
+gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
 gsutil cp "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2" "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
+gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
