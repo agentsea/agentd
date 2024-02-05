@@ -112,20 +112,28 @@ variable "format" {
 //   ssh_timeout            = "10m"
 // }
 
+// source "amazon-ebs" "jammy" {
+//   ami_name      = "agentd-ubuntu-22.04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+//   instance_type = "t2.micro"
+//   region        = var.aws_region
+//   source_ami_filter {
+//     filters = {
+//       name                = "ubuntu/images/*ubuntu-jammy-22.04-amd64-server-*"
+//       root-device-type    = "ebs"
+//       virtualization-type = "hvm"
+//     }
+//     owners      = ["099720109477"] # Ubuntu's owner ID
+//     most_recent = true
+//   }
+//   ssh_username = "ubuntu"
+// }
+
 source "amazon-ebs" "jammy" {
   ami_name      = "agentd-ubuntu-22.04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
   instance_type = "t2.micro"
   region        = var.aws_region
-  source_ami_filter {
-    filters = {
-      name                = "ubuntu/images/*ubuntu-jammy-22.04-amd64-server-*"
-      root-device-type    = "ebs"
-      virtualization-type = "hvm"
-    }
-    owners      = ["099720109477"] # Ubuntu's owner ID
-    most_recent = true
-  }
-  ssh_username = "ubuntu"
+  source_ami    = "ami-0c7217cdde317cfec" # only works on us-east-1
+  ssh_username  = "ubuntu"
 }
 
 // source "googlecompute" "ubuntu" {
