@@ -22,4 +22,4 @@ fi
 
 export PATH="$PATH:$PATH_TO_ADD"
 
-pip install mss "fastapi[all]" pyautogui pynput "uvicorn[standard]"
+python3 -m pip install mss "fastapi[all]" pyautogui pynput "uvicorn[standard]"
