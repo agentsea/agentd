@@ -13,6 +13,8 @@ chown -R agentsea:agentsea /home/agentsea
 echo 'agentsea ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/agentsea
 
 echo "installing base packages..."
+cat /etc/apt/sources.list
+add-apt-repository universe
 apt-get update
 apt-get install -y software-properties-common
 apt search ubuntu-desktop
