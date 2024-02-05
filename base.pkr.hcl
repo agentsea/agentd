@@ -87,30 +87,30 @@ variable "format" {
   default = "qcow2"
 }
 
-// source "qemu" "jammy" {
-//   # accelerator      = "kvm"
-//   boot_command     = []
-//   disk_compression = true
-//   disk_interface   = "virtio"
-//   disk_image       = true
-//   disk_size        = var.disk_size
-//   format           = var.format
-//   headless         = var.headless
-//   iso_checksum     = var.iso_checksum
-//   iso_url          = var.iso_url
-//   net_device       = "virtio-net"
-//   output_directory = "${var.output_directory}"
-//   qemuargs = [
-//     ["-m", "${var.ram}M"],
-//     ["-smp", "${var.cpu}"],
-//     ["-cdrom", "cidata_root.iso"]
-//   ]
-//   communicator           = "ssh"
-//   shutdown_command       = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
-//   ssh_password           = var.ssh_password
-//   ssh_username           = var.ssh_username
-//   ssh_timeout            = "10m"
-// }
+source "qemu" "jammy" {
+  # accelerator      = "kvm"
+  boot_command     = []
+  disk_compression = true
+  disk_interface   = "virtio"
+  disk_image       = true
+  disk_size        = var.disk_size
+  format           = var.format
+  headless         = var.headless
+  iso_checksum     = var.iso_checksum
+  iso_url          = var.iso_url
+  net_device       = "virtio-net"
+  output_directory = "${var.output_directory}"
+  qemuargs = [
+    ["-m", "${var.ram}M"],
+    ["-smp", "${var.cpu}"],
+    ["-cdrom", "cidata_root.iso"]
+  ]
+  communicator           = "ssh"
+  shutdown_command       = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
+  ssh_password           = var.ssh_password
+  ssh_username           = var.ssh_username
+  ssh_timeout            = "10m"
+}
 
 // source "amazon-ebs" "jammy" {
 //   ami_name      = "agentd-ubuntu-22.04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
@@ -128,13 +128,21 @@ variable "format" {
 //   ssh_username = "ubuntu"
 // }
 
-source "amazon-ebs" "jammy" {
-  ami_name      = "agentd-ubuntu-22.04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
-  instance_type = "t2.micro"
-  region        = var.aws_region
-  source_ami    = "ami-0c7217cdde317cfec" # only works on us-east-1
-  ssh_username  = "ubuntu"
-}
+// source "amazon-ebs" "jammy" {
+//   ami_name      = "agentd-ubuntu-22.04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+//   instance_type = "t2.micro"
+//   region        = var.aws_region
+//   source_ami_filter {
+//     filters = {
+//       name                = "ubuntu/images/*ubuntu-jammy-22.04-amd64-server-*"
+//       root-device-type    = "ebs"
+//       virtualization-type = "hvm"
+//     }
+//     owners      = ["099720109477"] # Ubuntu's owner ID
+//     most_recent = true
+//   }
+//   ssh_username  = "ubuntu"
+// }
 
 // source "googlecompute" "ubuntu" {
 //   project_id = var.gcp_project_id
@@ -147,8 +155,8 @@ source "amazon-ebs" "jammy" {
 build {
   sources = [
     // "source.qemu.jammy",
-    "source.amazon-ebs.jammy",
-    // "source.googlecompute.ubuntu"
+    // "source.amazon-ebs.jammy",
+    "source.googlecompute.ubuntu"
   ]
 
   provisioner "shell" {

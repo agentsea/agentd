@@ -13,12 +13,9 @@ chown -R agentsea:agentsea /home/agentsea
 echo 'agentsea ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/agentsea
 
 echo "installing base packages..."
-cat /etc/apt/sources.list
 add-apt-repository universe
 apt-get update
-apt-get install -y software-properties-common
-apt search ubuntu-desktop
-apt-get install -y xvfb ubuntu-desktop x11vnc websockify python3-pip python3-dev python3-venv
+apt-get install -y xvfb ubuntu-desktop x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common
 snap install chromium
 
 su agentsea -c "xauth generate :99 . trusted"
