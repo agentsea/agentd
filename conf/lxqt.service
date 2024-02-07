@@ -1,0 +1,13 @@
+[Unit]
+Description=Start LXQt on Xvfb
+Requires=xvfb.service
+After=xvfb.service network.target
+
+[Service]
+Type=simple
+User=agentsea
+Environment="DISPLAY=:99" "XAUTHORITY=/home/agentsea/.Xauthority"
+ExecStart=/usr/bin/startlxqt
+
+[Install]
+WantedBy=multi-user.target

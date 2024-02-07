@@ -8,7 +8,7 @@ PartOf=xvfb.service
 Type=forking
 User=agentsea
 Environment="DISPLAY=:99" "XAUTHORITY=/home/agentsea/.Xauthority"
-ExecStart=/bin/su agentsea -c "/usr/bin/dbus-launch gnome-session"
+ExecStart=/usr/bin/dbus-launch gnome-session
 ExecStop=/usr/bin/killall gnome-session
 
 [Install]
