@@ -19,8 +19,10 @@ apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv p
 snap install chromium
 
 # Since LXQt doesn't use GDM, we configure SDDM (Simple Desktop Display Manager) for automatic login if needed.
-sed -i '/\[Autologin\]/a User=agentsea' /etc/sddm.conf
-sed -i '/\[Autologin\]/a Session=lxqt.desktop' /etc/sddm.conf
+mkdir -p /etc/sddm.conf.d
+echo "[Autologin]" > /etc/sddm.conf.d/autologin.conf
+echo "User=agentsea" >> /etc/sddm.conf.d/autologin.conf
+echo "Session=lxqt.desktop" >> /etc/sddm.conf.d/autologin.conf
 
 su agentsea -c "xauth generate :99 . trusted"
 su agentsea -c "bash install_deps.sh"
