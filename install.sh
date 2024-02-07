@@ -50,13 +50,25 @@ systemctl enable xvfb.service
 systemctl enable lxqt.service
 systemctl enable ntp
 
+restart_service_and_log() {
+  local service_name="$1"
+  echo "Restarting $service_name..."
+  if systemctl restart "$service_name"; then
+    echo "$service_name restarted successfully."
+  else
+    echo "Failed to restart $service_name. Here are the last 20 log lines:"
+    journalctl -u "$service_name" --no-pager -n 20
+  fi
+}
+
+
 echo "restarting services..."
-systemctl restart agentd.service
-systemctl restart websockify.service
-systemctl restart x11vnc.service
-systemctl restart xvfb.service
-systemctl restart lxqt.service
-systemctl restart ntp
+restart_service_and_log agentd.service
+restart_service_and_log websockify.service
+restart_service_and_log restart x11vnc.service
+restart_service_and_log restart xvfb.service
+restart_service_and_log restart lxqt.service
+restart_service_and_log restart ntp
 
 echo "setting up firewall..."
 ufw enable
