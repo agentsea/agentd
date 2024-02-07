@@ -40,6 +40,7 @@ cp ./conf/websockify.service /etc/systemd/system/websockify.service
 cp ./conf/x11vnc.service /lib/systemd/system/x11vnc.service
 cp ./conf/xvfb.service /lib/systemd/system/xvfb.service
 cp ./conf/lxqt.service /lib/systemd/system/lxqt.service
+cp ./conf/openbox.service /lib/systemd/system/openbox.service
 
 echo "enabling services..."
 systemctl daemon-reload
@@ -48,7 +49,9 @@ systemctl enable websockify.service
 systemctl enable x11vnc.service
 systemctl enable xvfb.service
 systemctl enable lxqt.service
+systemctl enable openbox.service
 systemctl enable ntp
+# systemctl enable sddm
 
 restart_service_and_log() {
   local service_name="$1"
@@ -67,6 +70,7 @@ restart_service_and_log websockify.service
 restart_service_and_log x11vnc.service
 restart_service_and_log xvfb.service
 restart_service_and_log lxqt.service
+restart_service_and_log openbox.service
 restart_service_and_log ntp
 
 echo "setting up firewall..."
