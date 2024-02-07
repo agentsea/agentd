@@ -34,6 +34,8 @@ cp ./conf/agentd.service /etc/systemd/system/agentd.service
 cp ./conf/websockify.service /etc/systemd/system/websockify.service
 cp ./conf/x11vnc.service /lib/systemd/system/x11vnc.service
 cp ./conf/xvfb.service /lib/systemd/system/xvfb.service
+cp ./conf/gnome.service /lib/systemd/system/gnome.service
+cp ./conf/dconf.service /lib/systemd/system/dconf.service
 
 echo "enabling services..."
 systemctl daemon-reload
@@ -41,6 +43,8 @@ systemctl enable agentd.service
 systemctl enable websockify.service
 systemctl enable x11vnc.service
 systemctl enable xvfb.service
+systemctl enable gnome.service
+systemctl enable dconf.service
 systemctl enable ntp
 
 echo "restarting services..."
@@ -48,6 +52,8 @@ systemctl restart agentd.service
 systemctl restart websockify.service
 systemctl restart x11vnc.service
 systemctl restart xvfb.service
+systemctl restart gnome.service
+systemctl restart gnome.service
 systemctl restart ntp
 
 echo "setting up firewall..."

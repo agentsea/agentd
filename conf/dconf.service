@@ -1,0 +1,14 @@
+[Unit]
+Description=Apply dconf settings for GNOME
+Requires=gnome.service
+After=gnome.service
+
+[Service]
+Type=oneshot
+User=agentsea
+Environment="DISPLAY=:99"
+ExecStart=/bin/su agentsea -c "dconf write /org/gnome/initial-setup/done true"
+# Replace 1000 with agentsea's UID
+
+[Install]
+WantedBy=multi-user.target
