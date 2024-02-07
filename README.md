@@ -12,21 +12,21 @@ We recommend using one of our base vms which is already configured.
 
 ```bash
 wget https://storage.googleapis.com/agentsea-vms/jammy/latest/agentd-jammy.qcow2
-```
+```   
    
 
 If you want to install on a fresh Ubuntu VM, use the a [cloud images base](https://cloud-images.ubuntu.com/jammy/current/) qcow2 image.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/agentsea/agentd/main/remote_install.sh | sudo bash
-```
+```   
    
 
 To use the image, we need to make a [cloud-init](https://cloud-init.io/) iso with our user-data. See this [tutorial](https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html), below is how it looks on MacOS
 
 ```bash
 xorriso -as mkisofs -o cidata.iso -V "cidata" -J -r -iso-level 3 meta/
-```
+```   
    
 
 Then the image can be ran with Qemu
@@ -35,21 +35,21 @@ Then the image can be ran with Qemu
 qemu-system-x86_64 -nographic -hda ./agentd-jammy.qcow2 \
 -m 4G -smp 2 -netdev user,id=vmnet,hostfwd=tcp::6080-:6080,hostfwd=tcp::8000-:8000,hostfwd=tcp::2222-:22 \
 -device e1000,netdev=vmnet -cdrom cidata.iso
-```
+```   
    
 
 The agentd service can then be accessed
 
 ```bash
 curl localhost:8000/health
-```
+```   
    
 
 You can login to the machine with
 
 ```bash
 ssh -p 2222 agentsea@localhost
-```
+```   
 
 ## API Endpoints
 
@@ -153,9 +153,9 @@ To pack a fresh set of images
 
 ```bash
 make pack
-```
+```   
    
-   
+
 To run from this repo
 
 ```bash
