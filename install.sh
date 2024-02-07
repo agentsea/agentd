@@ -11,7 +11,11 @@ touch /home/agentsea/.bashrc
 touch /home/agentsea/.Xauthority
 chown -R agentsea:agentsea /home/agentsea
 echo 'agentsea ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/agentsea
+
+echo "configuring gnome..."
+apt-get install -y dconf-cli
 su agentsea -c "dconf write /org/gnome/initial-setup/done true"
+mkdir -p /home/agentsea/.config
 touch /home/agentsea/.config/gnome-initial-setup-done
 
 echo "installing base packages..."
