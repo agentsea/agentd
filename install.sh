@@ -61,7 +61,6 @@ restart_service_and_log() {
   fi
 }
 
-
 echo "restarting services..."
 restart_service_and_log agentd.service
 restart_service_and_log websockify.service
