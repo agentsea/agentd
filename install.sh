@@ -15,7 +15,7 @@ echo 'agentsea ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/agentsea
 echo "installing base packages..."
 add-apt-repository universe
 apt-get update
-apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp dbus-x11 openbox lxqt sddm lxqt-session
+apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp dbus-x11 openbox menu lxqt sddm lxqt-session
 snap install chromium
 
 echo "configuring lxqt"

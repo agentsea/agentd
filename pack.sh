@@ -44,6 +44,7 @@ PACKER_LOG=1 packer build \
   base.pkr.hcl
 
 echo "copying artifacts to local latest directory..."
+mkdir -p "${BASE_DIR}/latest"
 cp "${OUTPUT_DIRECTORY}/packer-jammy" "${BASE_DIR}/latest/jammy.qcow2"
 
 echo "copying artifacts to GCS..."
