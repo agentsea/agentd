@@ -14,14 +14,12 @@ We recommend using one of our base vms which is already configured.
 wget https://storage.googleapis.com/agentsea-vms/jammy/latest/agentd-jammy.qcow2
 ```
 
-</br>
 If you want to install on a fresh Ubuntu VM, use the a [cloud images base](https://cloud-images.ubuntu.com/jammy/current/) qcow2 image.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/agentsea/agentd/main/remote_install.sh | sudo bash
 ```
 
-</br>
 To use the image, we need to make a [cloud-init](https://cloud-init.io/) iso with our user-data. See this [tutorial](https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html), below is how it looks on MacOS
 
 ```bash
