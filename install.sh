@@ -65,10 +65,10 @@ restart_service_and_log() {
 echo "restarting services..."
 restart_service_and_log agentd.service
 restart_service_and_log websockify.service
-restart_service_and_log restart x11vnc.service
-restart_service_and_log restart xvfb.service
-restart_service_and_log restart lxqt.service
-restart_service_and_log restart ntp
+restart_service_and_log x11vnc.service
+restart_service_and_log xvfb.service
+restart_service_and_log lxqt.service
+restart_service_and_log ntp
 
 echo "setting up firewall..."
 ufw enable
