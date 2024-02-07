@@ -11,15 +11,19 @@ touch /home/agentsea/.bashrc
 touch /home/agentsea/.Xauthority
 chown -R agentsea:agentsea /home/agentsea
 echo 'agentsea ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/agentsea
+su agentsea -c "dconf write /org/gnome/initial-setup/done true"
+touch /home/agentsea/.config/gnome-initial-setup-done
 
 echo "installing base packages..."
 add-apt-repository universe
 apt-get update
-apt-get install -y xvfb ubuntu-desktop x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common
+apt-get install -y xvfb ubuntu-desktop x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp
 snap install chromium
 
 su agentsea -c "xauth generate :99 . trusted"
 su agentsea -c "bash install_deps.sh"
+sed -i '/\[daemon\]/a AutomaticLoginEnable=True' /etc/gdm3/custom.conf
+sed -i "/\[daemon\]/a AutomaticLogin=agentsea" /etc/gdm3/custom.conf
 
 echo "copying services..."
 cp ./conf/agentd.service /etc/systemd/system/agentd.service
@@ -33,12 +37,14 @@ systemctl enable agentd.service
 systemctl enable websockify.service
 systemctl enable x11vnc.service
 systemctl enable xvfb.service
+systemctl enable ntp
 
 echo "restarting services..."
 systemctl restart agentd.service
 systemctl restart websockify.service
 systemctl restart x11vnc.service
 systemctl restart xvfb.service
+systemctl restart ntp
 
 echo "setting up firewall..."
 ufw_status=$(ufw status | grep -o "inactive")

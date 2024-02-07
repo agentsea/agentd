@@ -7,7 +7,7 @@ Type=simple
 User=agentsea
 Environment="XAUTHORITY=/home/agentsea/.Xauthority" "DISPLAY=:99"
 ExecStartPre=/bin/sleep 10
-ExecStart=/usr/bin/x11vnc -forever -display :99 -auth /run/user/1000/gdm/Xauthority -localhost -nopw
+ExecStart=/usr/bin/x11vnc -forever -display :99 -auth /home/agentsea/.Xauthority -nopw -shared -verbose -rfbport 5900
 ExecStop=/usr/bin/killall x11vnc
 Restart=on-failure
 RestartSec=11s

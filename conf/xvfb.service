@@ -8,6 +8,7 @@ Environment="XAUTHORITY=/home/agentsea/.Xauthority" "DISPLAY=:99"
 User=agentsea
 Restart=on-failure
 RestartSec=2
+ExecStartPost=/bin/su agentsea -c "/usr/bin/dbus-launch --exit-with-session gnome-session"
 
 [Install]
 WantedBy=multi-user.target

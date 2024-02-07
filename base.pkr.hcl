@@ -154,9 +154,9 @@ source "qemu" "jammy" {
 
 build {
   sources = [
-    // "source.qemu.jammy",
+    "source.qemu.jammy",
     // "source.amazon-ebs.jammy",
-    "source.googlecompute.ubuntu"
+    // "source.googlecompute.ubuntu"
   ]
 
   provisioner "shell" {
