@@ -78,6 +78,7 @@ restart_service_and_log lxqt.service
 restart_service_and_log ntp
 
 echo "setting up firewall..."
-ufw enable
-ufw allow 22/tcp
-ufw reload
+ufw disable
+# ufw enable
+# ufw allow 22/tcp
+# ufw reload
