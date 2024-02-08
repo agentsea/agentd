@@ -4,12 +4,14 @@ import os
 from datetime import datetime
 import base64
 import uuid
+import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import pyautogui
 from mss import mss
+import psutil
 
 from .models import (
     MoveMouseModel,
@@ -27,6 +29,8 @@ from .models import (
     RecordRequest,
     RecordedEvent,
     Actions,
+    SystemUsageModel,
+    SystemInfoModel,
 )
 from .chromium import is_chromium_running, is_chromium_window_open
 from .recording import RecordingSession, lock, sessions
@@ -35,6 +39,13 @@ from .recording import RecordingSession, lock, sessions
 
 app = FastAPI()
 
+logging.basicConfig(
+    filename="audit.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -42,6 +53,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    # Log the request details
+    logging.info(f"Method: {request.method} Path: {request.url.path}")
+    response = await call_next(request)
+    return response
 
 
 @app.get("/")
@@ -70,10 +89,7 @@ async def open_url(request: OpenURLModel):
         else:
             print("Chromium is not running. Starting it...")
 
-        # os.system(f'chromium-browser --kiosk --no-first-run "{request.url}" &')
-        os.system(
-            f'chromium-browser --no-first-run --start-maximized "{request.url}" &'
-        )
+        os.system(f'chromium --no-first-run --start-fullscreen "{request.url}" &')
 
         while not is_chromium_window_open():
             time.sleep(1)
@@ -310,3 +326,37 @@ async def get_actions(session_id: str):
         session = RecordingSession.load(session_id)
 
     return Actions(actions=session.as_actions())
+
+
+@app.get("/system_usage", response_model=SystemUsageModel)
+async def system_usage():
+    cpu_percent = psutil.cpu_percent()
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage("/")
+
+    return SystemUsageModel(
+        cpu_percent=cpu_percent,
+        memory_percent=memory.percent,
+        disk_percent=disk.percent,
+    )
+
+
+@app.get("/info", response_model=SystemInfoModel)
+async def get_info():
+    try:
+        with open("audit.log", "r") as f:
+            lines = f.readlines()
+            if lines:
+                last_line = lines[-1]
+                last_activity_str = last_line.split(" - ")[0]
+                last_activity_datetime = datetime.strptime(
+                    last_activity_str, "%Y-%m-%d %H:%M:%S"
+                )
+                last_activity_unix = int(
+                    time.mktime(last_activity_datetime.timetuple())
+                )
+            else:
+                last_activity_unix = None
+        return SystemInfoModel(last_activity_ts=last_activity_unix)
+    except Exception as e:
+        return SystemInfoModel(last_activity_ts=None)

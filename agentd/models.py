@@ -102,3 +102,13 @@ class Recordings(BaseModel):
 
 class Actions(BaseModel):
     actions: List[Dict[str, Any]]
+
+
+class SystemUsageModel(BaseModel):
+    cpu_percent: float
+    memory_percent: float
+    disk_percent: float
+
+
+class SystemInfoModel(BaseModel):
+    last_activity_ts: int | None

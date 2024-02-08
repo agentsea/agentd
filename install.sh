@@ -16,7 +16,11 @@ echo "installing base packages..."
 add-apt-repository universe
 apt-get update
 apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp dbus-x11 openbox menu lxqt sddm lxqt-session
+
+echo "installing chromium"
 snap install chromium
+update-alternatives --install /usr/bin/x-www-browser x-www-browser /snap/bin/chromium 200
+update-alternatives --set x-www-browser /snap/bin/chromium
 
 echo "configuring lxqt"
 mkdir -p /etc/sddm.conf.d
@@ -48,8 +52,8 @@ systemctl enable agentd.service
 systemctl enable websockify.service
 systemctl enable x11vnc.service
 systemctl enable xvfb.service
-systemctl enable lxqt.service
 systemctl enable openbox.service
+systemctl enable lxqt.service
 systemctl enable ntp
 # systemctl enable sddm
 
@@ -69,8 +73,8 @@ restart_service_and_log agentd.service
 restart_service_and_log websockify.service
 restart_service_and_log x11vnc.service
 restart_service_and_log xvfb.service
-restart_service_and_log lxqt.service
 restart_service_and_log openbox.service
+restart_service_and_log lxqt.service
 restart_service_and_log ntp
 
 echo "setting up firewall..."
