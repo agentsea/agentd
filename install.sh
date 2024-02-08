@@ -43,8 +43,8 @@ cp ./conf/agentd.service /etc/systemd/system/agentd.service
 cp ./conf/websockify.service /etc/systemd/system/websockify.service
 cp ./conf/x11vnc.service /lib/systemd/system/x11vnc.service
 cp ./conf/xvfb.service /lib/systemd/system/xvfb.service
-cp ./conf/lxqt.service /lib/systemd/system/lxqt.service
 cp ./conf/openbox.service /lib/systemd/system/openbox.service
+cp ./conf/lxqt.service /lib/systemd/system/lxqt.service
 
 echo "enabling services..."
 systemctl daemon-reload

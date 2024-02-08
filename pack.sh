@@ -47,8 +47,15 @@ echo "copying artifacts to local latest directory..."
 mkdir -p "${BASE_DIR}/latest"
 cp "${OUTPUT_DIRECTORY}/packer-jammy" "${BASE_DIR}/latest/jammy.qcow2"
 
-echo "copying artifacts to GCS..."
-gsutil cp "${BASE_DIR}/latest/jammy.qcow2" "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
-gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
-gsutil cp "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2" "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
-gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
+echo "\nDo you want to copy artifacts to GCS? (y/n)"
+read -r answer
+
+if [ "$answer" = "y" ]; then
+  echo "copying artifacts to GCS..."
+  gsutil cp "${BASE_DIR}/latest/jammy.qcow2" "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
+  gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
+  gsutil cp "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2" "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
+  gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
+else
+  echo "Copy operation aborted."
+fi
