@@ -15,7 +15,20 @@ packer {
     }
   }
 }
+variable "build_qemu" {
+  type    = bool
+  default = true
+}
 
+variable "build_ec2" {
+  type    = bool
+  default = true
+}
+
+variable "build_gce" {
+  type    = bool
+  default = true
+}
 
 variable "gcp_project_id" {
   type    = string
@@ -137,11 +150,26 @@ source "googlecompute" "ubuntu" {
 }
 
 build {
-  sources = [
-    "source.qemu.jammy",
-    "source.amazon-ebs.jammy",
-    "source.googlecompute.ubuntu"
-  ]
+  dynamic "source" {
+    for_each = var.build_qemu ? ["source.qemu.jammy"] : []
+    content {
+      source = source.value
+    }
+  }
+
+  dynamic "source" {
+    for_each = var.build_ec2 ? ["source.amazon-ebs.jammy"] : []
+    content {
+      source = source.value
+    }
+  }
+
+  dynamic "source" {
+    for_each = var.build_gce ? ["source.googlecompute.ubuntu"] : []
+    content {
+      source = source.value
+    }
+  }
 
   provisioner "shell" {
     inline = [
@@ -175,4 +203,21 @@ post-processors {
     "gcloud compute images add-iam-policy-binding ${build.ImageName} --member='allAuthenticatedUsers' --role='roles/compute.imageUser'",
   ]
   only = ["source.googlecompute.ubuntu"]
+}
+
+post-processors {
+  type = "shell-local"
+  only = ["source.qemu.jammy"]
+  inline = [
+    "echo \"copying artifacts to local latest directory...\"",
+    "mkdir -p \"${BASE_DIR}/latest\"",
+    "cp \"${OUTPUT_DIRECTORY}/packer-jammy\" \"${BASE_DIR}/latest/jammy.qcow2\"",
+    "echo 'copying artifacts to GCS...'",
+    "TIMESTAMP=$(date +%Y%m%d%H%M%S)",
+    "OUTPUT_DIR='output-ubuntu'",
+    "gsutil cp \"${OUTPUT_DIR}/latest/jammy.qcow2\" \"gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2\"",
+    "gsutil acl ch -u AllUsers:R \"gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2\"",
+    "gsutil cp \"gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2\" \"gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2\"",
+    "gsutil acl ch -u AllUsers:R \"gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2\"",
+  ]
 }

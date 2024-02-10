@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# Default builder flags
+BUILD_QEMU=${BUILD_QEMU:-true}
+BUILD_EC2=${BUILD_EC2:-true}
+BUILD_GCE=${BUILD_GCE:-true}
+
+# Parse command-line arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --no-qemu) BUILD_QEMU=false ;;
+        --no-ec2) BUILD_EC2=false ;;
+        --no-gce) BUILD_GCE=false ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
 # Fetch the current GCP project ID
 export GCP_PROJECT_ID=$(gcloud config get-value project)
 
@@ -33,29 +49,15 @@ BASE_DIR=".vms/jammy"
 OUTPUT_DIRECTORY="${BASE_DIR}/${TIMESTAMP}"
 
 # Ensure the directory exists
-mkdir -p "${BASE_DIRECTORY}"
+mkdir -p "${OUTPUT_DIRECTORY}"
 
-# Run Packer with the current GCP project ID, AWS region, and the generated timestamp for version
+# Run Packer with the current GCP project ID, AWS region, generated timestamp for version, and builder flags
 PACKER_LOG=1 packer build \
   -var 'gcp_project_id='"$GCP_PROJECT_ID" \
   -var 'aws_region='"$AWS_REGION" \
   -var 'version='"$TIMESTAMP" \
   -var "output_directory=${OUTPUT_DIRECTORY}" \
+  -var 'build_qemu='"$BUILD_QEMU" \
+  -var 'build_ec2='"$BUILD_EC2" \
+  -var 'build_gce='"$BUILD_GCE" \
   base.pkr.hcl
-
-echo "copying artifacts to local latest directory..."
-mkdir -p "${BASE_DIR}/latest"
-cp "${OUTPUT_DIRECTORY}/packer-jammy" "${BASE_DIR}/latest/jammy.qcow2"
-
-echo "\nDo you want to copy artifacts to GCS? (y/n)"
-read -r answer
-
-if [ "$answer" = "y" ]; then
-  echo "copying artifacts to GCS..."
-  gsutil cp "${BASE_DIR}/latest/jammy.qcow2" "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
-  gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2"
-  gsutil cp "gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2" "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
-  gsutil acl ch -u AllUsers:R "gs://agentsea-vms/jammy/${TIMESTAMP}/agentd-jammy.qcow2"
-else
-  echo "Copy operation aborted."
-fi
