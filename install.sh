@@ -46,6 +46,8 @@ cp ./conf/xvfb.service /lib/systemd/system/xvfb.service
 cp ./conf/openbox.service /lib/systemd/system/openbox.service
 cp ./conf/lxqt.service /lib/systemd/system/lxqt.service
 
+loginctl enable-linger agentsea
+
 echo "enabling services..."
 systemctl daemon-reload
 systemctl enable agentd.service

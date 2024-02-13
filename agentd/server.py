@@ -5,6 +5,7 @@ from datetime import datetime
 import base64
 import uuid
 import logging
+import subprocess
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -89,7 +90,15 @@ async def open_url(request: OpenURLModel):
         else:
             print("Chromium is not running. Starting it...")
 
-        os.system(f'chromium --no-first-run --start-fullscreen "{request.url}" &')
+        subprocess.Popen(
+            [
+                "chromium",
+                "--no-first-run",
+                "--start-fullscreen",
+                request.url,
+            ],
+            shell=True,
+        )
 
         while not is_chromium_window_open():
             time.sleep(1)

@@ -11,6 +11,7 @@ Agentd is currently tested on Ubuntu 22.04 cloud image.
 We recommend using one of our base vms which is already configured.
 
 ### Qemu
+
 For Qemu, download the qcow2 image
 ```bash
 wget https://storage.googleapis.com/agentsea-vms/jammy/latest/agentd-jammy.qcow2

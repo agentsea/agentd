@@ -49,7 +49,7 @@ BASE_DIR=".vms/jammy"
 OUTPUT_DIRECTORY="${BASE_DIR}/${TIMESTAMP}"
 
 # Ensure the directory exists
-mkdir -p "${OUTPUT_DIRECTORY}"
+mkdir -p "${BASE_DIR}"
 
 # Run Packer with the current GCP project ID, AWS region, generated timestamp for version, and builder flags
 PACKER_LOG=1 packer build \

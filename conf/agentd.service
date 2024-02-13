@@ -4,7 +4,13 @@ After=network.target xvfb.service
 
 [Service]
 User=agentsea
-Environment="DISPLAY=:99" "XAUTHORITY=/run/user/1000/gdm/Xauthority"
+Environment="DISPLAY=:99" "XAUTHORITY=/home/agentsea/.Xauthority"
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+Environment="XDG_DATA_DIRS=/usr/local/share:/usr/share:/var/lib/snapd/desktop"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus"
+Environment="XDG_RUNTIME_DIR=/run/user/1001"
+Environment="XDG_SESSION_CLASS=user"
+Environment="HOME=/home/agentsea"
 WorkingDirectory=/home/agentsea/agentd
 ExecStart=/home/agentsea/.local/bin/uvicorn agentd.server:app --host 0.0.0.0 --port 8000 --reload
 Restart=always
