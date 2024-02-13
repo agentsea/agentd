@@ -97,7 +97,6 @@ async def open_url(request: OpenURLModel):
                 "--start-fullscreen",
                 request.url,
             ],
-            shell=True,
         )
 
         while not is_chromium_window_open():

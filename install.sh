@@ -30,10 +30,19 @@ echo "Session=lxqt.desktop" >> /etc/sddm.conf.d/autologin.conf
 
 mkdir -p /home/agentsea/.config/lxqt
 echo -e "[Session]\nwindow_manager=openbox" > /home/agentsea/.config/lxqt/session.conf
-chown -R agentsea:agentsea /home/agentsea/.config
+
+echo "export BROWSER=/snap/bin/chromium" >> /home/agentsea/.profile
+chown agentsea:agentsea /home/agentsea/.profile
+
+echo "[Default Applications]" > /home/agentsea/.config/mimeapps.list
+echo "x-scheme-handler/http=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
+echo "x-scheme-handler/https=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
+echo "text/html=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
 
 mkdir -p /home/agentsea/.config/openbox
 cp /etc/xdg/openbox/rc.xml /home/agentsea/.config/openbox/
+
+chown -R agentsea:agentsea /home/agentsea/.config
 
 su agentsea -c "xauth generate :99 . trusted"
 su agentsea -c "bash install_deps.sh"
