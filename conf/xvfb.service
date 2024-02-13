@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStart=/usr/bin/Xvfb :99 -screen 0 1280x1024x24
 Environment="XAUTHORITY=/home/agentsea/.Xauthority" "DISPLAY=:99"
+ExecStartPre=/bin/sh -c '/usr/bin/xauth add :99 . $(mcookie)'
 User=agentsea
 Restart=on-failure
 RestartSec=2

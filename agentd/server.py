@@ -6,6 +6,8 @@ import base64
 import uuid
 import logging
 import subprocess
+import sys
+import tempfile
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,7 +35,11 @@ from .models import (
     SystemUsageModel,
     SystemInfoModel,
 )
-from .chromium import is_chromium_running, is_chromium_window_open
+from .chromium import (
+    is_chromium_running,
+    is_chromium_window_open,
+    gracefully_terminate_chromium,
+)
 from .recording import RecordingSession, lock, sessions
 
 # from .storage import upload_directory_to_gcs
@@ -83,25 +89,30 @@ async def mouse_coordinates() -> CoordinatesModel:
 @app.post("/open_url")
 async def open_url(request: OpenURLModel):
     try:
-        if is_chromium_running():
+        chromium_pids = is_chromium_running()
+        if chromium_pids:
             print("Chromium is running. Restarting it...")
-            os.system("pkill chrome")
+            gracefully_terminate_chromium(chromium_pids)
             time.sleep(5)
-        else:
-            print("Chromium is not running. Starting it...")
 
+        user_data_dir = tempfile.mkdtemp()  # TODO: this is a hack to prevent corruption
+
+        print("Starting Chromium...")
         subprocess.Popen(
             [
                 "chromium",
                 "--no-first-run",
                 "--start-fullscreen",
+                "--user-data-dir=" + user_data_dir,
                 request.url,
             ],
+            stdout=sys.stdout,
+            stderr=sys.stderr,
         )
 
         while not is_chromium_window_open():
             time.sleep(1)
-            print("chrome window not open yet...")
+            print("Waiting for the Chromium window to open...")
 
         time.sleep(5)
         return {"status": "success"}
