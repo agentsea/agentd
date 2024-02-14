@@ -31,13 +31,13 @@ echo "Session=lxqt.desktop" >> /etc/sddm.conf.d/autologin.conf
 mkdir -p /home/agentsea/.config/lxqt
 echo -e "[Session]\nwindow_manager=openbox" > /home/agentsea/.config/lxqt/session.conf
 
-echo "export BROWSER=/snap/bin/chromium" >> /home/agentsea/.profile
-chown agentsea:agentsea /home/agentsea/.profile
+# echo "export BROWSER=/snap/bin/chromium" >> /home/agentsea/.profile
+# chown agentsea:agentsea /home/agentsea/.profile
 
-echo "[Default Applications]" > /home/agentsea/.config/mimeapps.list
-echo "x-scheme-handler/http=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
-echo "x-scheme-handler/https=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
-echo "text/html=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
+# echo "[Default Applications]" > /home/agentsea/.config/mimeapps.list
+# echo "x-scheme-handler/http=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
+# echo "x-scheme-handler/https=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
+# echo "text/html=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
 
 mkdir -p /home/agentsea/.config/openbox
 cp /etc/xdg/openbox/rc.xml /home/agentsea/.config/openbox/
@@ -88,8 +88,5 @@ restart_service_and_log openbox.service
 restart_service_and_log lxqt.service
 restart_service_and_log ntp
 
-echo "setting up firewall..."
+echo "disabling firewall..."
 ufw disable
-# ufw enable
-# ufw allow 22/tcp
-# ufw reload
