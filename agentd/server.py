@@ -8,6 +8,7 @@ import logging
 import subprocess
 import sys
 import tempfile
+import platform
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +35,7 @@ from .models import (
     Actions,
     SystemUsageModel,
     SystemInfoModel,
+    ScreenSizeModel,
 )
 from .chromium import (
     is_chromium_running,
@@ -41,8 +43,6 @@ from .chromium import (
     gracefully_terminate_chromium,
 )
 from .recording import RecordingSession, lock, sessions
-
-# from .storage import upload_directory_to_gcs
 
 app = FastAPI()
 
@@ -78,6 +78,56 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/info", response_model=SystemInfoModel)
+async def get_info():
+    # Screen size
+    width, height = pyautogui.size()
+    screen_size = ScreenSizeModel(x=width, y=height)
+
+    # OS Info
+    os_info = f"{platform.system()} {platform.release()}"
+
+    # Code Version (Git)
+    try:
+        code_version = (
+            subprocess.check_output(["git", "rev-parse", "HEAD"])
+            .decode("utf-8")
+            .strip()
+        )
+    except Exception as e:
+        code_version = None
+
+    # Last Activity from log
+    try:
+        with open("audit.log", "r") as f:
+            lines = f.readlines()
+            last_activity_unix = None
+            if lines:
+                last_line = lines[-1]
+                last_activity_str = last_line.split(" - ")[0]
+                last_activity_datetime = datetime.strptime(
+                    last_activity_str, "%Y-%m-%d %H:%M:%S"
+                )
+                last_activity_unix = int(
+                    time.mktime(last_activity_datetime.timetuple())
+                )
+    except Exception as e:
+        last_activity_unix = None
+
+    return SystemInfoModel(
+        last_activity_ts=last_activity_unix,
+        screen_size=screen_size,
+        os_info=os_info,
+        code_version=code_version,
+    )
+
+
+@app.get("/screen_size")
+def get_screen_size() -> ScreenSizeModel:
+    width, height = pyautogui.size()
+    return ScreenSizeModel(x=width, y=height)
 
 
 @app.get("/mouse_coordinates")
@@ -225,6 +275,7 @@ async def take_screenshot() -> ScreenshotResponseModel:
         )
 
         return response
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -358,24 +409,3 @@ async def system_usage():
         memory_percent=memory.percent,
         disk_percent=disk.percent,
     )
-
-
-@app.get("/info", response_model=SystemInfoModel)
-async def get_info():
-    try:
-        with open("audit.log", "r") as f:
-            lines = f.readlines()
-            if lines:
-                last_line = lines[-1]
-                last_activity_str = last_line.split(" - ")[0]
-                last_activity_datetime = datetime.strptime(
-                    last_activity_str, "%Y-%m-%d %H:%M:%S"
-                )
-                last_activity_unix = int(
-                    time.mktime(last_activity_datetime.timetuple())
-                )
-            else:
-                last_activity_unix = None
-        return SystemInfoModel(last_activity_ts=last_activity_unix)
-    except Exception as e:
-        return SystemInfoModel(last_activity_ts=None)

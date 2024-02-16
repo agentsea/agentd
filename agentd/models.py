@@ -7,6 +7,18 @@ class OpenURLModel(BaseModel):
     url: str
 
 
+class ScreenSizeModel(BaseModel):
+    x: int
+    y: int
+
+
+class SystemInfoModel(BaseModel):
+    last_activity_ts: int | None
+    screen_size: ScreenSizeModel
+    os_info: str
+    code_version: str | None
+
+
 class MoveMouseModel(BaseModel):
     x: int
     y: int
@@ -108,7 +120,3 @@ class SystemUsageModel(BaseModel):
     cpu_percent: float
     memory_percent: float
     disk_percent: float
-
-
-class SystemInfoModel(BaseModel):
-    last_activity_ts: int | None

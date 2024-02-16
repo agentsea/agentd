@@ -12,10 +12,29 @@ touch /home/agentsea/.Xauthority
 chown -R agentsea:agentsea /home/agentsea
 echo 'agentsea ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/agentsea
 
+
+echo "Configuring .xprofile to disable screen saver..."
+cat > /home/agentsea/.xprofile <<EOL
+# Disable screen saver
+xset s off
+EOL
+chown agentsea:agentsea /home/agentsea/.xprofile
+
+echo "Configuring LXQt Power Management..."
+mkdir -p /home/agentsea/.config/lxqt
+echo "[General]
+__userfile__=true
+enableBatteryWatcher=false
+enableIdlenessWatcher=false
+enableLidWatcher=false
+runCheckLevel=1" > /home/agentsea/.config/lxqt/lxqt-powermanagement.conf
+chown -R agentsea:agentsea /home/agentsea/.config
+
 echo "installing base packages..."
 add-apt-repository universe
 apt-get update
-apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp dbus-x11 openbox menu lxqt sddm lxqt-session
+apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp dbus-x11 openbox menu lxqt sddm lxqt-session wmctrl
+apt-get remove -y xscreensaver
 
 echo "installing chromium"
 snap install chromium
@@ -28,16 +47,7 @@ echo "[Autologin]" > /etc/sddm.conf.d/autologin.conf
 echo "User=agentsea" >> /etc/sddm.conf.d/autologin.conf
 echo "Session=lxqt.desktop" >> /etc/sddm.conf.d/autologin.conf
 
-mkdir -p /home/agentsea/.config/lxqt
 echo -e "[Session]\nwindow_manager=openbox" > /home/agentsea/.config/lxqt/session.conf
-
-# echo "export BROWSER=/snap/bin/chromium" >> /home/agentsea/.profile
-# chown agentsea:agentsea /home/agentsea/.profile
-
-# echo "[Default Applications]" > /home/agentsea/.config/mimeapps.list
-# echo "x-scheme-handler/http=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
-# echo "x-scheme-handler/https=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
-# echo "text/html=chromium_chromium.desktop" >> /home/agentsea/.config/mimeapps.list
 
 mkdir -p /home/agentsea/.config/openbox
 cp /etc/xdg/openbox/rc.xml /home/agentsea/.config/openbox/
@@ -46,6 +56,11 @@ chown -R agentsea:agentsea /home/agentsea/.config
 
 su agentsea -c "xauth generate :99 . trusted"
 su agentsea -c "bash install_deps.sh"
+
+# Disable screen saver and DPMS
+echo "Disabling screen saver and DPMS..."
+su agentsea -c "xset s off"
+# su agentsea -c "xset -dpms"
 
 echo "copying services..."
 cp ./conf/agentd.service /etc/systemd/system/agentd.service
@@ -66,7 +81,6 @@ systemctl enable xvfb.service
 systemctl enable openbox.service
 systemctl enable lxqt.service
 systemctl enable ntp
-# systemctl enable sddm
 
 restart_service_and_log() {
   local service_name="$1"

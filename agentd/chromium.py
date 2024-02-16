@@ -16,7 +16,7 @@ def is_chromium_running() -> list:
 
 def is_chromium_window_open():
     try:
-        output = subprocess.check_output(["wmctrl", "-l"])
+        output = subprocess.check_output(["wmctrl", "-l", "-x"])
         return "Chromium" in output.decode()
     except subprocess.CalledProcessError:
         return False

@@ -45,3 +45,8 @@ pack: user-data
 user-data:
 	# hdiutil makehybrid -o cidata.iso -hfs -joliet -iso -default-volume-name cidata root_meta/
 	xorriso -as mkisofs -o cidata_root.iso -V "cidata" -J -r -iso-level 3 root_meta/
+
+.PHONY: push-latest
+push-latest:
+	gsutil cp .vms/jammy/latest/jammy.qcow2 gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2
+	gsutil acl ch -u AllUsers:R gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2

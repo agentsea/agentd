@@ -61,3 +61,6 @@ PACKER_LOG=1 packer build \
   -var 'build_ec2='"$BUILD_EC2" \
   -var 'build_gce='"$BUILD_GCE" \
   base.pkr.hcl
+
+	# gsutil cp .vms/jammy/latest/jammy.qcow2 gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2
+	# gsutil acl ch -u AllUsers:R gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2
