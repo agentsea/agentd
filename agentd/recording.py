@@ -241,7 +241,7 @@ class RecordingSession:
         session.mouse_listener = mouse.Listener(
             on_click=session.on_click, on_scroll=session.on_scroll
         )
-        session._data: List[RecordedEvent] = data.events
+        session._data: List[RecordedEvent] = data.events  # type: ignore
         session._end_time = data.end_time
         return session
 
