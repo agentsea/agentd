@@ -1,6 +1,28 @@
-# agentd
+<!-- PROJECT LOGO -->
+<br />
+<p align="center">
+  <!-- <a href="https://github.com/agentsea/skillpacks">
+    <img src="https://project-logo.png" alt="Logo" width="80">
+  </a> -->
 
-A daemon that makes a desktop OS accessible to AI agents.
+  <h1 align="center">agentd</h1>
+
+  <p align="center">
+    A daemon that makes a desktop OS accessible to AI agents.
+    <br />
+    <a href="https://github.com/agentsea/agentd"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/agentsea/agentd">View Demo</a>
+    ·
+    <a href="https://github.com/agentsea/agentd/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/agentsea/agentd/issues">Request Feature</a>
+  </p>
+  <br>
+</p>
+
+Agentd makes a desktop OS accessible to AI agents by exposing an HTTP API.
 
 For a higher level interface see [AgentDesk](https://github.com/agentsea/agentdesk)
 
