@@ -1,6 +1,6 @@
 # Contributing
 
-First off, thank you for considering contributing to this project. It's people like you that make Agentsea such a great tool.
+First off, thank you for considering contributing to this project. It's people like you that make it such a great tool.
 
 ## Code of Conduct
 
