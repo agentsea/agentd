@@ -4,12 +4,6 @@ from pydantic import BaseModel
 
 
 class OpenURLModel(BaseModel):
-    """
-    A model representing a URL to be opened.
-
-    Attributes:
-        url (str): The URL to be opened.
-    """
     url: str
 
 

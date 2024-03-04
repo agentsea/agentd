@@ -72,14 +72,6 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/")
 async def root():
-    """
-    Root endpoint that returns a welcome message.
-    
-    This endpoint serves as a basic check to ensure the agent service is running and accessible.
-    
-    Returns:
-        JSON response with a welcome message.
-    """
     return {"message": "Agent in the shell"}
 
 
