@@ -277,7 +277,7 @@ class RecordingSession:
                 return event
         return None
 
-    def encode_image_to_base64(image_path: str) -> str:
+    def encode_image_to_base64(self, image_path: str) -> str:
         with open(image_path, "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
         return encoded_image
