@@ -1,7 +1,7 @@
 API Reference
 =============
 
-The `agentd` demon provides a number of HTTP endpoints for interacting with the VM via HTTP.
+The ``agentd`` demon provides a number of HTTP endpoints for interacting with the VM via HTTP.
 
 GET "/"
 ^^^^^^^
@@ -26,7 +26,7 @@ Returns a JSON response with a welcome message.
 GET /health
 ^^^^^^^^^^^
 
-The health endpoint returns a health check for the agent service.
+The ``/health`` endpoint returns a health check for the agent service.
 
 **Request:**
 
@@ -45,7 +45,7 @@ Returns a JSON response with a health check.
 GET /info
 ^^^^^^^^^
 
-The info endpoint returns detailed information about the system where the agent is running.
+The ``/info`` endpoint returns detailed information about the system where the agent is running.
 
 **Request:**
 
@@ -67,12 +67,12 @@ Returns a JSON response with the system information.
         "code_version": "a1b2c3d4"
     }
 
-The response includes the last activity timestamp (`last_activity_ts`), screen size (`screen_size`), operating system information (`os_info`), and the current code version (`code_version`).
+The response includes the last activity timestamp (``last_activity_ts``), screen size (``screen_size``), operating system information (``os_info``), and the current code version (``code_version``).
 
 GET /screen_size
 ^^^^^^^^^^^^^^^^
 
-The screen_size endpoint returns the current screen size of the system where the agent is running.
+The ``/screen_size`` endpoint returns the current screen size of the system where the agent is running.
 
 **Request:**
 
@@ -89,12 +89,12 @@ Returns a JSON response with the screen size.
         "y": 1080
     }
 
-The response includes the width (`x`) and height (`y`) of the screen in pixels.
+The response includes the width (``x``) and height (``y``) of the screen in pixels.
 
 GET /mouse_coordinates
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The mouse_coordinates endpoint returns the current mouse position on the screen.
+The ``/mouse_coordinates`` endpoint returns the current mouse position on the screen.
 
 **Request:**
 
@@ -116,7 +116,7 @@ The response includes the x and y coordinates of the mouse position in pixels.
 POST /open_url
 ^^^^^^^^^^^^^^
 
-The open_url endpoint opens a specified URL in the Chromium browser.
+The ``/open_url`` endpoint opens a specified URL in the Chromium browser.
 
 **Request:**
 
@@ -128,7 +128,7 @@ The open_url endpoint opens a specified URL in the Chromium browser.
 
 Attributes:
 
-- `url` (str): The URL to be opened in the browser.
+- ``url`` (str): The URL to be opened in the browser.
 
 **Response:**
 
@@ -140,15 +140,15 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The URL was successfully opened in the browser.
-- `error`: An error occurred while attempting to open the URL. An additional `message` field will provide details about the error.
+- ``success``: The URL was successfully opened in the browser.
+- ``error``: An error occurred while attempting to open the URL. An additional ``message`` field will provide details about the error.
 
 POST /move_mouse
 ^^^^^^^^^^^^^^^^
 
-The move_mouse endpoint moves the mouse cursor to a specified position on the screen.
+The ``/move_mouse`` endpoint moves the mouse cursor to a specified position on the screen.
 
 **Request:**
 
@@ -163,10 +163,10 @@ The move_mouse endpoint moves the mouse cursor to a specified position on the sc
 
 Attributes:
 
-- `x` (int): The x-coordinate to move the mouse to.
-- `y` (int): The y-coordinate to move the mouse to.
-- `duration` (float, optional): The time in seconds over which the movement should occur. Defaults to 1.0.
-- `tween` (str, optional): The name of the tweening/easing function to use for the movement. Defaults to "easeInOutQuad".
+- ``x`` (int): The x-coordinate to move the mouse to.
+- ``y`` (int): The y-coordinate to move the mouse to.
+- ``duration`` (float, optional): The time in seconds over which the movement should occur. Defaults to 1.0.
+- ``tween`` (str, optional): The name of the tweening/easing function to use for the movement. Defaults to "easeInOutQuad".
 
 **Response:**
 
@@ -178,15 +178,15 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The mouse was successfully moved to the specified coordinates.
-- `error`: An error occurred while attempting to move the mouse. An additional `message` field will provide details about the error.
+- ``success``: The mouse was successfully moved to the specified coordinates.
+- ``error``: An error occurred while attempting to move the mouse. An additional ``message`` field will provide details about the error.
 
 POST /click
 ^^^^^^^^^^^
 
-The click endpoint simulates a mouse click at a specified location on the screen or a simple click if no location is provided.
+The ``/click`` endpoint simulates a mouse click at a specified location on the screen or a simple click if no location is provided.
 
 **Request:**
 
@@ -204,12 +204,12 @@ The click endpoint simulates a mouse click at a specified location on the screen
 
 Attributes:
 
-- `button` (str, optional): The mouse button to click. Defaults to "left". Other possible values include "right" and "middle".
-- `location` (object, optional): An object containing the coordinates and other optional parameters for moving the mouse before clicking. If not provided, the click occurs at the current mouse location.
-    - `x` (int): The x-coordinate to move the mouse to.
-    - `y` (int): The y-coordinate to move the mouse to.
-    - `duration` (float, optional): The time in seconds over which the mouse movement should occur. Defaults to 1.0.
-    - `tween` (str, optional): The name of the tweening/easing function to use for the mouse movement. Defaults to "easeInOutQuad".
+- ``button`` (str, optional): The mouse button to click. Defaults to "left". Other possible values include "right" and "middle".
+- ``location`` (object, optional): An object containing the coordinates and other optional parameters for moving the mouse before clicking. If not provided, the click occurs at the current mouse location.
+    - ``x`` (int): The x-coordinate to move the mouse to.
+    - ``y`` (int): The y-coordinate to move the mouse to.
+    - ``duration`` (float, optional): The time in seconds over which the mouse movement should occur. Defaults to 1.0.
+    - ``tween`` (str, optional): The name of the tweening/easing function to use for the mouse movement. Defaults to "easeInOutQuad".
 
 **Response:**
 
@@ -221,15 +221,15 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The mouse was successfully clicked at the specified location or at the current location if no coordinates were provided.
-- `error`: An error occurred while attempting to click the mouse. An additional `message` field will provide details about the error.
+- ``success``: The mouse was successfully clicked at the specified location or at the current location if no coordinates were provided.
+- ``error``: An error occurred while attempting to click the mouse. An additional ``message`` field will provide details about the error.
 
 POST /double_click
 ^^^^^^^^^^^^^^^^^^
 
-The double_click endpoint simulates a double mouse click at the current mouse location.
+The ``/double_click`` endpoint simulates a double mouse click at the current mouse location.
 
 **Request:**
 
@@ -245,15 +245,15 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The mouse was successfully double-clicked at the current location.
-- `error`: An error occurred while attempting to double-click the mouse. An additional `message` field will provide details about the error.
+- ``success``: The mouse was successfully double-clicked at the current location.
+- ``error``: An error occurred while attempting to double-click the mouse. An additional ``message`` field will provide details about the error.
 
 POST /type_text
 ^^^^^^^^^^^^^^^
 
-The type_text endpoint simulates typing text at the current cursor location.
+The ``/type_text`` endpoint simulates typing text at the current cursor location.
 
 **Request:**
 
@@ -267,9 +267,9 @@ The type_text endpoint simulates typing text at the current cursor location.
 
 Attributes:
 
-- `text` (str): The text to be typed.
-- `min_interval` (float, optional): The minimum interval between key presses. Defaults to 0.05 seconds.
-- `max_interval` (float, optional): The maximum interval between key presses. Defaults to 0.25 seconds.
+- ``text`` (str): The text to be typed.
+- ``min_interval`` (float, optional): The minimum interval between key presses. Defaults to 0.05 seconds.
+- ``max_interval`` (float, optional): The maximum interval between key presses. Defaults to 0.25 seconds.
 
 **Response:**
 
@@ -281,15 +281,15 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The text was successfully typed at the current cursor location.
-- `error`: An error occurred while attempting to type the text. An additional `message` field will provide details about the error.
+- ``success``: The text was successfully typed at the current cursor location.
+- ``error``: An error occurred while attempting to type the text. An additional ``message`` field will provide details about the error.
 
 POST /press_key
 ^^^^^^^^^^^^^^^
 
-The press_key endpoint simulates pressing a key on the keyboard.
+The ``/press_key`` endpoint simulates pressing a key on the keyboard.
 
 **Request:**
 
@@ -309,16 +309,16 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The key was successfully pressed.
-- `error`: An error occurred while attempting to press the key. An additional `message` field will provide details about the error.
+- ``success``: The key was successfully pressed.
+- ``error``: An error occurred while attempting to press the key. An additional ``message`` field will provide details about the error.
 
 
 POST /scroll
 ^^^^^^^^^^^^
 
-The scroll endpoint simulates scrolling the mouse wheel.
+The ``/scroll`` endpoint simulates scrolling the mouse wheel.
 
 **Request:**
 
@@ -338,15 +338,15 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The scroll action was successfully performed.
-- `error`: An error occurred while attempting to perform the scroll action. An additional `message` field will provide details about the error.
+- ``success``: The scroll action was successfully performed.
+- ``error``: An error occurred while attempting to perform the scroll action. An additional ``message`` field will provide details about the error.
 
 POST /drag_mouse
 ^^^^^^^^^^^^^^^^
 
-The drag_mouse endpoint drags the mouse cursor from its current location to a specified location on the screen.
+The ``/drag_mouse`` endpoint drags the mouse cursor from its current location to a specified location on the screen.
 
 **Request:**
 
@@ -367,15 +367,15 @@ Returns a JSON response indicating the status of the operation.
         "status": "success"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The mouse was successfully dragged to the specified location.
-- `error`: An error occurred while attempting to drag the mouse. An additional `message` field will provide details about the error.
+- ``success``: The mouse was successfully dragged to the specified location.
+- ``error``: An error occurred while attempting to drag the mouse. An additional ``message`` field will provide details about the error.
 
 POST /screenshot
 ^^^^^^^^^^^^^^^^
 
-The screenshot endpoint captures the current screen and returns an image.
+The ``/screenshot`` endpoint captures the current screen and returns an image.
 
 **Request:**
 
@@ -393,15 +393,15 @@ Returns a JSON response containing the screenshot image encoded in base64 and th
         "file_path": "path/to/screenshot.png"
     }
 
-Possible `status` values:
+Possible ``status`` values:
 
-- `success`: The screenshot was successfully captured and returned.
-- `error`: An error occurred while attempting to capture the screenshot. An additional `message` field will provide details about the error.
+- ``success``: The screenshot was successfully captured and returned.
+- ``error``: An error occurred while attempting to capture the screenshot. An additional ``message`` field will provide details about the error.
 
 POST /recordings
 ^^^^^^^^^^^^^^^^
 
-The recordings endpoint starts a new recording session.
+The ``/recordings`` endpoint starts a new recording session.
 
 **Request:**
 
@@ -424,7 +424,7 @@ Returns a JSON response containing the session ID of the newly started recording
 GET /recordings
 ^^^^^^^^^^^^^^^
 
-The recordings endpoint retrieves a list of all recording sessions.
+The ``/recordings`` endpoint retrieves a list of all recording sessions.
 
 **Request:**
 
@@ -454,7 +454,7 @@ The endpoint to stop a recording session.
 **Request:**
 
 Path Parameters:
-- `session_id`: The unique identifier of the recording session to be stopped.
+- ``session_id``: The unique identifier of the recording session to be stopped.
 
 **Response:**
 
@@ -468,7 +468,7 @@ The endpoint to retrieve a specific recording session by its session ID.
 **Request:**
 
 Path Parameters:
-- `session_id`: The unique identifier of the recording session to be retrieved.
+- ``session_id``: The unique identifier of the recording session to be retrieved.
 
 **Response:**
 
@@ -517,8 +517,8 @@ The endpoint to retrieve a specific event from a recording session by its sessio
 **Request:**
 
 Path Parameters:
-- `session_id`: The unique identifier of the recording session.
-- `event_id`: The unique identifier of the event within the recording session.
+- ``session_id``: The unique identifier of the recording session.
+- ``event_id``: The unique identifier of the event within the recording session.
 
 **Response:**
 
@@ -551,8 +551,8 @@ The endpoint to delete a specific event from a recording session by its session 
 **Request:**
 
 Path Parameters:
-- `session_id`: The unique identifier of the recording session.
-- `event_id`: The unique identifier of the event within the recording session.
+- ``session_id``: The unique identifier of the recording session.
+- ``event_id``: The unique identifier of the event within the recording session.
 
 **Response:**
 
@@ -669,3 +669,4 @@ Returns a JSON response containing the current system usage statistics including
     }
 
 This endpoint allows you to monitor the health and performance of the system where the agent is running.
+
