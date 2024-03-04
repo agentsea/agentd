@@ -27,5 +27,6 @@ jobs:
         poetry install
 
     - name: Run tests
-      run: |
-        poetry run pytest
+      uses: coactions/setup-xvfb@v1
+      with:
+        run: poetry run pytest
