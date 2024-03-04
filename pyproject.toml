@@ -18,7 +18,13 @@ psutil = "^5.9.8"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.0"
 pytest-asyncio = "^0.23.5"
+flake8 = "^7.0.0"
+black = "^24.2.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+build-docs = "scripts.build_docs:main"
+lint = "scripts.lint:main"
