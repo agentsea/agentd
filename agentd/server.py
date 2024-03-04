@@ -96,7 +96,7 @@ async def get_info():
             .decode("utf-8")
             .strip()
         )
-    except Exception as e:
+    except Exception:
         code_version = None
 
     # Last Activity from log
@@ -113,7 +113,7 @@ async def get_info():
                 last_activity_unix = int(
                     time.mktime(last_activity_datetime.timetuple())
                 )
-    except Exception as e:
+    except Exception:
         last_activity_unix = None
 
     return SystemInfoModel(
