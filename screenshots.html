@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; agentd 0.1.0 documentation</title>
+  <title>Making Screenshots &mdash; agentd 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -18,8 +19,10 @@
         <script src="_static/doctools.js?v=888ff710"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="#" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Making Recordings" href="recordings.html" />
+    <link rel="prev" title="Browser Operations" href="browser.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,12 +45,15 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="info.html">System Information and Health</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mouse.html">Mouse Operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keyboard.html">Keyboard Operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="browser.html">Browser Operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="screenshots.html">Making Screenshots</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Making Screenshots</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#post-screenshot">POST /screenshot</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="recordings.html">Making Recordings</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">-------</span></p>
@@ -69,8 +75,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Index</li>
+      <li class="breadcrumb-item active">Making Screenshots</li>
       <li class="wy-breadcrumbs-aside">
+            <a href="_sources/screenshots.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -78,17 +85,37 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-
-<h1 id="index">Index</h1>
-
-<div class="genindex-jumpbox">
- 
+  <section id="making-screenshots">
+<h1>Making Screenshots<a class="headerlink" href="#making-screenshots" title="Link to this heading"></a></h1>
+<section id="post-screenshot">
+<h2>POST /screenshot<a class="headerlink" href="#post-screenshot" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">/screenshot</span></code> endpoint captures the current screen and returns an image.</p>
+<p><strong>Request:</strong></p>
+<p>No parameters required.</p>
+<p><strong>Response:</strong></p>
+<p>Returns a JSON response containing the screenshot image encoded in base64 and the file path where the screenshot is saved.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;image&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;base64_encoded_image&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;file_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;path/to/screenshot.png&quot;</span>
+<span class="p">}</span>
+</pre></div>
 </div>
+<p>Possible <code class="docutils literal notranslate"><span class="pre">status</span></code> values:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">success</span></code>: The screenshot was successfully captured and returned.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">error</span></code>: An error occurred while attempting to capture the screenshot. An additional <code class="docutils literal notranslate"><span class="pre">message</span></code> field will provide details about the error.</p></li>
+</ul>
+</section>
+</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="browser.html" class="btn btn-neutral float-left" title="Browser Operations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="recordings.html" class="btn btn-neutral float-right" title="Making Recordings" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; agentd 0.1.0 documentation</title>
+  <title>Browser Operations &mdash; agentd 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -18,8 +19,10 @@
         <script src="_static/doctools.js?v=888ff710"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="#" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Making Screenshots" href="screenshots.html" />
+    <link rel="prev" title="Keyboard Operations" href="keyboard.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,11 +45,14 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="info.html">System Information and Health</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mouse.html">Mouse Operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keyboard.html">Keyboard Operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="browser.html">Browser Operations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Browser Operations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#post-open-url">POST /open_url</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="screenshots.html">Making Screenshots</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recordings.html">Making Recordings</a></li>
 </ul>
@@ -69,8 +75,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Index</li>
+      <li class="breadcrumb-item active">Browser Operations</li>
       <li class="wy-breadcrumbs-aside">
+            <a href="_sources/browser.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -78,17 +85,43 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-
-<h1 id="index">Index</h1>
-
-<div class="genindex-jumpbox">
- 
+  <section id="browser-operations">
+<h1>Browser Operations<a class="headerlink" href="#browser-operations" title="Link to this heading"></a></h1>
+<section id="post-open-url">
+<h2>POST /open_url<a class="headerlink" href="#post-open-url" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">/open_url</span></code> endpoint opens a specified URL in the Chromium browser.</p>
+<p><strong>Request:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://example.com&quot;</span>
+<span class="p">}</span>
+</pre></div>
 </div>
+<p>Attributes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">url</span></code> (str): The URL to be opened in the browser.</p></li>
+</ul>
+<p><strong>Response:</strong></p>
+<p>Returns a JSON response indicating the status of the operation.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Possible <code class="docutils literal notranslate"><span class="pre">status</span></code> values:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">success</span></code>: The URL was successfully opened in the browser.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">error</span></code>: An error occurred while attempting to open the URL. An additional <code class="docutils literal notranslate"><span class="pre">message</span></code> field will provide details about the error.</p></li>
+</ul>
+</section>
+</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="keyboard.html" class="btn btn-neutral float-left" title="Keyboard Operations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="screenshots.html" class="btn btn-neutral float-right" title="Making Screenshots" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
