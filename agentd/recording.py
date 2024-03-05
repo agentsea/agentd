@@ -6,11 +6,10 @@ import json
 import os
 import uuid
 import base64
-from enum import Enum
 from datetime import datetime
 
 from pynput import keyboard, mouse
-from pynput.keyboard import Key, Listener, KeyCode
+from pynput.keyboard import Key, KeyCode
 from mss import mss
 import pyautogui
 
@@ -212,7 +211,7 @@ class RecordingSession:
         session_dir = self._dir()
         os.makedirs(session_dir, exist_ok=True)
 
-        filepath = os.path.join(session_dir, f"session.json")
+        filepath = os.path.join(session_dir, "session.json")
         with open(filepath, "w") as file:
             record = self.as_schema()
             json.dump(record.model_dump(), file, indent=4)
@@ -249,7 +248,7 @@ class RecordingSession:
     def load(cls, session_id: str) -> RecordingSession:
         """Loads a recording session from a file given the session ID."""
 
-        file_path = os.path.join(RECORDINGS_DIR, session_id, f"session.json")
+        file_path = os.path.join(RECORDINGS_DIR, session_id, "session.json")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"No recording found for session ID {session_id}")
 
@@ -277,7 +276,7 @@ class RecordingSession:
                 return event
         return None
 
-    def encode_image_to_base64(image_path: str) -> str:
+    def encode_image_to_base64(self, image_path: str) -> str:
         with open(image_path, "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
         return encoded_image
