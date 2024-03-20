@@ -62,12 +62,12 @@ variable "headless" {
 
 variable "iso_checksum" {
   type    = string
-  default = "ab7be4d3c42143ece5da5ac3773c27e1d30940d306523b776dd2e4a488fbc28a"
+  default = "304983616fcba6ee1452e9f38993d7d3b8a90e1eb65fb0054d672ce23294d812"
 }
 
 variable "iso_url" {
   type    = string
-  default = "https://cloud-images.ubuntu.com/jammy/20240131/jammy-server-cloudimg-amd64.img"
+  default = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
 }
 
 variable "name" {

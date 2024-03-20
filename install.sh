@@ -41,6 +41,22 @@ snap install chromium
 update-alternatives --install /usr/bin/x-www-browser x-www-browser /snap/bin/chromium 200
 update-alternatives --set x-www-browser /snap/bin/chromium
 
+echo "Adding Chromium icon to desktop..."
+mkdir -p /home/agentsea/Desktop
+cat > /home/agentsea/Desktop/chromium.desktop <<EOL
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chromium Web Browser
+Exec=/snap/bin/chromium --start-maximized
+Icon=chromium
+Terminal=false
+Categories=Internet;WebBrowser;
+EOL
+chmod +x /home/agentsea/Desktop/chromium.desktop
+chown agentsea:agentsea /home/agentsea/Desktop/chromium.desktop
+
+
 echo "configuring lxqt"
 mkdir -p /etc/sddm.conf.d
 echo "[Autologin]" > /etc/sddm.conf.d/autologin.conf

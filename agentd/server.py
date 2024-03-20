@@ -152,7 +152,7 @@ async def open_url(request: OpenURLModel):
             [
                 "chromium",
                 "--no-first-run",
-                "--start-fullscreen",
+                "--start-maximized",
                 "--user-data-dir=" + user_data_dir,
                 request.url,
             ],
