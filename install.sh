@@ -43,26 +43,6 @@ snap install chromium
 update-alternatives --install /usr/bin/x-www-browser x-www-browser /snap/bin/chromium 200
 update-alternatives --set x-www-browser /snap/bin/chromium
 
-echo "Adding Chromium icon to desktop..."
-mkdir -p /home/agentsea/Desktop
-cat > /home/agentsea/Desktop/chromium.desktop <<EOL
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Chromium Web Browser
-Exec=/snap/bin/chromium --start-maximized
-Icon=chromium
-Terminal=false
-Categories=Internet;WebBrowser;
-EOL
-# sudo -u agentsea -g agentsea bash -l -c 'DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true'
-# sudo -u agentsea -g agentsea DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
-sudo -u agentsea -g agentsea /bin/bash << EOF
-export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus"
-gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
-EOF
-chmod +x /home/agentsea/Desktop/chromium.desktop
-
 echo "configuring lxqt"
 mkdir -p /etc/sddm.conf.d
 echo "[Autologin]" > /etc/sddm.conf.d/autologin.conf
@@ -127,3 +107,36 @@ restart_service_and_log ntp
 
 echo "disabling firewall..."
 ufw disable
+
+su - agentsea -c 'bash -l -c "
+    while [ -z \$(pgrep -u \\\$USER lxqt-session) ]; do
+        echo Waiting for LXQt session to start...
+        sleep 2
+    done
+
+    echo LXQt session started, setting icon as trusted...
+"'
+
+
+echo "Adding Chromium icon to desktop..."
+mkdir -p /home/agentsea/Desktop
+cat > /home/agentsea/Desktop/chromium.desktop <<EOL
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chromium Web Browser
+Exec=/snap/bin/chromium --start-maximized
+Icon=chromium
+Terminal=false
+Categories=Internet;WebBrowser;
+EOL
+# sudo -u agentsea -g agentsea bash -l -c 'DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true'
+# sudo -u agentsea -g agentsea DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
+sudo -u agentsea -g agentsea /bin/bash << EOF
+export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus"
+echo "!!!! setting metadata::trusted to true"
+echo "!!!! DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS"
+which gio
+gio set /home/agentsea/Desktop/chromium.desktop "metadata::trusted" true
+EOF
+chmod +x /home/agentsea/Desktop/chromium.desktop
