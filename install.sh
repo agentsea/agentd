@@ -55,9 +55,24 @@ Icon=chromium
 Terminal=false
 Categories=Internet;WebBrowser;
 EOL
+cat > /home/agentsea/.local/share/applications/chromium2.desktop <<EOL
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chromium Web Browser 2
+Exec=/snap/bin/chromium --start-maximized
+Icon=chromium
+Terminal=false
+Categories=Internet;WebBrowser;
+EOL
 chmod +x /home/agentsea/Desktop/chromium.desktop
+chmod +x /home/agentsea/.local/share/applications/chromium2.desktop
+chown agentsea:agentsea -R /home/agentsea/.local
+chown agentsea:agentsea /home/agentsea/Desktop
 chown agentsea:agentsea /home/agentsea/Desktop/chromium.desktop
-
+chmod -R 775 /home/agentsea/Desktop  # TODO: 
+gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
+gio set /home/agentsea/.local/share/applications/chromium2.desktop metadata::trusted true
 
 echo "configuring lxqt"
 mkdir -p /etc/sddm.conf.d
