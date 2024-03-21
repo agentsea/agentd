@@ -72,8 +72,8 @@ chown agentsea:agentsea /home/agentsea/Desktop/chromium.desktop
 chmod -R 775 /home/agentsea/Desktop  # TODO: 
 gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
 gio set /home/agentsea/.local/share/applications/chromium2.desktop metadata::trusted true
-sudo -u agentsea -g agentsea dbus-launch gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
-sudo -u agentsea -g agentsea dbus-launch gio set /home/agentsea/.local/share/applications/chromium2.desktop metadata::trusted true
+su -u agentsea -g agentsea dbus-launch gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
+su -u agentsea -g agentsea dbus-launch gio set /home/agentsea/.local/share/applications/chromium2.desktop metadata::trusted true
 chmod +x /home/agentsea/Desktop/chromium.desktop
 chmod +x /home/agentsea/.local/share/applications/chromium2.desktop
 
