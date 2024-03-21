@@ -109,7 +109,7 @@ echo "disabling firewall..."
 ufw disable
 
 su - agentsea -c 'bash -l -c "
-    while [ -z \$(pgrep -u \\\$USER lxqt-session) ]; do
+    while [ -z \$(pgrep -u agentsea lxqt-session) ]; do
         echo Waiting for LXQt session to start...
         sleep 2
     done
