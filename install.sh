@@ -55,6 +55,7 @@ Icon=chromium
 Terminal=false
 Categories=Internet;WebBrowser;
 EOL
+mkdir -p /home/agentsea/Desktop/.local/share/applications/
 cat > /home/agentsea/.local/share/applications/chromium2.desktop <<EOL
 [Desktop Entry]
 Version=1.0
