@@ -133,12 +133,4 @@ EOL
 chown agentsea:agentsea /home/agentsea/Desktop/chromium.desktop
 chmod 755 /home/agentsea/Desktop/chromium.desktop
 sudo -u agentsea -g agentsea bash -l -c 'DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true'
-# sudo -u agentsea -g agentsea DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
-# sudo -u agentsea -g agentsea /bin/bash << EOF
-# export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus"
-# echo "!!!! setting metadata::trusted to true"
-# echo "!!!! DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS"
-# which gio
-# gio set /home/agentsea/Desktop/chromium.desktop "metadata::trusted" true
-# EOF
 chmod +x /home/agentsea/Desktop/chromium.desktop
