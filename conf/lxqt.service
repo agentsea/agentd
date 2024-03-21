@@ -7,6 +7,7 @@ After=xvfb.service network.target
 Type=simple
 User=agentsea
 Environment="DISPLAY=:99" "XAUTHORITY=/home/agentsea/.Xauthority"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus"
 ExecStart=/usr/bin/startlxqt
 Restart=on-failure
 RestartSec=5
