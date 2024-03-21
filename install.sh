@@ -55,7 +55,7 @@ Icon=chromium
 Terminal=false
 Categories=Internet;WebBrowser;
 EOL
-su -u agentsea -g agentsea dbus-launch gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
+su agentsea -c dbus-launch gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
 chmod +x /home/agentsea/Desktop/chromium.desktop
 
 echo "configuring lxqt"
