@@ -55,8 +55,12 @@ Icon=chromium
 Terminal=false
 Categories=Internet;WebBrowser;
 EOL
-sudo -u agentsea -g agentsea bash -l -c 'DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true'
+# sudo -u agentsea -g agentsea bash -l -c 'DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true'
 # sudo -u agentsea -g agentsea DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
+sudo -u agentsea -g agentsea /bin/bash << EOF
+export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus"
+gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true
+EOF
 chmod +x /home/agentsea/Desktop/chromium.desktop
 
 echo "configuring lxqt"
