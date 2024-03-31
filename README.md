@@ -10,7 +10,7 @@
   <p align="center">
     A daemon that makes a desktop OS accessible to AI agents.
     <br />
-    <a href="https://github.com/agentsea/agentd"><strong>Explore the docs »</strong></a>
+    <a href="https://agentsea.github.io/agentd/"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/agentsea/agentd">View Demo</a>
