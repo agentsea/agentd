@@ -16,6 +16,6 @@ The ``agentd`` demon provides a number of HTTP endpoints for interacting with th
 
 .. toctree::
    :maxdepth: 1
-   :caption: -------
+   :caption: ↪
 
-   Back to Agentsea Documentation <https://agentsea.github.io>
+   Go to User Guide <https://agentsea.github.io/agentd.html>
