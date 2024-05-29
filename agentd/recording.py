@@ -1,29 +1,30 @@
 from __future__ import annotations
-from typing import List, Optional
-from threading import Lock
-import time
+
+import base64
 import json
 import os
+import time
 import uuid
-import base64
 from datetime import datetime
+from threading import Lock
+from typing import Dict, List, Optional
 
+import pyautogui
+from mss import mss
 from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
-from mss import mss
-import pyautogui
 
 from .models import (
-    Recording,
-    RecordedEvent,
-    KeyData,
-    TextData,
     ClickData,
-    ScrollData,
     CoordinatesModel,
+    KeyData,
+    RecordedEvent,
+    Recording,
+    ScrollData,
+    TextData,
 )
 
-sessions = {}
+sessions: Dict[str, RecordingSession] = {}
 lock = Lock()
 
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
@@ -193,6 +194,8 @@ class RecordingSession:
     def get_event(self, event_id: str) -> Optional[RecordedEvent]:
         for event in self._data:
             if event.id == event_id:
+                if not event.screenshot_path:
+                    raise ValueError("Event has no screenshot")
                 with open(event.screenshot_path, "rb") as image_file:
                     encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
                     event.screenshot_b64 = encoded_image
@@ -232,11 +235,11 @@ class RecordingSession:
 
     @classmethod
     def from_schema(cls, data: Recording) -> RecordingSession:
-        session = cls.__new__(RecordingSession)
+        session = cls.__new__(cls)
         session._start_time = data.start_time
         session._id = data.id
         session._description = data.description
-        session.keyboard_listener = keyboard.Listener(on_press=session.on_press)
+        session.keyboard_listener = keyboard.Listener(on_press=session.on_press)  # type: ignore
         session.mouse_listener = mouse.Listener(
             on_click=session.on_click, on_scroll=session.on_scroll
         )
@@ -294,6 +297,8 @@ class RecordingSession:
         for event in self._data:
             if event.type == "init":
                 # Skip the first event and encode its screenshot
+                if not event.screenshot_path:
+                    raise ValueError("Event has no screenshot")
                 previous_screenshot_encoded = self.encode_image_to_base64(
                     event.screenshot_path
                 )

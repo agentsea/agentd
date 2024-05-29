@@ -1,46 +1,47 @@
-import time
-import random
-import os
-from datetime import datetime
 import base64
-import uuid
 import logging
+import os
+import platform
+import random
 import subprocess
 import sys
 import tempfile
-import platform
+import time
+import uuid
+from datetime import datetime
+from typing import Optional
 
+import psutil
+import pyautogui
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-
-import pyautogui
 from mss import mss
-import psutil
 
-from .models import (
-    MoveMouseModel,
-    ClickModel,
-    TypeTextModel,
-    PressKeyModel,
-    ScrollModel,
-    DragMouseModel,
-    ScreenshotResponseModel,
-    OpenURLModel,
-    CoordinatesModel,
-    Recording,
-    RecordResponse,
-    Recordings,
-    RecordRequest,
-    RecordedEvent,
-    Actions,
-    SystemUsageModel,
-    SystemInfoModel,
-    ScreenSizeModel,
-)
 from .chromium import (
+    gracefully_terminate_chromium,
     is_chromium_running,
     is_chromium_window_open,
-    gracefully_terminate_chromium,
+)
+from .models import (
+    Actions,
+    ClickModel,
+    CoordinatesModel,
+    DragMouseModel,
+    MoveMouseModel,
+    OpenURLModel,
+    PressKeyModel,
+    PressKeysModel,
+    RecordedEvent,
+    Recording,
+    Recordings,
+    RecordRequest,
+    RecordResponse,
+    ScreenshotResponseModel,
+    ScreenSizeModel,
+    ScrollModel,
+    SystemInfoModel,
+    SystemUsageModel,
+    TypeTextModel,
 )
 from .recording import RecordingSession, lock, sessions
 
@@ -133,7 +134,7 @@ def get_screen_size() -> ScreenSizeModel:
 @app.get("/mouse_coordinates")
 async def mouse_coordinates() -> CoordinatesModel:
     x, y = pyautogui.position()
-    return CoordinatesModel(x=x, y=y)
+    return CoordinatesModel(x=x, y=y)  # type: ignore
 
 
 @app.post("/open_url")
@@ -232,6 +233,15 @@ async def press_key(request: PressKeyModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/hot_key")
+async def hot_key(request: PressKeysModel):
+    try:
+        pyautogui.hotkey(*request.keys)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/scroll")
 async def scroll(request: ScrollModel):
     try:
@@ -299,7 +309,7 @@ async def list_recordings():
 @app.post("/recordings/{session_id}/stop")
 async def stop_recording(session_id: str):
     with lock:
-        session: RecordingSession = sessions.get(session_id)
+        session: Optional[RecordingSession] = sessions.get(session_id)
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
         session.stop()
@@ -319,31 +329,31 @@ async def stop_recording(session_id: str):
 async def get_recording(session_id: str):
     if session_id in sessions:
         with lock:
-            session: RecordingSession = sessions.get(session_id)
+            session: Optional[RecordingSession] = sessions.get(session_id)
             print("got in-mem session: ", session)
             if not session:
                 raise HTTPException(status_code=404, detail="Session not found")
             return session.as_schema()
     else:
-        session = RecordingSession.load(session_id).as_schema()
-        print("got disk session: ", session)
-        return session
+        rec_session = RecordingSession.load(session_id).as_schema()
+        print("got disk session: ", rec_session)
+        return rec_session
 
 
 @app.get("/recordings/{session_id}/event/{event_id}", response_model=RecordedEvent)
 async def get_event(session_id: str, event_id: str):
     if session_id in sessions:
         with lock:
-            session: RecordingSession = sessions.get(session_id)
-            print("got in-mem session: ", session)
-            if not session:
+            rec_session: Optional[RecordingSession] = sessions.get(session_id)  # type: ignore
+            print("got in-mem session: ", rec_session)
+            if not rec_session:
                 raise HTTPException(status_code=404, detail="Session not found")
 
     else:
-        session: RecordingSession = RecordingSession.load(session_id)
-        print("got disk session: ", session)
+        rec_session: RecordingSession = RecordingSession.load(session_id)
+        print("got disk session: ", rec_session)
 
-    event = session.find_event(event_id)
+    event = rec_session.find_event(event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     return event
@@ -354,7 +364,7 @@ async def delete_event(session_id: str, event_id: str):
     if session_id in sessions:
         with lock:
             # Retrieve the session
-            session: RecordingSession = sessions.get(session_id)
+            session: Optional[RecordingSession] = sessions.get(session_id)
             if not session:
                 raise HTTPException(status_code=404, detail="Session not found")
 
@@ -388,7 +398,7 @@ async def list_sessions():
 async def get_actions(session_id: str):
     if session_id in sessions:
         with lock:
-            session: RecordingSession = sessions.get(session_id)
+            session: Optional[RecordingSession] = sessions.get(session_id)
             if not session:
                 raise HTTPException(status_code=404, detail="Session not found")
 

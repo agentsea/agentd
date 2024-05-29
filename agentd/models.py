@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -39,6 +39,10 @@ class TypeTextModel(BaseModel):
 
 class PressKeyModel(BaseModel):
     key: str
+
+
+class PressKeysModel(BaseModel):
+    keys: List[str]
 
 
 class ScrollModel(BaseModel):

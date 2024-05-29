@@ -62,7 +62,7 @@ variable "headless" {
 
 variable "iso_checksum" {
   type    = string
-  default = "304983616fcba6ee1452e9f38993d7d3b8a90e1eb65fb0054d672ce23294d812"
+  default = "1718f177dde4c461148ab7dcbdcf2f410c1f5daa694567f6a8bbb239d864b525"
 }
 
 variable "iso_url" {
