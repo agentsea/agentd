@@ -7,6 +7,7 @@ rm -rf $INSTALL_DIR
 # Clone the repository
 echo "Cloning repository into $INSTALL_DIR..."
 git clone https://github.com/agentsea/agentd.git "$INSTALL_DIR"
+chown -R agentsea:agentsea $INSTALL_DIR
 
 # Check if git clone was successful
 if [ $? -ne 0 ]; then
