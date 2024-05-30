@@ -100,53 +100,53 @@ variable "format" {
   default = "qcow2"
 }
 
-source "qemu" "jammy" {
-  # accelerator      = "kvm"
-  boot_command     = []
-  disk_compression = true
-  disk_interface   = "virtio"
-  disk_image       = true
-  disk_size        = var.disk_size
-  format           = var.format
-  headless         = var.headless
-  iso_checksum     = var.iso_checksum
-  iso_url          = var.iso_url
-  net_device       = "virtio-net"
-  output_directory = "${var.output_directory}"
-  qemuargs = [
-    ["-m", "${var.ram}M"],
-    ["-smp", "${var.cpu}"],
-    ["-cdrom", "cidata_root.iso"]
-  ]
-  communicator           = "ssh"
-  shutdown_command       = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
-  ssh_password           = var.ssh_password
-  ssh_username           = var.ssh_username
-  ssh_timeout            = "10m"
-}
+// source "qemu" "jammy" {
+//   # accelerator      = "kvm"
+//   boot_command     = []
+//   disk_compression = true
+//   disk_interface   = "virtio"
+//   disk_image       = true
+//   disk_size        = var.disk_size
+//   format           = var.format
+//   headless         = var.headless
+//   iso_checksum     = var.iso_checksum
+//   iso_url          = var.iso_url
+//   net_device       = "virtio-net"
+//   output_directory = "${var.output_directory}"
+//   qemuargs = [
+//     ["-m", "${var.ram}M"],
+//     ["-smp", "${var.cpu}"],
+//     ["-cdrom", "cidata_root.iso"]
+//   ]
+//   communicator           = "ssh"
+//   shutdown_command       = "echo '${var.ssh_password}' | sudo -S shutdown -P now"
+//   ssh_password           = var.ssh_password
+//   ssh_username           = var.ssh_username
+//   ssh_timeout            = "10m"
+// }
 
-source "amazon-ebs" "jammy" {
-  ami_name      = "agentd-ubuntu-22.04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
-  instance_type = "t2.micro"
-  region        = var.aws_region
-  source_ami_filter {
-    filters = {
-      name                = "ubuntu/images/*ubuntu-jammy-22.04-amd64-server-*"
-      root-device-type    = "ebs"
-      virtualization-type = "hvm"
-    }
-    owners      = ["099720109477"] # Ubuntu's owner ID
-    most_recent = true
-  }
-  ssh_username  = "ubuntu"
-}
+// source "amazon-ebs" "jammy" {
+//   ami_name      = "agentd-ubuntu-22.04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+//   instance_type = "t2.micro"
+//   region        = var.aws_region
+//   source_ami_filter {
+//     filters = {
+//       name                = "ubuntu/images/*ubuntu-jammy-22.04-amd64-server-*"
+//       root-device-type    = "ebs"
+//       virtualization-type = "hvm"
+//     }
+//     owners      = ["099720109477"] # Ubuntu's owner ID
+//     most_recent = true
+//   }
+//   ssh_username  = "ubuntu"
+// }
 
 source "googlecompute" "ubuntu" {
   project_id = var.gcp_project_id
-  source_image_family = "ubuntu-2204-lts"
+  source_image = "agentd-ubuntu-22-04-20240321084622"
   zone        = "us-central1-a"
   ssh_username = "ubuntu"
-  image_name  = "agentd-ubuntu-22-04-${formatdate("YYYYMMDDHHmmss", timestamp())}"
+  image_name  = "agentd-ubuntu-22-04-u${formatdate("YYYYMMDDHHmmss", timestamp())}"
 }
 
 build {
@@ -170,9 +170,10 @@ build {
   //     source = source.value
   //   }
   // }
+
   sources = [
-    "source.qemu.jammy",
-    "source.amazon-ebs.jammy",
+    // "source.qemu.jammy",
+    // "source.amazon-ebs.jammy",
     "source.googlecompute.ubuntu",
   ]
 
@@ -180,7 +181,7 @@ build {
   provisioner "shell" {
     inline = [
       # Run install script
-      "curl -sSL https://raw.githubusercontent.com/agentsea/agentd/main/remote_install.sh | sudo bash",
+      "curl -sSL https://raw.githubusercontent.com/agentsea/agentd/main/remote_install_server.sh | sudo bash",
 
       # Prepare cloud-init to run on next boot for the QEMU image
       "sudo cloud-init clean --logs",
