@@ -13,9 +13,11 @@ from typing import Optional
 
 import psutil
 import pyautogui
+import xcursor
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from mss import mss
+from Xlib import display
 
 from .chromium import (
     gracefully_terminate_chromium,
@@ -419,3 +421,15 @@ async def system_usage():
         memory_percent=memory.percent,
         disk_percent=disk.percent,
     )
+
+
+@app.get("/mouse_cursor")
+async def get_mouse_cursor():
+    try:
+        d = display.Display()
+        root = d.screen().root
+        cursor = root.query_pointer()._data["cursor"]
+        cursor_info = xcursor.Xcursor(cursor).name
+        return {"cursor_type": cursor_info}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
