@@ -13,6 +13,7 @@ pyautogui = "^0.9.54"
 mss = "^9.0.1"
 pynput = "^1.7.6"
 psutil = "^5.9.8"
+python-xlib = "^0.33"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -15,6 +15,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+su agentsea -c "bash install_deps.sh"
+
 # Change directory to the cloned repository
 cd "$INSTALL_DIR"
 
