@@ -1,7 +1,7 @@
-agentd API Reference
+AgentD API Reference
 ====================
 
-The ``agentd`` demon provides a number of HTTP endpoints for interacting with the VM via HTTP.
+The ``AgentD`` demon provides a number of HTTP endpoints for interacting with the VM via HTTP.
 
 .. toctree::
    :maxdepth: 2
@@ -18,4 +18,4 @@ The ``agentd`` demon provides a number of HTTP endpoints for interacting with th
    :maxdepth: 1
    :caption: ↪
 
-   Go to User Guide <https://agentsea.github.io/agentd.html>
+   Go to User Guide <https://docs.hub.agentsea.ai/agentd/intro>
