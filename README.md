@@ -13,6 +13,8 @@
     <a href="https://docs.hub.agentsea.ai/agentd/intro"><strong>Explore the docs »</strong></a>
     <br />
     <br />
+    <a href="https://youtu.be/exoOUUwFRB8">View Demo</a>
+    ·
     <a href="https://github.com/agentsea/agentd/issues">Report Bug</a>
     ·
     <a href="https://github.com/agentsea/agentd/issues">Request Feature</a>
