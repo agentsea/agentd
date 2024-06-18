@@ -208,6 +208,10 @@ curl -sSL https://raw.githubusercontent.com/agentsea/agentd/main/remote_install.
   - **Path Variable:** `session_id`
   - **Response Model:** `Actions`
 
+## Community
+
+Come join us on [Discord](https://discord.gg/hhaq7XYPS6).
+
 ## Developing
 
 To pack a fresh set of images
