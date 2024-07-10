@@ -10,12 +10,15 @@ import time
 import uuid
 from datetime import datetime
 from typing import Optional
+import threading
 
 import psutil
 import pyautogui
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from mss import mss
+from pydantic import BaseModel
+from fastapi.responses import FileResponse
 
 
 from .firefox import (
@@ -62,6 +65,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+video_recording_process = None
+video_recording_lock = threading.Lock()
+video_recordings_dir = "video_recordings"
+os.makedirs(video_recordings_dir, exist_ok=True)
+
+
+class VideoRecordResponse(BaseModel):
+    session_id: str
+
+class VideoRecordings(BaseModel):
+    recordings: list[str]
+
+class VideoRecordModel(BaseModel):
+    status: str
+    file_path: str
 
 
 @app.middleware("http")
@@ -420,3 +439,54 @@ async def system_usage():
         disk_percent=disk.percent,
     )
 
+##
+### Recording
+##
+
+@app.post("/start_video_recording", response_model=VideoRecordResponse)
+async def start_video_recording():
+    global video_recording_process
+    with video_recording_lock:
+        if video_recording_process is not None:
+            raise HTTPException(status_code=400, detail="Video recording is already in progress.")
+        
+        session_id = str(uuid.uuid4())
+        file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
+
+        video_recording_process = subprocess.Popen([
+            "ffmpeg", "-video_size", "1920x1080", "-framerate", "25", "-f", "x11grab",
+            "-i", ":0.0", file_path
+        ])
+
+    return VideoRecordResponse(session_id=session_id)
+
+
+@app.post("/stop_video_recording", response_model=VideoRecordModel)
+async def stop_video_recording():
+    global video_recording_process
+    with video_recording_lock:
+        if video_recording_process is None:
+            raise HTTPException(status_code=400, detail="No video recording in progress.")
+        
+        video_recording_process.terminate()
+        video_recording_process = None
+
+        session_id = str(uuid.uuid4())
+        file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
+
+    return VideoRecordModel(status="success", file_path=file_path)
+
+
+@app.get("/video_recordings", response_model=VideoRecordings)
+async def list_video_recordings():
+    recordings = os.listdir(video_recordings_dir)
+    return VideoRecordings(recordings=recordings)
+
+
+@app.get("/video_recordings/{session_id}", response_class=FileResponse)
+async def get_video_recording(session_id: str):
+    file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Recording not found.")
+    
+    return FileResponse(file_path, media_type="video/mp4", filename=f"{session_id}.mp4")
