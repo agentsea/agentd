@@ -157,6 +157,7 @@ async def mouse_coordinates() -> CoordinatesModel:
     return CoordinatesModel(x=x, y=y)  # type: ignore
 
 
+@app.post("/open_url")
 async def open_url(request: OpenURLModel):
     try:
         firefox_pids = is_firefox_running()
