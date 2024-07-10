@@ -143,7 +143,7 @@ variable "format" {
 
 source "googlecompute" "ubuntu" {
   project_id = var.gcp_project_id
-  source_image = "agentd-ubuntu-22-04-20240321084622"
+  source_image = "agentd-ubuntu-22-04-u20240530022848"
   zone        = "us-central1-a"
   ssh_username = "ubuntu"
   image_name  = "agentd-ubuntu-22-04-u${formatdate("YYYYMMDDHHmmss", timestamp())}"

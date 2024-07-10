@@ -118,19 +118,25 @@ su - agentsea -c 'bash -l -c "
 "'
 
 
-echo "Adding Chromium icon to desktop..."
+echo "Adding Firefox icon to desktop..."
 mkdir -p /home/agentsea/Desktop
-cat > /home/agentsea/Desktop/chromium.desktop <<EOL
+cat > /home/agentsea/Desktop/firefox.desktop <<EOL
 [Desktop Entry]
 Version=1.0
-Type=Application
-Name=Chromium Web Browser
-Exec=/snap/bin/chromium --start-maximized
-Icon=chromium
+Name=Firefox Web Browser
+Comment=Browse the Web
+GenericName=Web Browser
+Exec=firefox %u
 Terminal=false
-Categories=Internet;WebBrowser;
+X-MultipleArgs=false
+Type=Application
+Icon=firefox
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;
+StartupWMClass=firefox
+StartupNotify=true
 EOL
-chown agentsea:agentsea /home/agentsea/Desktop/chromium.desktop
-chmod 755 /home/agentsea/Desktop/chromium.desktop
-sudo -u agentsea -g agentsea bash -l -c 'DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/chromium.desktop metadata::trusted true'
-chmod +x /home/agentsea/Desktop/chromium.desktop
+chown agentsea:agentsea /home/agentsea/Desktop/firefox.desktop
+chmod 755 /home/agentsea/Desktop/firefox.desktop
+sudo -u agentsea -g agentsea bash -l -c 'DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus" gio set /home/agentsea/Desktop/firefox.desktop metadata::trusted true'
+chmod +x /home/agentsea/Desktop/firefox.desktop

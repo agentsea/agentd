@@ -13,16 +13,15 @@ from typing import Optional
 
 import psutil
 import pyautogui
-import xcursor
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from mss import mss
-from Xlib import display
 
-from .chromium import (
-    gracefully_terminate_chromium,
-    is_chromium_running,
-    is_chromium_window_open,
+
+from .firefox import (
+    gracefully_terminate_firefox,
+    is_firefox_running,
+    is_firefox_window_open,
 )
 from .models import (
     Actions,
@@ -139,33 +138,32 @@ async def mouse_coordinates() -> CoordinatesModel:
     return CoordinatesModel(x=x, y=y)  # type: ignore
 
 
-@app.post("/open_url")
 async def open_url(request: OpenURLModel):
     try:
-        chromium_pids = is_chromium_running()
-        if chromium_pids:
-            print("Chromium is running. Restarting it...")
-            gracefully_terminate_chromium(chromium_pids)
+        firefox_pids = is_firefox_running()
+        if firefox_pids:
+            print("Firefox is running. Restarting it...")
+            gracefully_terminate_firefox(firefox_pids)
             time.sleep(5)
 
         user_data_dir = tempfile.mkdtemp()  # TODO: this is a hack to prevent corruption
 
-        print("Starting Chromium...")
+        print("Starting Firefox...")
         subprocess.Popen(
             [
-                "chromium",
-                "--no-first-run",
-                "--start-maximized",
-                "--user-data-dir=" + user_data_dir,
+                "firefox",
+                "-url",
                 request.url,
+                "-profile",
+                user_data_dir,
             ],
             stdout=sys.stdout,
             stderr=sys.stderr,
         )
 
-        while not is_chromium_window_open():
+        while not is_firefox_window_open():
             time.sleep(1)
-            print("Waiting for the Chromium window to open...")
+            print("Waiting for the Firefox window to open...")
 
         time.sleep(5)
         return {"status": "success"}
@@ -422,14 +420,3 @@ async def system_usage():
         disk_percent=disk.percent,
     )
 
-
-@app.get("/mouse_cursor")
-async def get_mouse_cursor():
-    try:
-        d = display.Display()
-        root = d.screen().root
-        cursor = root.query_pointer()._data["cursor"]
-        cursor_info = xcursor.Xcursor(cursor).name
-        return {"cursor_type": cursor_info}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
