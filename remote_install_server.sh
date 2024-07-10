@@ -18,8 +18,8 @@ fi
 # Change directory to the cloned repository
 cd "$INSTALL_DIR"
 
-whoami
-bash install_deps.sh
+# whoami
+# bash install_deps.sh
 
 # Assuming your script uses other scripts or configurations from the repo
 # Execute a specific script from the cloned repository
