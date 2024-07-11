@@ -14,8 +14,8 @@ def is_firefox_running() -> list:
 
 def is_firefox_window_open():
     try:
-        output = subprocess.check_output(["wmctrl", "-l", "-x"])
-        return "Navigator.Firefox" in output.decode()
+        output = subprocess.check_output(["xdotool", "search", "--onlyvisible", "--class", "firefox"])
+        return bool(output.strip())
     except subprocess.CalledProcessError:
         return False
 
@@ -31,3 +31,14 @@ def gracefully_terminate_firefox(pids: list):
             print(f"Firefox process {pid} not found.")
         except Exception as e:
             print(f"Error terminating Firefox process {pid}: {e}")
+
+def maximize_firefox_window():
+    """
+    Maximizes the Firefox window.
+    """
+    try:
+        window_id = subprocess.check_output(["xdotool", "search", "--onlyvisible", "--class", "firefox"]).strip().decode('utf-8')
+        subprocess.run(["wmctrl", "-i", "-r", window_id, "-b", "add,maximized_vert,maximized_horz"], check=True)
+        print(f"Maximized Firefox window with window ID {window_id}")
+    except subprocess.CalledProcessError:
+        print("Failed to maximize Firefox window.")

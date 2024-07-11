@@ -25,6 +25,7 @@ from .firefox import (
     gracefully_terminate_firefox,
     is_firefox_running,
     is_firefox_window_open,
+    maximize_firefox_window
 )
 from .models import (
     Actions,
@@ -65,22 +66,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-video_recording_process = None
-video_recording_lock = threading.Lock()
-video_recordings_dir = "video_recordings"
-os.makedirs(video_recordings_dir, exist_ok=True)
-
-
-class VideoRecordResponse(BaseModel):
-    session_id: str
-
-class VideoRecordings(BaseModel):
-    recordings: list[str]
-
-class VideoRecordModel(BaseModel):
-    status: str
-    file_path: str
 
 
 @app.middleware("http")
@@ -166,16 +151,11 @@ async def open_url(request: OpenURLModel):
             gracefully_terminate_firefox(firefox_pids)
             time.sleep(5)
 
-        user_data_dir = tempfile.mkdtemp()  # TODO: this is a hack to prevent corruption
-
         print("Starting Firefox...")
         subprocess.Popen(
             [
                 "firefox",
-                "-url",
                 request.url,
-                "-profile",
-                user_data_dir,
             ],
             stdout=sys.stdout,
             stderr=sys.stderr,
@@ -184,6 +164,8 @@ async def open_url(request: OpenURLModel):
         while not is_firefox_window_open():
             time.sleep(1)
             print("Waiting for the Firefox window to open...")
+
+        maximize_firefox_window()
 
         time.sleep(5)
         return {"status": "success"}
@@ -444,8 +426,28 @@ async def system_usage():
 ### Recording
 ##
 
+video_recording_process = None
+video_recording_lock = threading.Lock()
+video_recordings_dir = "video_recordings"
+os.makedirs(video_recordings_dir, exist_ok=True)
+
+
+class VideoRecordRequest(BaseModel):
+    framerate: int
+
+class VideoRecordResponse(BaseModel):
+    session_id: str
+
+class VideoRecordings(BaseModel):
+    recordings: list[str]
+
+class VideoRecordModel(BaseModel):
+    status: str
+    file_path: str
+
+
 @app.post("/start_video_recording", response_model=VideoRecordResponse)
-async def start_video_recording():
+async def start_video_recording(request: VideoRecordRequest):
     global video_recording_process
     with video_recording_lock:
         if video_recording_process is not None:
@@ -455,7 +457,7 @@ async def start_video_recording():
         file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
 
         video_recording_process = subprocess.Popen([
-            "ffmpeg", "-video_size", "1920x1080", "-framerate", "25", "-f", "x11grab",
+            "ffmpeg", "-video_size", "1920x1080", "-framerate", f"{request.framerate}", "-f", "x11grab",
             "-i", ":0.0", file_path
         ])
 
@@ -491,3 +493,13 @@ async def get_video_recording(session_id: str):
         raise HTTPException(status_code=404, detail="Recording not found.")
     
     return FileResponse(file_path, media_type="video/mp4", filename=f"{session_id}.mp4")
+
+
+@app.delete("/video_recordings/{session_id}", response_model=VideoRecordModel)
+async def delete_video_recording(session_id: str):
+    file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Recording not found.")
+    
+    os.remove(file_path)
+    return VideoRecordModel(status="success", file_path=file_path)

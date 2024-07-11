@@ -18,6 +18,8 @@ fi
 # Change directory to the cloned repository
 cd "$INSTALL_DIR"
 
+apt install -y xdotool
+
 # whoami
 # bash install_deps.sh
 

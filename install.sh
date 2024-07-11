@@ -33,7 +33,7 @@ chown -R agentsea:agentsea /home/agentsea/.config
 echo "installing base packages..."
 add-apt-repository universe
 apt-get update
-apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp dbus-x11 openbox menu lxqt sddm lxqt-session wmctrl
+apt-get install -y xvfb x11vnc websockify python3-pip python3-dev python3-venv python3-tk software-properties-common ntp dbus-x11 openbox menu lxqt sddm lxqt-session wmctrl xdotool
 apt-get remove -y xscreensaver
 
 echo 'export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1001/bus"' >> /home/agentsea/.profile
