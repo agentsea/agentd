@@ -4,13 +4,9 @@ COPY . /config/agentd/
 
 # Update and install dependencies
 RUN apk update && \
-    apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl
+    apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl poetry
 
-# Install Poetry using the official installation script
-RUN curl -sSL https://install.python-poetry.org | python3 -
-
-# Add Poetry to the PATH environment variable
-ENV PATH="/config/.local/bin:$PATH"
+RUN ls /config/agentd
 
 RUN cd /config/agentd && poetry install
 

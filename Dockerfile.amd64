@@ -4,9 +4,11 @@ COPY . /config/agentd/
 
 # Update and install dependencies
 RUN apk update && \
-    apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl
+    apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl poetry
 
-RUN python -m pip install -r /config/agentd/requirements.txt
+RUN ls /config/agentd
+
+RUN cd /config/agentd && poetry install
 
 RUN mkdir -p /etc/services.d/uvicorn
 COPY uvicorn-run.sh /etc/services.d/uvicorn/run
