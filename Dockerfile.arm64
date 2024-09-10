@@ -9,6 +9,9 @@ RUN apk update && \
 # Install Poetry using the official installation script
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
+# Add Poetry to the PATH environment variable
+ENV PATH="/config/.local/bin:$PATH"
+
 RUN cd /config/agentd && poetry install
 
 RUN mkdir -p /etc/services.d/uvicorn
