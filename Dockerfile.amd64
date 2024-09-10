@@ -12,6 +12,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 # Add Poetry to the PATH environment variable
 ENV PATH="/config/.local/bin:$PATH"
 
+# Debugging: Check where Poetry was installed
+RUN find / -name poetry
+
 RUN cd /config/agentd && /config/.local/bin/poetry install
 
 RUN mkdir -p /etc/services.d/uvicorn
