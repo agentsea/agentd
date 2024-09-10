@@ -6,7 +6,7 @@ After=network.target xvfb.service
 User=agentsea
 Environment="DISPLAY=:99" "XAUTHORITY=/home/agentsea/.Xauthority"
 WorkingDirectory=/home/agentsea/agentd
-ExecStart=/home/agentsea/.local/bin/uvicorn agentd.server:app --host 0.0.0.0 --port 8000 --reload
+ExecStart=/home/agentsea/.local/bin/uvicorn agentd.server:app --host 0.0.0.0 --port 8000 --reload --reload-exclude .recordings
 Restart=always
 
 [Install]

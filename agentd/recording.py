@@ -7,7 +7,10 @@ import time
 import uuid
 from datetime import datetime
 from threading import Lock
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
+import subprocess
+import signal
+import atexit
 
 import pyautogui
 from mss import mss
@@ -28,6 +31,8 @@ sessions: Dict[str, RecordingSession] = {}
 lock = Lock()
 
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
+os.makedirs(RECORDINGS_DIR, exist_ok=True)
+SCREENSHOT_INTERVAL = 0.5
 
 
 class RecordingSession:
@@ -48,7 +53,7 @@ class RecordingSession:
             id=str(uuid.uuid4()),
             type="init",
             timestamp=time.time(),
-            screenshot_path=self.take_screenshot(),
+            after_screenshot_path=self.take_screenshot(),
             coordinates=CoordinatesModel(x=x, y=y),
         )
         self._data: List[RecordedEvent] = [initial_event]
@@ -57,24 +62,103 @@ class RecordingSession:
         self.text_buffer = ""
         self.shift_pressed = False
         self.caps_lock_on = False
+        self.screenshot_process = None
+        self.used_screenshots: Set[str] = set()
 
     def start(self):
         self.keyboard_listener.start()
+        time.sleep(1)
         self.mouse_listener.start()
+
         self._status = "running"
+        self._start_screenshot_subprocess()
+        atexit.register(self.stop)
 
     def stop(self):
-        self.keyboard_listener.stop()
-        self.mouse_listener.stop()
-        self._end_time = time.time()
-        self._status = "stopped"
+        if self._status != "stopped":
+            self._status = "stopping"
+            self.keyboard_listener.stop()
+            self.mouse_listener.stop()
+            self._stop_screenshot_subprocess()
+            self._end_time = time.time()
+            self._cleanup_unused_screenshots()
+            self._status = "stopped"
+            atexit.unregister(self.stop)
+
+    def _start_screenshot_subprocess(self):
+        screenshot_script = f"""
+import time
+import os
+from mss import mss
+
+SCREENSHOT_INTERVAL = {SCREENSHOT_INTERVAL}
+SESSION_DIR = "{self._dir()}"
+
+def take_screenshots():
+    with mss() as sct:
+        while True:
+            timestamp = time.time()
+            filename = f"screenshot_{{timestamp}}.png"
+            file_path = os.path.join(SESSION_DIR, filename)
+            sct.shot(output=file_path)
+            time.sleep(SCREENSHOT_INTERVAL)
+
+if __name__ == "__main__":
+    os.makedirs(SESSION_DIR, exist_ok=True)
+    take_screenshots()
+"""
+        screenshot_script_path = os.path.join(self._dir(), "screenshot_script.py")
+        with open(screenshot_script_path, "w") as f:
+            f.write(screenshot_script)
+
+        self.screenshot_process = subprocess.Popen(
+            ["python", screenshot_script_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+    def _stop_screenshot_subprocess(self):
+        if self.screenshot_process:
+            os.kill(self.screenshot_process.pid, signal.SIGTERM)
+            self.screenshot_process.wait()
+
+    def _get_latest_screenshot(self) -> str:
+        session_dir = self._dir()
+        screenshot_files = [
+            f
+            for f in os.listdir(session_dir)
+            if f.startswith("screenshot_") and f.endswith(".png")
+        ]
+        if not screenshot_files:
+            return ""
+        latest_screenshot = max(
+            screenshot_files,
+            key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
+        )
+        latest_path = os.path.join(session_dir, latest_screenshot)
+        self.used_screenshots.add(latest_path)
+        return latest_path
+
+    def _cleanup_unused_screenshots(self):
+        session_dir = self._dir()
+        for filename in os.listdir(session_dir):
+            if filename.startswith("screenshot_") and filename.endswith(".png"):
+                file_path = os.path.join(session_dir, filename)
+                if file_path not in self.used_screenshots:
+                    try:
+                        os.remove(file_path)
+                        print(f"Deleted unused screenshot: {file_path}")
+                    except OSError as e:
+                        print(f"Error deleting unused screenshot {file_path}: {e}")
 
     def on_press(self, key: Key):
         print("\npressed key: ", key)
+        before_screenshot = self._get_latest_screenshot()
         # Handle shift and caps lock keys
         if key in [Key.shift, Key.shift_r, Key.shift_l]:
             self.shift_pressed = True
             return
+
         if key == Key.caps_lock:
             self.caps_lock_on = not self.caps_lock_on
             return
@@ -124,7 +208,8 @@ class RecordingSession:
                     id=str(uuid.uuid4()),
                     type="key",
                     timestamp=time.time(),
-                    screenshot_path=self.take_screenshot(),
+                    after_screenshot_path=self.take_screenshot(),
+                    before_screenshot_path=before_screenshot,
                     coordinates=CoordinatesModel(x=x, y=y),
                     key_data=KeyData(key=str(key)),
                 )
@@ -142,7 +227,7 @@ class RecordingSession:
                 id=str(uuid.uuid4()),
                 type="text",
                 timestamp=time.time(),
-                screenshot_path=self.take_screenshot(),
+                after_screenshot_path=self.take_screenshot(),
                 coordinates=CoordinatesModel(x=x, y=y),
                 text_data=TextData(text=self.text_buffer),
             )
@@ -154,18 +239,25 @@ class RecordingSession:
 
     def on_click(self, x, y, button, pressed):
         print("clicked button: ", x, y, button, pressed)
-        print("type: ", type(x), type(y), type(button), type(pressed))
-        event = RecordedEvent(
-            id=str(uuid.uuid4()),
-            type="click",
-            timestamp=time.time(),
-            screenshot_path=self.take_screenshot(),
-            coordinates=CoordinatesModel(x=x, y=y),
-            click_data=ClickData(button=button, pressed=pressed),
-        )
-        self._data.append(event)
+        try:
+            screenshot_path = self._get_latest_screenshot()
+            event = RecordedEvent(
+                id=str(uuid.uuid4()),
+                type="click",
+                timestamp=time.time(),
+                before_screenshot_path=screenshot_path,
+                after_screenshot_path=self.take_screenshot(),
+                coordinates=CoordinatesModel(x=int(x), y=int(y)),
+                click_data=ClickData(button=button._name_, pressed=pressed),
+            )
+            self._data.append(event)
+        except Exception as e:
+            print(f"Error recording click event: {e}")
+        print("recorded event: ", event)
 
     def on_scroll(self, x, y, dx, dy):
+        print("scolled: ", x, y, dx, dy)
+        screenshot_path = self._get_latest_screenshot()
         if self._data and self._data[-1].type == "scroll":
             # Update the last scroll event
             self._data[-1].scroll_data.dx += dx
@@ -176,7 +268,8 @@ class RecordingSession:
                 id=str(uuid.uuid4()),
                 type="scroll",
                 timestamp=time.time(),
-                screenshot_path=self.take_screenshot(),
+                before_screenshot_path=screenshot_path,
+                after_screenshot_path=self.take_screenshot(),
                 coordinates=CoordinatesModel(x=x, y=y),
                 scroll_data=ScrollData(dx=dx, dy=dy),
             )
@@ -194,11 +287,16 @@ class RecordingSession:
     def get_event(self, event_id: str) -> Optional[RecordedEvent]:
         for event in self._data:
             if event.id == event_id:
-                if not event.screenshot_path:
+                if not event.before_screenshot_path:
                     raise ValueError("Event has no screenshot")
-                with open(event.screenshot_path, "rb") as image_file:
+                with open(event.before_screenshot_path, "rb") as image_file:
                     encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-                    event.screenshot_b64 = encoded_image
+                    event.before_screenshot_b64 = encoded_image
+                if not event.after_screenshot_path:
+                    raise ValueError("Event has no screenshot")
+                with open(event.after_screenshot_path, "rb") as image_file:
+                    encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+                    event.after_screenshot_b64 = encoded_image
                 return event
         return None
 
@@ -291,16 +389,22 @@ class RecordingSession:
             List[dict]: A list of action schemas
         """
         actions = []
-        previous_screenshot_encoded = None
+        before_screenshot_encoded = None
+        after_screenshot_encoded = None
         previous_coordinates = None
 
         for event in self._data:
             if event.type == "init":
                 # Skip the first event and encode its screenshot
-                if not event.screenshot_path:
+                if not event.before_screenshot_path:
                     raise ValueError("Event has no screenshot")
-                previous_screenshot_encoded = self.encode_image_to_base64(
-                    event.screenshot_path
+                before_screenshot_encoded = self.encode_image_to_base64(
+                    event.before_screenshot_path
+                )
+                if not event.after_screenshot_path:
+                    raise ValueError("Event has no screenshot")
+                after_screenshot_encoded = self.encode_image_to_base64(
+                    event.after_screenshot_path
                 )
                 previous_coordinates = {
                     "x": event.coordinates.x,
@@ -318,7 +422,8 @@ class RecordingSession:
                                 "text": event.text_data.text,
                             },
                         },
-                        "screenshot": previous_screenshot_encoded,
+                        "before_screenshot": before_screenshot_encoded,
+                        "after_screenshot": after_screenshot_encoded,
                         "previous_coordinates": previous_coordinates,
                     }
                 )
@@ -335,7 +440,8 @@ class RecordingSession:
                                     "button": event.click_data.button,
                                 },
                             },
-                            "screenshot": previous_screenshot_encoded,
+                            "before_screenshot": before_screenshot_encoded,
+                            "after_screenshot": after_screenshot_encoded,
                             "previous_coordinates": previous_coordinates,
                         }
                     )
@@ -347,19 +453,22 @@ class RecordingSession:
                             "name": "scroll",
                             "parameters": {"clicks": event.scroll_data.dy},
                         },
-                        "screenshot": previous_screenshot_encoded,
+                        "before_screenshot": before_screenshot_encoded,
+                        "after_screenshot": after_screenshot_encoded,
                         "previous_coordinates": previous_coordinates,
                     }
                 )
             elif event.type == "key":
                 # Handle special key events
+
                 actions.append(
                     {
                         "action": {
                             "name": "press_key",
-                            "parameters": {"key": event.key_data.text},
+                            "parameters": {"key": event.key_data.key},
                         },
-                        "screenshot": previous_screenshot_encoded,
+                        "before_screenshot": before_screenshot_encoded,
+                        "after_screenshot": after_screenshot_encoded,
                         "previous_coordinates": previous_coordinates,
                     }
                 )
@@ -367,8 +476,8 @@ class RecordingSession:
                 raise ValueError(f"Unknown event type '{event.type}'")
 
             # Update the previous screenshot and coordinates for the next event
-            previous_screenshot_encoded = self.encode_image_to_base64(
-                event.screenshot_path
+            before_screenshot_encoded = self.encode_image_to_base64(
+                event.before_screenshot_path
             )
             previous_coordinates = {"x": event.coordinates.x, "y": event.coordinates.y}
 
