@@ -14,7 +14,7 @@ import threading
 
 import psutil
 import pyautogui
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from mss import mss
 from pydantic import BaseModel
@@ -25,7 +25,7 @@ from .firefox import (
     gracefully_terminate_firefox,
     is_firefox_running,
     is_firefox_window_open,
-    maximize_firefox_window
+    maximize_firefox_window,
 )
 from .models import (
     Actions,
@@ -292,6 +292,32 @@ async def take_screenshot() -> ScreenshotResponseModel:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/exec")
+async def exec_command(command: str = Body(..., embed=True)):
+    try:
+        # Execute the provided command
+        result = subprocess.run(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        # Check if the command was successful
+        if result.returncode == 0:
+            return {"status": "success", "output": result.stdout.strip()}
+        else:
+            return {
+                "status": "error",
+                "output": result.stderr.strip(),
+                "return_code": result.returncode,
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/recordings", response_model=RecordResponse)
 async def start_recording(request: RecordRequest):
     session_id = str(uuid.uuid4())
@@ -422,6 +448,7 @@ async def system_usage():
         disk_percent=disk.percent,
     )
 
+
 ##
 ### Recording
 ##
@@ -435,11 +462,14 @@ os.makedirs(video_recordings_dir, exist_ok=True)
 class VideoRecordRequest(BaseModel):
     framerate: int
 
+
 class VideoRecordResponse(BaseModel):
     session_id: str
 
+
 class VideoRecordings(BaseModel):
     recordings: list[str]
+
 
 class VideoRecordModel(BaseModel):
     status: str
@@ -451,15 +481,27 @@ async def start_video_recording(request: VideoRecordRequest):
     global video_recording_process
     with video_recording_lock:
         if video_recording_process is not None:
-            raise HTTPException(status_code=400, detail="Video recording is already in progress.")
-        
+            raise HTTPException(
+                status_code=400, detail="Video recording is already in progress."
+            )
+
         session_id = str(uuid.uuid4())
         file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
 
-        video_recording_process = subprocess.Popen([
-            "ffmpeg", "-video_size", "1920x1080", "-framerate", f"{request.framerate}", "-f", "x11grab",
-            "-i", ":0.0", file_path
-        ])
+        video_recording_process = subprocess.Popen(
+            [
+                "ffmpeg",
+                "-video_size",
+                "1920x1080",
+                "-framerate",
+                f"{request.framerate}",
+                "-f",
+                "x11grab",
+                "-i",
+                ":0.0",
+                file_path,
+            ]
+        )
 
     return VideoRecordResponse(session_id=session_id)
 
@@ -469,8 +511,10 @@ async def stop_video_recording():
     global video_recording_process
     with video_recording_lock:
         if video_recording_process is None:
-            raise HTTPException(status_code=400, detail="No video recording in progress.")
-        
+            raise HTTPException(
+                status_code=400, detail="No video recording in progress."
+            )
+
         video_recording_process.terminate()
         video_recording_process = None
 
@@ -491,7 +535,7 @@ async def get_video_recording(session_id: str):
     file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Recording not found.")
-    
+
     return FileResponse(file_path, media_type="video/mp4", filename=f"{session_id}.mp4")
 
 
@@ -500,6 +544,6 @@ async def delete_video_recording(session_id: str):
     file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Recording not found.")
-    
+
     os.remove(file_path)
     return VideoRecordModel(status="success", file_path=file_path)

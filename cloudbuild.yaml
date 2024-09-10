@@ -1,0 +1,68 @@
+# cloudbuild.yaml
+steps:
+  # Build for x86_64
+  - name: "gcr.io/cloud-builders/docker"
+    args: [
+        "build",
+        "--no-cache",
+        "--pull",
+        "-f",
+        "Dockerfile.amd64", # Your custom Dockerfile for x86_64
+        "-t",
+        "gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64",
+        ".",
+      ]
+
+  # Set up QEMU for ARM builds
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "run",
+        "--rm",
+        "--privileged",
+        "multiarch/qemu-user-static:register",
+        "--reset",
+      ]
+
+  # Build for ARM64
+  - name: "gcr.io/cloud-builders/docker"
+    args: [
+        "build",
+        "--no-cache",
+        "--pull",
+        "-f",
+        "Dockerfile.arm64", # Your custom Dockerfile for ARM64
+        "-t",
+        "gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64",
+        ".",
+      ]
+
+  # Create and push a multi-arch manifest
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        echo '{ "experimental": true }' | sudo tee /etc/docker/daemon.json
+        sudo service docker restart
+        docker manifest create gcr.io/$PROJECT_ID/agentd-webtop:latest \
+          gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 \
+          gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
+        docker manifest annotate gcr.io/$PROJECT_ID/agentd-webtop:latest \
+          gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 --os linux --arch amd64
+        docker manifest annotate gcr.io/$PROJECT_ID/agentd-webtop:latest \
+          gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64 --os linux --arch arm64
+        docker manifest push gcr.io/$PROJECT_ID/agentd-webtop:latest
+
+# Images to be pushed to Google Container Registry
+images:
+  - "gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64"
+  - "gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64"
+  - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
+
+# Set a longer timeout for the build process (default is 10m)
+timeout: "3600s"
+
+# Use a larger machine type for faster builds
+options:
+  machineType: "N1_HIGHCPU_8"
