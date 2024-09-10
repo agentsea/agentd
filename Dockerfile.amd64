@@ -6,18 +6,7 @@ COPY . /config/agentd/
 RUN apk update && \
     apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl
 
-# Install Poetry using the official installation script
-RUN curl -sSL https://install.python-poetry.org | python3 -
-
-# Add Poetry to the PATH environment variable
-ENV PATH="/config/.local/bin:$PATH"
-
-# Debugging: Check where Poetry was installed and log environment variables
-RUN find / -name poetry > /config/poetry_location.log && cat /config/poetry_location.log
-RUN echo $PATH
-
-# Install dependencies using Poetry, using the exact path from log if necessary
-RUN cd /config/agentd && /config/.local/bin/poetry install || /path/to/poetry install
+RUN python -m pip install -r /config/agentd/requirements.txt
 
 RUN mkdir -p /etc/services.d/uvicorn
 COPY uvicorn-run.sh /etc/services.d/uvicorn/run

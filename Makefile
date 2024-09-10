@@ -50,3 +50,7 @@ user-data:
 push-latest:
 	gsutil cp .vms/jammy/latest/jammy.qcow2 gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2
 	gsutil acl ch -u AllUsers:R gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2
+
+.PHONY: exp-deps
+exp-deps:
+	poetry export -f requirements.txt --output requirements.txt --without-hashes
