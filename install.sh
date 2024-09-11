@@ -128,12 +128,10 @@ Comment=Browse the Web
 GenericName=Web Browser
 Exec=firefox %u
 Terminal=false
-X-MultipleArgs=false
 Type=Application
 Icon=firefox
 Categories=Network;WebBrowser;
 MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;
-StartupWMClass=firefox
 StartupNotify=true
 EOL
 chown agentsea:agentsea /home/agentsea/Desktop/firefox.desktop

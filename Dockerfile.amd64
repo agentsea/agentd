@@ -1,15 +1,23 @@
 FROM lscr.io/linuxserver/webtop:latest
 
+# Copy the project into the container
 COPY . /config/agentd/
 
-# Update and install dependencies
+# Update and install dependencies, including python3-dev for Python development headers
 RUN apk update && \
-    apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl poetry
+    apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl poetry python3-dev
 
+# List the files in the /config/agentd directory (for debugging purposes)
 RUN ls /config/agentd
 
+# Install project dependencies using Poetry
 RUN cd /config/agentd && poetry install
 
+# Create directory for uvicorn service
 RUN mkdir -p /etc/services.d/uvicorn
+
+# Copy the uvicorn-run.sh script to the service directory
 COPY uvicorn-run.sh /etc/services.d/uvicorn/run
+
+# Make the uvicorn-run.sh script executable
 RUN chmod +x /etc/services.d/uvicorn/run
