@@ -1,4 +1,3 @@
-# cloudbuild.yaml
 steps:
   # Build for x86_64
   - name: "gcr.io/cloud-builders/docker"
@@ -6,6 +5,8 @@ steps:
         "build",
         "--no-cache",
         "--pull",
+        "--platform",
+        "linux/amd64", # Specify platform explicitly
         "-f",
         "Dockerfile.amd64", # Your custom Dockerfile for x86_64
         "-t",
@@ -30,6 +31,8 @@ steps:
         "build",
         "--no-cache",
         "--pull",
+        "--platform",
+        "linux/arm64", # Specify platform explicitly
         "-f",
         "Dockerfile.arm64", # Your custom Dockerfile for ARM64
         "-t",
