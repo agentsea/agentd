@@ -6,21 +6,51 @@ steps:
     args: ["buildx", "use", "mybuilder"]
   - name: "gcr.io/cloud-builders/docker"
     args: ["buildx", "inspect", "--bootstrap"]
-  # Build for both AMD64 and ARM64 with verbose logging
+
+  # Build for AMD64
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "buildx"
       - "build"
       - "--progress=plain"
-      - "--platform=linux/amd64,linux/arm64"
+      - "--platform=linux/amd64"
       - "-t"
-      - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
+      - "gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64"
       - "-t"
-      - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}"
+      - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64"
       - "-f"
       - "Dockerfile"
       - "--push"
       - "."
+
+  # Build for ARM64
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "buildx"
+      - "build"
+      - "--progress=plain"
+      - "--platform=linux/arm64"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64"
+      - "-f"
+      - "Dockerfile"
+      - "--push"
+      - "."
+
+  # Create multi-arch manifest
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:latest \
+          gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 \
+          gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
+        docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
+          gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64 \
+          gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64
 
   # Verify the pushed images using docker buildx
   - name: "gcr.io/cloud-builders/docker"
@@ -30,6 +60,8 @@ steps:
       - |
         docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
         docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
 
   # Verify the pushed images using Google Cloud SDK
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
@@ -39,6 +71,8 @@ steps:
       - |
         gcloud container images describe gcr.io/$PROJECT_ID/agentd-webtop:latest
         gcloud container images describe gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
+        gcloud container images describe gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64
+        gcloud container images describe gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
 
   # Pull the images to ensure they are fully processed
   - name: "gcr.io/cloud-builders/docker"
@@ -48,6 +82,8 @@ steps:
       - |
         docker pull gcr.io/$PROJECT_ID/agentd-webtop:latest || true
         docker pull gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} || true
+        docker pull gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 || true
+        docker pull gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64 || true
 
   # Add a delay to ensure GCR has fully processed the new images
   - name: "gcr.io/cloud-builders/gcloud"
@@ -66,12 +102,17 @@ steps:
       - |
         docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
         docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
 
 images:
   - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
+  - "gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64"
+  - "gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64"
   - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}"
+  - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64"
+  - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64"
 
 timeout: "3600s"
-
 options:
   machineType: "N1_HIGHCPU_8"
