@@ -40,6 +40,15 @@ steps:
         gcloud container images describe gcr.io/$PROJECT_ID/agentd-webtop:latest
         gcloud container images describe gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
 
+  # Pull the images to ensure they are fully processed
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker pull gcr.io/$PROJECT_ID/agentd-webtop:latest || true
+        docker pull gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} || true
+
   # Add a delay to ensure GCR has fully processed the new images
   - name: "gcr.io/cloud-builders/gcloud"
     entrypoint: "bash"
@@ -48,6 +57,15 @@ steps:
       - |
         echo "Waiting for images to be fully processed..."
         sleep 30
+
+  # Final verification step
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker manifest inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
+        docker manifest inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
 
 images:
   - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
