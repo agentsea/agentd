@@ -58,14 +58,14 @@ steps:
         echo "Waiting for images to be fully processed..."
         sleep 30
 
-  # Final verification step
+  # Final verification step using buildx imagetools
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        docker manifest inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
-        docker manifest inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
 
 images:
   - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
