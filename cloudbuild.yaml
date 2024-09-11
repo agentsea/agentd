@@ -6,12 +6,12 @@ steps:
     args: ["buildx", "use", "mybuilder"]
   - name: "gcr.io/cloud-builders/docker"
     args: ["buildx", "inspect", "--bootstrap"]
-
-  # Build for both AMD64 and ARM64
+  # Build for both AMD64 and ARM64 with verbose logging
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "buildx"
       - "build"
+      - "--progress=plain"
       - "--platform=linux/amd64,linux/arm64"
       - "-t"
       - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
