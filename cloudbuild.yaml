@@ -15,13 +15,25 @@ steps:
       - "--platform=linux/amd64,linux/arm64"
       - "-t"
       - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}"
       - "-f"
-      - "Dockerfile" # Use a single Dockerfile for both architectures
+      - "Dockerfile"
       - "--push"
       - "."
 
+  # Verify the pushed images
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
+
 images:
   - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
+  - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}"
 
 timeout: "3600s"
 

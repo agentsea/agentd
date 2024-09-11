@@ -9,8 +9,8 @@ RUN ls /config/agentd
 
 RUN cd /config/agentd && poetry install
 
-RUN mkdir -p /etc/services.d/uvicorn
+RUN mkdir -p /etc/services.d/agentd
 
-COPY uvicorn-run.sh /etc/services.d/uvicorn/run
+COPY uvicorn-run.sh /etc/services.d/agentd/run
 
-RUN chmod +x /etc/services.d/uvicorn/run
+RUN chmod +x /etc/services.d/agentd/run
