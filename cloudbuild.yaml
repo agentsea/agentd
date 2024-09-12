@@ -1,105 +1,48 @@
 steps:
-  # Clean up any existing buildx builders to avoid conflicts
+  # Set up QEMU for multi-architecture support
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        echo "Cleaning up old buildx instances"
-        docker buildx rm mybuilder || true
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-  # Set up a new buildx builder
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["buildx", "create", "--name", "mybuilder", "--use"]
-
-  # Build for AMD64
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      - "buildx"
-      - "build"
-      - "--platform=linux/amd64"
-      - "-t"
-      - "gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64"
-      - "-t"
-      - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64"
-      - "-f"
-      - "Dockerfile"
-      - "--push"
-      - "."
-    waitFor: ["-"]
-
-  # Build for ARM64
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      - "buildx"
-      - "build"
-      - "--platform=linux/arm64"
-      - "-t"
-      - "gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64"
-      - "-t"
-      - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64"
-      - "-f"
-      - "Dockerfile"
-      - "--push"
-      - "."
-    waitFor: ["-"]
-
-  # Verify individual architecture images
+  # Set up Docker Buildx
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        echo "Verifying AMD64 image:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 || exit 1
-        echo "Verifying ARM64 image:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64 || exit 1
+        docker buildx create --name mybuilder --use
+        docker buildx inspect --bootstrap
 
-  # Create and push multi-arch manifest
+  # Build and push for multiple architectures
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        set -e
-        echo "Creating multi-arch manifest for latest tag"
-        if ! docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:latest \
-          gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 \
-          gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64; then
-          echo "Failed to create multi-arch manifest for latest tag" >&2
-          exit 1
-        fi
+        docker buildx build \
+          --platform linux/amd64,linux/arm64 \
+          -t gcr.io/$PROJECT_ID/agentd-webtop:latest \
+          -t gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
+          --push \
+          .
 
-        echo "Creating multi-arch manifest for SHORT_SHA tag"
-        if ! docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
-          gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64 \
-          gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64; then
-          echo "Failed to create multi-arch manifest for SHORT_SHA tag" >&2
-          exit 1
-        fi
-
-  # Verify the final multi-arch images
+  # Verify the multi-arch image
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        echo "Verifying final multi-arch image for latest tag:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest || exit 1
-        echo "Verifying final multi-arch image for SHORT_SHA tag:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} || exit 1
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
 
 images:
   - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
-  - "gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64"
-  - "gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64"
   - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}"
-  - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64"
-  - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64"
 
 timeout: "3600s"
 
-options:
-  machineType: "N1_HIGHCPU_8"
 options:
   machineType: "N1_HIGHCPU_8"
