@@ -5,6 +5,8 @@ COPY . /config/agentd/
 RUN apk update && \
     apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl poetry python3-dev
 
+RUN poetry config virtualenvs.in-project true
+
 RUN ls /config/agentd
 
 RUN cd /config/agentd && poetry env use /usr/bin/python3.12 && poetry install
