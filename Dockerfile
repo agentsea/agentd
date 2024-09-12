@@ -7,7 +7,7 @@ RUN apk update && \
 
 RUN ls /config/agentd
 
-RUN cd /config/agentd && poetry install
+RUN cd /config/agentd && poetry env use /usr/bin/python3.12 && poetry install
 
 RUN mkdir -p /etc/services.d/agentd
 
