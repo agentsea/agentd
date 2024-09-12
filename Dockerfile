@@ -3,7 +3,7 @@ FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest
 COPY . /config/agentd/
 
 RUN apk update && \
-    apk add --no-cache python3 py3-pip build-base libffi-dev openssl-dev curl poetry python3-dev
+    apk add --no-cache build-base libffi-dev openssl-dev curl poetry python3-dev
 
 RUN poetry config virtualenvs.in-project true
 
