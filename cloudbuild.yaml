@@ -1,5 +1,14 @@
 steps:
-  # Set up buildx
+  # Clean up any existing buildx builders to avoid conflicts
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        echo "Cleaning up old buildx instances"
+        docker buildx rm mybuilder || true
+
+  # Set up a new buildx builder
   - name: "gcr.io/cloud-builders/docker"
     args: ["buildx", "create", "--name", "mybuilder", "--use"]
 
@@ -92,6 +101,5 @@ timeout: "3600s"
 
 options:
   machineType: "N1_HIGHCPU_8"
-
 options:
   machineType: "N1_HIGHCPU_8"
