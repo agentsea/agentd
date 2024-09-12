@@ -24,8 +24,8 @@ steps:
       - |
         docker buildx build \
           --platform linux/amd64,linux/arm64 \
-          -t gcr.io/$PROJECT_ID/agentd-webtop:latest \
-          -t gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
+          -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest \
+          -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
           --push \
           .
 
@@ -35,12 +35,12 @@ steps:
     args:
       - "-c"
       - |
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
+        docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest
+        docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA}
 
 images:
-  - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
-  - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}"
+  - "us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest"
+  - "us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA}"
 
 timeout: "3600s"
 
