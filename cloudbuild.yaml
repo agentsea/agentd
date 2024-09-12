@@ -51,18 +51,14 @@ steps:
       - "-c"
       - |
         echo "Creating multi-arch manifest for latest tag"
-        docker manifest create gcr.io/$PROJECT_ID/agentd-webtop:latest \
+        docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:latest \
           gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 \
           gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
-        echo "Pushing multi-arch manifest for latest tag"
-        docker manifest push gcr.io/$PROJECT_ID/agentd-webtop:latest
 
         echo "Creating multi-arch manifest for SHORT_SHA tag"
-        docker manifest create gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
+        docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
           gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64 \
           gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64
-        echo "Pushing multi-arch manifest for SHORT_SHA tag"
-        docker manifest push gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
 
   # Verify the final multi-arch images
   - name: "gcr.io/cloud-builders/docker"
