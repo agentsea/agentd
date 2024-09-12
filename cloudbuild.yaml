@@ -17,6 +17,7 @@ steps:
       - "Dockerfile"
       - "--push"
       - "."
+    waitFor: ["-"]
 
   # Build for ARM64
   - name: "gcr.io/cloud-builders/docker"
@@ -32,6 +33,7 @@ steps:
       - "Dockerfile"
       - "--push"
       - "."
+    waitFor: ["-"]
 
   # Verify individual architecture images
   - name: "gcr.io/cloud-builders/docker"
@@ -40,9 +42,9 @@ steps:
       - "-c"
       - |
         echo "Verifying AMD64 image:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 || exit 1
         echo "Verifying ARM64 image:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64 || exit 1
 
   # Create and push multi-arch manifest
   - name: "gcr.io/cloud-builders/docker"
@@ -50,15 +52,22 @@ steps:
     args:
       - "-c"
       - |
+        set -e
         echo "Creating multi-arch manifest for latest tag"
-        docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:latest \
+        if ! docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:latest \
           gcr.io/$PROJECT_ID/agentd-webtop:latest-amd64 \
-          gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64
+          gcr.io/$PROJECT_ID/agentd-webtop:latest-arm64; then
+          echo "Failed to create multi-arch manifest for latest tag" >&2
+          exit 1
+        fi
 
         echo "Creating multi-arch manifest for SHORT_SHA tag"
-        docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
+        if ! docker buildx imagetools create -t gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} \
           gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-amd64 \
-          gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64
+          gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64; then
+          echo "Failed to create multi-arch manifest for SHORT_SHA tag" >&2
+          exit 1
+        fi
 
   # Verify the final multi-arch images
   - name: "gcr.io/cloud-builders/docker"
@@ -67,9 +76,9 @@ steps:
       - "-c"
       - |
         echo "Verifying final multi-arch image for latest tag:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:latest || exit 1
         echo "Verifying final multi-arch image for SHORT_SHA tag:"
-        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}
+        docker buildx imagetools inspect gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA} || exit 1
 
 images:
   - "gcr.io/$PROJECT_ID/agentd-webtop:latest"
@@ -80,6 +89,9 @@ images:
   - "gcr.io/$PROJECT_ID/agentd-webtop:${SHORT_SHA}-arm64"
 
 timeout: "3600s"
+
+options:
+  machineType: "N1_HIGHCPU_8"
 
 options:
   machineType: "N1_HIGHCPU_8"
