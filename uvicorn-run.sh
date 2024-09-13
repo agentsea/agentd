@@ -1,4 +1,5 @@
 #!/bin/sh
 cd /config/agentd
-source /config/agentd/.venv/bin/activate  # Activate the virtual environment
+VENV_PATH=$(poetry env info -p)
+source "$VENV_PATH/bin/activate"
 exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000
