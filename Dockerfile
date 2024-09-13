@@ -1,37 +1,44 @@
 FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest
 
-# Install necessary packages without running 'apk update'
+# Install necessary build tools and libraries
 RUN apk add --no-cache \
     build-base \
     libffi-dev \
     openssl-dev \
+    zlib-dev \
+    bzip2-dev \
+    readline-dev \
+    sqlite-dev \
+    ncurses-dev \
+    xz-dev \
+    tk-dev \
+    gdbm-dev \
+    db-dev \
+    libpcap-dev \
+    linux-headers \
     curl \
-    python3-dev \
-    py3-pip
+    wget
 
-# Install Poetry using pip
-RUN pip3 install --no-cache-dir poetry
+# Set environment variables for Python installation
+ENV PYTHON_VERSION=3.12.0
+ENV PYTHON_INSTALL_DIR=/opt/python$PYTHON_VERSION
 
-# Copy your project into the container
-COPY . /app/agentd/
+# Download and build Python from source
+RUN mkdir -p /tmp/python-build && \
+    cd /tmp/python-build && \
+    wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz && \
+    tar -xf Python-${PYTHON_VERSION}.tar.xz && \
+    cd Python-${PYTHON_VERSION} && \
+    ./configure --prefix=${PYTHON_INSTALL_DIR} --enable-optimizations && \
+    make -j$(nproc) && \
+    make altinstall && \
+    rm -rf /tmp/python-build
 
-# Set the working directory
-WORKDIR /app/agentd
+# Update PATH to include the new Python installation
+ENV PATH="${PYTHON_INSTALL_DIR}/bin:${PATH}"
 
-# Configure Poetry to create virtual environments inside the project directory
-RUN poetry config virtualenvs.in-project true
+# Verify Python installation
+RUN python3.12 --version
 
-# Install dependencies without specifying the system Python interpreter
-RUN poetry install --no-interaction --no-ansi
-
-# Create the service directory
-RUN mkdir -p /etc/services.d/agentd
-
-# Copy the service script
-COPY uvicorn-run.sh /etc/services.d/agentd/run
-
-# Make the service script executable
-RUN chmod +x /etc/services.d/agentd/run
-
-# Expose the necessary port
-EXPOSE 8000
+# Install Poetry using the custom Python
+RUN python3.12 -m pip install --no-cache-dir poetry
