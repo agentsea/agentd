@@ -23,14 +23,14 @@ RUN apk add --no-cache \
 ENV PYTHON_VERSION=3.12.0
 ENV PYTHON_INSTALL_DIR=/opt/python$PYTHON_VERSION
 
-# Download and build Python from source
+# Download and build Python from source with modified flags
 RUN mkdir -p /tmp/python-build && \
     cd /tmp/python-build && \
     wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz && \
     tar -xf Python-${PYTHON_VERSION}.tar.xz && \
     cd Python-${PYTHON_VERSION} && \
-    ./configure --prefix=${PYTHON_INSTALL_DIR} --enable-optimizations && \
-    make -j$(nproc) && \
+    CFLAGS="-Wno-error -O2" ./configure --prefix=${PYTHON_INSTALL_DIR} --enable-optimizations && \
+    make -j$(nproc) CFLAGS="-Wno-error -O2" && \
     make altinstall && \
     rm -rf /tmp/python-build
 
