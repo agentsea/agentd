@@ -1,8 +1,6 @@
 FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest
 
-ARG PYTHON_VERSION=3.12.0
-
-# Install necessary packages
+# Install necessary build tools and libraries
 RUN apk add --no-cache \
     build-base \
     libffi-dev \
@@ -22,33 +20,33 @@ RUN apk add --no-cache \
     git \
     wget
 
-# Install Python using pyenv
-RUN curl https://pyenv.run | bash
+# Set environment variables for Python installation
+ENV PYTHON_VERSION=3.12.0
 ENV PYENV_ROOT="/root/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PATH"
-RUN eval "$(pyenv init -)"
-RUN pyenv install ${PYTHON_VERSION}
 
-# Create /app directory and set local Python version
-RUN mkdir -p /app
-WORKDIR /app
-RUN pyenv local ${PYTHON_VERSION}
+# Install pyenv
+RUN curl https://pyenv.run | bash
+
+# Add pyenv to PATH and initialize
+RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc && \
+    echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc && \
+    echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+
+# Install Python using pyenv
+RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION}"
 
 # Verify Python installation
-RUN python --version
+RUN /bin/bash -c "source ~/.bashrc && python --version"
 
 # Install Poetry
-RUN curl -sSL https://install.python-poetry.org | python -
+RUN /bin/bash -c "source ~/.bashrc && curl -sSL https://install.python-poetry.org | python -"
 
-# Add pyenv and poetry to PATH
-ENV PATH="/root/.pyenv/shims:/root/.local/bin:$PATH"
+# Add Poetry to PATH
+ENV PATH="/root/.local/bin:$PATH"
 
 # Verify Poetry installation
 RUN poetry --version
 
-# Set up shell to use pyenv
-RUN echo 'eval "$(pyenv init -)"' >> ~/.profile
-RUN echo 'eval "$(pyenv init --path)"' >> ~/.profile
-
-# Set WORKDIR to /app for subsequent commands
+# Set working directory
 WORKDIR /app
