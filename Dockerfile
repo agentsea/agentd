@@ -42,14 +42,14 @@ RUN /bin/bash -c "source ~/.bashrc && python --version"
 # Install Poetry
 RUN /bin/bash -c "source ~/.bashrc && curl -sSL https://install.python-poetry.org | python -"
 
-# Add Poetry to PATH
-ENV PATH="/root/.local/bin:$PATH"
+# Add Poetry to PATH (note the change from /root to /config)
+ENV PATH="/config/.local/bin:$PATH"
 
 # Add Poetry to .bashrc for interactive shells
-RUN echo 'export PATH="/root/.local/bin:$PATH"' >> ~/.bashrc
+RUN echo 'export PATH="/config/.local/bin:$PATH"' >> ~/.bashrc
 
 # Verify Poetry installation
-RUN /bin/bash -c "source ~/.bashrc && poetry --version"
+RUN /bin/bash -c "source ~/.bashrc && /config/.local/bin/poetry --version"
 
 # Set working directory
 WORKDIR /app
