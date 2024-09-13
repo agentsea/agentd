@@ -1,6 +1,8 @@
 FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest
 
-# Install necessary build tools and libraries
+ARG PYTHON_VERSION=3.12.0
+
+# Install necessary packages
 RUN apk add --no-cache \
     build-base \
     libffi-dev \
@@ -19,26 +21,21 @@ RUN apk add --no-cache \
     curl \
     wget
 
-# Set environment variables for Python installation
-ENV PYTHON_VERSION=3.12.0
-ENV PYTHON_INSTALL_DIR=/opt/python$PYTHON_VERSION
-
-# Download and build Python from source with modified flags
-RUN mkdir -p /tmp/python-build && \
-    cd /tmp/python-build && \
-    wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz && \
-    tar -xf Python-${PYTHON_VERSION}.tar.xz && \
-    cd Python-${PYTHON_VERSION} && \
-    CFLAGS="-Wno-error -O2" ./configure --prefix=${PYTHON_INSTALL_DIR} --enable-optimizations && \
-    make -j$(nproc) CFLAGS="-Wno-error -O2" && \
-    make altinstall && \
-    rm -rf /tmp/python-build
-
-# Update PATH to include the new Python installation
-ENV PATH="${PYTHON_INSTALL_DIR}/bin:${PATH}"
+# Install Python using pyenv
+RUN curl https://pyenv.run | bash
+ENV PATH="/root/.pyenv/bin:$PATH"
+RUN eval "$(pyenv init -)"
+RUN pyenv install ${PYTHON_VERSION}
+RUN pyenv global ${PYTHON_VERSION}
 
 # Verify Python installation
-RUN python3.12 --version
+RUN python --version
 
-# Install Poetry using the custom Python
-RUN python3.12 -m pip install --no-cache-dir poetry
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python -
+
+# Add pyenv and poetry to PATH
+ENV PATH="/root/.pyenv/versions/${PYTHON_VERSION}/bin:/root/.local/bin:$PATH"
+
+# Verify Poetry installation
+RUN poetry --version

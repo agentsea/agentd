@@ -26,6 +26,7 @@ steps:
           --platform linux/amd64,linux/arm64 \
           -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest \
           -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
+          --build-arg PYTHON_VERSION=3.12.0 \
           --push \
           .
 
