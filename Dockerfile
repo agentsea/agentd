@@ -1,36 +1,37 @@
 FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest
 
-# Update package list and install dependencies using apt
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
+# Install necessary packages without running 'apk update'
+RUN apk add --no-cache \
+    build-base \
     libffi-dev \
-    libssl-dev \
+    openssl-dev \
     curl \
-    python3 \
     python3-dev \
-    python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+    py3-pip
 
-# Install Poetry
+# Install Poetry using pip
 RUN pip3 install --no-cache-dir poetry
 
-# Copy your project
+# Copy your project into the container
 COPY . /app/agentd/
 
-# Set working directory
+# Set the working directory
 WORKDIR /app/agentd
 
 # Configure Poetry to create virtual environments inside the project directory
 RUN poetry config virtualenvs.in-project true
 
-# Install dependencies without specifying system Python
+# Install dependencies without specifying the system Python interpreter
 RUN poetry install --no-interaction --no-ansi
 
-# Set up your service script
+# Create the service directory
 RUN mkdir -p /etc/services.d/agentd
+
+# Copy the service script
 COPY uvicorn-run.sh /etc/services.d/agentd/run
+
+# Make the service script executable
 RUN chmod +x /etc/services.d/agentd/run
 
-# Expose necessary ports
+# Expose the necessary port
 EXPOSE 8000
