@@ -33,23 +33,23 @@ RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc && \
     echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc && \
     echo 'eval "$(pyenv init -)"' >> ~/.bashrc
 
-# Install Python using pyenv
-RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION}"
+# # Install Python using pyenv
+# RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION}"
 
-# Verify Python installation
-RUN /bin/bash -c "source ~/.bashrc && python --version"
+# # Verify Python installation
+# RUN /bin/bash -c "source ~/.bashrc && python --version"
 
-# Install Poetry
-RUN /bin/bash -c "source ~/.bashrc && curl -sSL https://install.python-poetry.org | python -"
+# # Install Poetry
+# RUN /bin/bash -c "source ~/.bashrc && curl -sSL https://install.python-poetry.org | python -"
 
-# Add Poetry to PATH (note the change from /root to /config)
-ENV PATH="/config/.local/bin:$PATH"
+# # Add Poetry to PATH (note the change from /root to /config)
+# ENV PATH="/config/.local/bin:$PATH"
 
-# Add Poetry to .bashrc for interactive shells
-RUN echo 'export PATH="/config/.local/bin:$PATH"' >> ~/.bashrc
+# # Add Poetry to .bashrc for interactive shells
+# RUN echo 'export PATH="/config/.local/bin:$PATH"' >> ~/.bashrc
 
-# Verify Poetry installation
-RUN /bin/bash -c "source ~/.bashrc && /config/.local/bin/poetry --version"
+# # Verify Poetry installation
+# RUN /bin/bash -c "source ~/.bashrc && /config/.local/bin/poetry --version"
 
-# Set working directory
-WORKDIR /app
+# # Set working directory
+# WORKDIR /app
