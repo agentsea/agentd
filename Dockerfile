@@ -18,6 +18,7 @@ RUN apk add --no-cache \
     linux-headers \
     curl \
     git \
+    poetry \
     wget
 
 # Set environment variables for Python installation
@@ -40,14 +41,20 @@ RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION}"
 # Set working directory
 WORKDIR /app
 
-# Copy requirements.txt into the container
-COPY requirements.txt /app/
+# Copy only pyproject.toml and poetry.lock (if it exists)
+COPY pyproject.toml poetry.lock* /app/
 
-# Install Python packages from requirements.txt
+# Generate requirements.txt file
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+# Install Python packages from the generated requirements.txt
 RUN /bin/bash -c "source ~/.bashrc && \
     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m pip install --upgrade pip && \
     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install -r requirements.txt"
+
+# Copy the rest of your application
+COPY . /app
 
 # Add the installed Python to PATH
 ENV PATH="$PYENV_ROOT/versions/${PYTHON_VERSION}/bin:$PATH"
