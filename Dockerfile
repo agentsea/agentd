@@ -44,9 +44,10 @@ WORKDIR /app
 COPY requirements.txt /app/
 
 # Install Python packages from requirements.txt
-RUN /bin/bash -c "source ~/.bashrc && $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
+RUN /bin/bash -c "source ~/.bashrc && \
+    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m pip install --upgrade pip && \
-    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install --no-deps -r requirements.txt"
+    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install -r requirements.txt"
 
 # Add the installed Python to PATH
 ENV PATH="$PYENV_ROOT/versions/${PYTHON_VERSION}/bin:$PATH"

@@ -14,8 +14,6 @@ mss = "^9.0.1"
 pynput = "^1.7.6"
 psutil = "^5.9.8"
 python-xlib = "^0.33"
-miniwob = "^1.0"
-selenium = "^4.24.0"
 
 
 [tool.poetry.group.dev.dependencies]
