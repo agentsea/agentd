@@ -22,15 +22,16 @@ RUN apk add --no-cache \
 
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.0
-ENV PYENV_ROOT="/root/.pyenv"
+ENV PYENV_ROOT="/config/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PATH"
 
 # Install pyenv
 RUN curl https://pyenv.run | bash
 
 # Add pyenv to PATH and initialize
-RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc && \
-    echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc && \
+RUN echo 'export PYENV_ROOT="/config/.pyenv"' >> ~/.bashrc && \
+    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc && \
+    echo 'eval "$(pyenv init --path)"' >> ~/.bashrc && \
     echo 'eval "$(pyenv init -)"' >> ~/.bashrc
 
 # Install Python using pyenv (without setting it as global)
@@ -43,7 +44,9 @@ WORKDIR /app
 COPY requirements.txt /app/
 
 # Install Python packages from requirements.txt
-RUN /bin/bash -c "source ~/.bashrc && $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install -r requirements.txt"
+RUN /bin/bash -c "source ~/.bashrc && $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
+    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m pip install --upgrade pip && \
+    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install -r requirements.txt"
 
 # Add the installed Python to PATH
 ENV PATH="$PYENV_ROOT/versions/${PYTHON_VERSION}/bin:$PATH"
