@@ -47,14 +47,14 @@ COPY pyproject.toml poetry.lock* /app/
 # Generate requirements.txt file
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-# Install Python packages from the generated requirements.txt
-RUN /bin/bash -c "source ~/.bashrc && \
-    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
-    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m pip install --upgrade pip && \
-    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install -r requirements.txt"
+# # Install Python packages from the generated requirements.txt
+# RUN /bin/bash -c "source ~/.bashrc && \
+#     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
+#     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m pip install --upgrade pip && \
+#     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install -r requirements.txt"
 
-# Copy the rest of your application
-COPY . /app
+# # Copy the rest of your application
+# COPY . /app
 
-# Add the installed Python to PATH
-ENV PATH="$PYENV_ROOT/versions/${PYTHON_VERSION}/bin:$PATH"
+# # Add the installed Python to PATH
+# ENV PATH="$PYENV_ROOT/versions/${PYTHON_VERSION}/bin:$PATH"
