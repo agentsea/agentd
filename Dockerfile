@@ -18,7 +18,6 @@ RUN apk add --no-cache \
     linux-headers \
     curl \
     git \
-    poetry \
     wget
 
 # Set environment variables for Python installation
@@ -41,22 +40,18 @@ RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION}"
 # Set working directory
 WORKDIR /app
 
-# Copy only pyproject.toml and poetry.lock (if it exists)
-COPY pyproject.toml poetry.lock* /app/
+COPY pyproject.toml /app/
+
+RUN poetry lock --no-update
 
 # Generate requirements.txt file
-RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes --without-urls
 
-RUN cat requirements.txt
+# Create a virtual environment
+RUN /bin/bash -c "source ~/.bashrc && \
+    $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /app/venv"
 
-# # Install Python packages from the generated requirements.txt
-# RUN /bin/bash -c "source ~/.bashrc && \
-#     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
-#     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m pip install --upgrade pip && \
-#     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/pip install -r requirements.txt"
-
-# # Copy the rest of your application
-# COPY . /app
-
-# # Add the installed Python to PATH
-# ENV PATH="$PYENV_ROOT/versions/${PYTHON_VERSION}/bin:$PATH"
+# Activate the virtual environment and install dependencies
+RUN /bin/bash -c "source /app/venv/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r requirements.txt"
