@@ -47,6 +47,8 @@ COPY pyproject.toml poetry.lock* /app/
 # Generate requirements.txt file
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
+RUN cat requirements.txt
+
 # # Install Python packages from the generated requirements.txt
 # RUN /bin/bash -c "source ~/.bashrc && \
 #     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m ensurepip && \
