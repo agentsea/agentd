@@ -18,6 +18,7 @@ RUN apk add --no-cache \
     linux-headers \
     curl \
     git \
+    poetry \ 
     wget
 
 # Set environment variables for Python installation
