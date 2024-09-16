@@ -18,7 +18,7 @@ RUN apk add --no-cache \
     linux-headers \
     curl \
     git \
-    poetry \ 
+    poetry \
     wget
 
 # Set environment variables for Python installation
@@ -38,29 +38,23 @@ RUN echo 'export PYENV_ROOT="/config/.pyenv"' >> ~/.bashrc && \
 # Install Python using pyenv (without setting it as global)
 RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION}"
 
+# Switch to non-root user 'abc'
+USER abc
+
 # Set working directory
 WORKDIR /app
 
-COPY pyproject.toml /app/
-
-RUN poetry lock --no-update
-
-# Generate requirements.txt file
-RUN poetry export -f requirements.txt --output requirements.txt --without-hashes --without-urls
+# Copy project files
+COPY --chown=abc:abc pyproject.toml poetry.lock /app/
 
 # Create a virtual environment
 RUN /bin/bash -c "source ~/.bashrc && \
     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /app/venv"
 
-RUN whoami
-
-USER abc
-
-RUN whoami
-
-# Activate the virtual environment and install dependencies
+# Activate the virtual environment and install dependencies using Poetry
 RUN /bin/bash -c "source /app/venv/bin/activate && \
-    pip install --upgrade pip && \
-    pip install -r requirements.txt"
+    poetry config virtualenvs.create false && \
+    poetry install --no-root"
 
-RUN chown -R abc:abc /home/abc
+# Copy the rest of your application code
+COPY --chown=abc:abc . /app/
