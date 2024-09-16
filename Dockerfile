@@ -40,8 +40,12 @@ RUN echo 'export PYENV_ROOT="/config/.pyenv"' >> /etc/profile.d/pyenv.sh && \
 # Create the application directory and set ownership to 'abc'
 RUN mkdir -p /config/app && chown -R abc:abc /config/app
 
+RUN whoami
+
 # Switch to non-root user 'abc'
 USER abc
+
+RUN whoami
 
 # Set working directory to '/config/app'
 WORKDIR /config/app
@@ -60,6 +64,8 @@ RUN /bin/bash -c "$PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /con
 
 # Update PATH to include the virtual environment's bin directory
 ENV PATH="/config/app/venv/bin:$PATH"
+
+USER root
 
 # **Install poetry into the virtual environment explicitly**
 # RUN /bin/bash -c "/config/app/venv/bin/pip install poetry"
