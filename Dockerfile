@@ -47,11 +47,8 @@ USER abc
 # Set working directory to '/config/app'
 WORKDIR /config/app
 
-# Ensure environment variables are available for user 'abc'
-RUN echo 'export PYENV_ROOT="/config/.pyenv"' >> ~/.bashrc && \
-    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc && \
-    echo 'eval "$(pyenv init --path)"' >> ~/.bashrc && \
-    echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+# **Remove the step modifying ~/.bashrc as 'abc'** (this step causes the permission error)
+# **It's unnecessary because the environment variables are already set in /etc/profile.d/pyenv.sh**
 
 # Copy project files
 COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
@@ -73,3 +70,6 @@ COPY --chown=abc:abc . /config/app/
 
 # Expose the port that your application will run on
 EXPOSE 8000
+
+# (Optional) Set the default command to run your application
+# CMD ["uvicorn", "your_module:app", "--host", "0.0.0.0", "--port", "8000"]
