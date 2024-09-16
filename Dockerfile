@@ -37,11 +37,12 @@ RUN mkdir -p /config/app && chown -R abc:abc /config/app
 # Switch to non-root user 'abc'
 USER abc
 
-# Set up pyenv for 'abc' user
-RUN echo 'export PYENV_ROOT="/config/.pyenv"' >> ~/.bashrc && \
-    echo 'export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"' >> ~/.bashrc && \
-    echo 'eval "$(pyenv init --path)"' >> ~/.bashrc && \
-    echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+# Create a shell script for environment setup
+RUN echo 'export PYENV_ROOT="/config/.pyenv"' > /config/app/pyenv_setup.sh && \
+    echo 'export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"' >> /config/app/pyenv_setup.sh && \
+    echo 'eval "$(pyenv init --path)"' >> /config/app/pyenv_setup.sh && \
+    echo 'eval "$(pyenv init -)"' >> /config/app/pyenv_setup.sh && \
+    chmod +x /config/app/pyenv_setup.sh
 
 # Set working directory to '/config/app'
 WORKDIR /config/app
@@ -49,17 +50,20 @@ WORKDIR /config/app
 # Copy project files
 COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
 
-# Reload bashrc to ensure pyenv is initialized
-RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION}"
+# Install Python using pyenv as 'abc' by sourcing the setup script
+RUN /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv install ${PYTHON_VERSION}"
+
+# Set the global Python version
+RUN /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv global ${PYTHON_VERSION}"
 
 # Create a virtual environment using the installed Python version
-RUN /bin/bash -c "source ~/.bashrc && pyenv global ${PYTHON_VERSION} && python -m venv /config/app/venv"
+RUN /bin/bash -c "source /config/app/pyenv_setup.sh && python -m venv /config/app/venv"
 
 # Update PATH to include the virtual environment's bin directory
 ENV PATH="/config/app/venv/bin:$PATH"
 
 # Install project dependencies using Poetry (assuming you have a pyproject.toml)
-RUN /bin/bash -c "source ~/.bashrc && pip install poetry && poetry install"
+RUN /bin/bash -c "source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && pip install poetry && poetry install"
 
-# Ensure that the environment is not altered for other users
+# Switch back to root if needed
 USER root
