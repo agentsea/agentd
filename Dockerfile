@@ -18,7 +18,6 @@ RUN apk add --no-cache \
     linux-headers \
     curl \
     git \
-    poetry \
     wget
 
 # Set environment variables for Python installation
@@ -47,23 +46,26 @@ USER abc
 # Set working directory to '/config/app'
 WORKDIR /config/app
 
-# **Set `HOME` environment variable to `/config/app`**
+# Set HOME environment variable to /config/app
 ENV HOME=/config/app
 
 # Copy project files
 COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
 
 # Install Python using pyenv as 'abc'
-RUN /bin/bash -l -c "pyenv install ${PYTHON_VERSION}"
+RUN /bin/bash -c "pyenv install ${PYTHON_VERSION}"
 
 # Create a virtual environment as 'abc'
-RUN /bin/bash -l -c "$PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /config/app/venv"
+RUN /bin/bash -c "$PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /config/app/venv"
 
 # Update PATH to include the virtual environment's bin directory
 ENV PATH="/config/app/venv/bin:$PATH"
 
+# Install poetry into the virtual environment
+RUN /bin/bash -c "pip install poetry"
+
 # Install dependencies using Poetry within the virtual environment
-RUN /bin/bash -l -c "poetry config virtualenvs.create false && poetry install --no-root"
+RUN /bin/bash -c "poetry config virtualenvs.create false && poetry install --no-root"
 
 # Copy the rest of your application code
 COPY --chown=abc:abc . /config/app/
@@ -71,9 +73,3 @@ COPY --chown=abc:abc . /config/app/
 # Expose the port that your application will run on
 EXPOSE 8000
 
-# (Optional) Set the default command to run your application
-# CMD ["uvicorn", "your_module:app", "--host", "0.0.0.0", "--port", "8000"]
-
-
-# (Optional) Set the default command to run your application
-# CMD ["uvicorn", "your_module:app", "--host", "0.0.0.0", "--port", "8000"]
