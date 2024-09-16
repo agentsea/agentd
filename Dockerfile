@@ -61,15 +61,14 @@ RUN /bin/bash -c "$PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /con
 # Update PATH to include the virtual environment's bin directory
 ENV PATH="/config/app/venv/bin:$PATH"
 
-# Install poetry into the virtual environment
-RUN /bin/bash -c "pip install poetry"
+# **Install poetry into the virtual environment explicitly**
+# RUN /bin/bash -c "/config/app/venv/bin/pip install poetry"
 
-# Install dependencies using Poetry within the virtual environment
-RUN /bin/bash -c "poetry config virtualenvs.create false && poetry install --no-root"
+# # Install dependencies using Poetry within the virtual environment
+# RUN /bin/bash -c "poetry config virtualenvs.create false && poetry install --no-root"
 
-# Copy the rest of your application code
-COPY --chown=abc:abc . /config/app/
+# # Copy the rest of your application code
+# COPY --chown=abc:abc . /config/app/
 
-# Expose the port that your application will run on
-EXPOSE 8000
-
+# # Expose the port that your application will run on
+# EXPOSE 8000
