@@ -21,25 +21,22 @@ RUN apk add --no-cache \
     poetry \
     wget
 
+# Switch to non-root user 'abc' before installing pyenv
+USER abc
+
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.0
-ENV PYENV_ROOT="/config/.pyenv"
+ENV PYENV_ROOT="/home/abc/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PATH"
 
-# Install pyenv
+# Install pyenv as 'abc'
 RUN curl https://pyenv.run | bash
 
-# Add pyenv to PATH and initialize
-RUN echo 'export PYENV_ROOT="/config/.pyenv"' >> ~/.bashrc && \
+# Add pyenv to PATH and initialize for 'abc'
+RUN echo 'export PYENV_ROOT="/home/abc/.pyenv"' >> ~/.bashrc && \
     echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc && \
     echo 'eval "$(pyenv init --path)"' >> ~/.bashrc && \
     echo 'eval "$(pyenv init -)"' >> ~/.bashrc
-
-# Install Python using pyenv (without setting it as global)
-RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION}"
-
-# Switch to non-root user 'abc'
-USER abc
 
 # Set working directory
 WORKDIR /app
@@ -47,7 +44,10 @@ WORKDIR /app
 # Copy project files
 COPY --chown=abc:abc pyproject.toml poetry.lock /app/
 
-# Create a virtual environment
+# Install Python using pyenv as 'abc'
+RUN /bin/bash -c "source ~/.bashrc && pyenv install ${PYTHON_VERSION}"
+
+# Create a virtual environment as 'abc'
 RUN /bin/bash -c "source ~/.bashrc && \
     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /app/venv"
 
