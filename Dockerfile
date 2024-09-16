@@ -34,6 +34,9 @@ RUN chown -R abc:abc /config/.pyenv
 # Create the application directory and set ownership to 'abc'
 RUN mkdir -p /config/app && chown -R abc:abc /config/app
 
+# Ensure the cache directory exists and is owned by 'abc'
+RUN mkdir -p /config/app/.cache && chown -R abc:abc /config/app/.cache
+
 # Switch to non-root user 'abc'
 USER abc
 
@@ -51,19 +54,20 @@ WORKDIR /config/app
 COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
 
 # Install Python using pyenv as 'abc' by sourcing the setup script
-RUN /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv install ${PYTHON_VERSION}"
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv install ${PYTHON_VERSION}"
 
 # Set the global Python version
-RUN /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv global ${PYTHON_VERSION}"
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv global ${PYTHON_VERSION}"
 
 # Create a virtual environment using the installed Python version
-RUN /bin/bash -c "source /config/app/pyenv_setup.sh && python -m venv /config/app/venv"
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && python -m venv /config/app/venv"
 
 # Update PATH to include the virtual environment's bin directory
 ENV PATH="/config/app/venv/bin:$PATH"
 
-# Install project dependencies using Poetry (assuming you have a pyproject.toml)
-RUN /bin/bash -c "source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && pip install poetry && poetry install"
+# Install project dependencies using Poetry
+RUN XDG_CACHE_HOME=/config/app/.cache POETRY_CACHE_DIR=/config/app/.cache/pypoetry /bin/bash -c \
+    "source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && pip install --no-cache-dir poetry && poetry install"
 
 # Switch back to root if needed
 USER root
