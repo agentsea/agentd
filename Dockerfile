@@ -52,7 +52,15 @@ RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 RUN /bin/bash -c "source ~/.bashrc && \
     $PYENV_ROOT/versions/${PYTHON_VERSION}/bin/python -m venv /app/venv"
 
+RUN whoami
+
+USER abc
+
+RUN whoami
+
 # Activate the virtual environment and install dependencies
 RUN /bin/bash -c "source /app/venv/bin/activate && \
     pip install --upgrade pip && \
     pip install -r requirements.txt"
+
+RUN chown -R abc:abc /home/abc
