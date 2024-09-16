@@ -50,7 +50,7 @@ RUN echo 'export PYENV_ROOT="/config/.pyenv"' > /config/app/pyenv_setup.sh && \
 # Set working directory to '/config/app'
 WORKDIR /config/app
 
-# Copy project files
+# Copy project files (only pyproject.toml and poetry.lock to leverage caching)
 COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
 
 # Install Python using pyenv as 'abc' by sourcing the setup script
@@ -69,5 +69,24 @@ ENV PATH="/config/app/venv/bin:$PATH"
 RUN XDG_CACHE_HOME=/config/app/.cache POETRY_CACHE_DIR=/config/app/.cache/pypoetry /bin/bash -c \
     "source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && pip install --no-cache-dir poetry && poetry install"
 
-# Switch back to root if needed
+# Copy the rest of your application code
+COPY --chown=abc:abc . /config/app/
+
+# Switch back to root to set up the s6 service
 USER root
+
+# Create the s6 service directory for your application
+RUN mkdir -p /etc/services.d/uvicorn
+
+# Copy the s6 run script into the service directory
+COPY uvicorn_run /etc/services.d/uvicorn/run
+
+# Make the run script executable
+RUN chmod +x /etc/services.d/uvicorn/run
+
+# Create the logs directory and set ownership to 'abc'
+RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs
+
+# Expose the port uvicorn is running on (if needed)
+EXPOSE 8000
+

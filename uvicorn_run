@@ -1,0 +1,10 @@
+#!/usr/bin/execlineb -P
+
+with-contenv
+
+# Switch to the 'abc' user
+s6-setuidgid abc
+s6-log n20 s1000000 T /config/app/logs/uvicorn
+
+# Source the pyenv setup script and activate the virtual environment
+bash -c 'source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000'
