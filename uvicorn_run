@@ -4,7 +4,8 @@ with-contenv
 
 # Switch to the 'abc' user
 s6-setuidgid abc
-s6-log n20 s1000000 T /config/app/logs/uvicorn
 
 # Source the pyenv setup script and activate the virtual environment
-bash -c 'source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000'
+# Then run uvicorn, redirecting logs to a file
+bash -c 'source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && \
+exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000 >> /config/app/logs/uvicorn.log 2>&1'

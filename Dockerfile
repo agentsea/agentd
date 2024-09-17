@@ -59,6 +59,11 @@ RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_set
 # Set the global Python version
 RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv global ${PYTHON_VERSION}"
 
+# Ensure 'abc' owns the pyenv directory after installation
+USER root
+RUN chown -R abc:abc /config/.pyenv
+USER abc
+
 # Create a virtual environment using the installed Python version
 RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && python -m venv /config/app/venv"
 
@@ -94,6 +99,7 @@ RUN chmod +x /etc/services.d/uvicorn/run
 
 # Create the logs directory and set ownership to 'abc'
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs
+RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
