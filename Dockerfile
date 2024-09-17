@@ -65,9 +65,17 @@ RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_set
 # Update PATH to include the virtual environment's bin directory
 ENV PATH="/config/app/venv/bin:$PATH"
 
+# **Set environment variable to prevent poetry from using keyring**
+ENV POETRY_NO_KEYRING=1
+
+# **Upgrade pip to the latest version**
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && \
+    source /config/app/venv/bin/activate && pip install --no-cache-dir --upgrade pip"
+
 # Install project dependencies using Poetry
 RUN XDG_CACHE_HOME=/config/app/.cache POETRY_CACHE_DIR=/config/app/.cache/pypoetry /bin/bash -c \
-    "source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && pip install --no-cache-dir poetry && poetry install"
+    "source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && \
+    pip install --no-cache-dir poetry && poetry install"
 
 # Copy the rest of your application code
 COPY --chown=abc:abc . /config/app/
@@ -89,4 +97,5 @@ RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
+
 
