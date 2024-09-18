@@ -54,10 +54,12 @@ WORKDIR /config/app
 COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
 
 # Install Python using pyenv as 'abc' by sourcing the setup script
-RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv install ${PYTHON_VERSION}"
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c \
+    "source /config/app/pyenv_setup.sh && pyenv install ${PYTHON_VERSION}"
 
 # Set the global Python version
-RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && pyenv global ${PYTHON_VERSION}"
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c \
+    "source /config/app/pyenv_setup.sh && pyenv global ${PYTHON_VERSION}"
 
 # Ensure 'abc' owns the pyenv directory after installation
 USER root
@@ -65,43 +67,63 @@ RUN chown -R abc:abc /config/.pyenv
 USER abc
 
 # Create a virtual environment using the installed Python version
-RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && python -m venv /config/app/venv"
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c \
+    "source /config/app/pyenv_setup.sh && python -m venv /config/app/venv"
 
 # Update PATH to include the virtual environment's bin directory
 ENV PATH="/config/app/venv/bin:$PATH"
 
-# **Set environment variable to prevent poetry from using keyring**
+# Set environment variable to prevent poetry from using keyring
 ENV POETRY_NO_KEYRING=1
 
-# **Upgrade pip to the latest version**
-RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c "source /config/app/pyenv_setup.sh && \
-    source /config/app/venv/bin/activate && pip install --no-cache-dir --upgrade pip"
+# Upgrade pip to the latest version
+RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c \
+    "source /config/app/pyenv_setup.sh && \
+     source /config/app/venv/bin/activate && \
+     pip install --no-cache-dir --upgrade pip"
 
 # Install project dependencies using Poetry
-RUN XDG_CACHE_HOME=/config/app/.cache POETRY_CACHE_DIR=/config/app/.cache/pypoetry /bin/bash -c \
-    "source /config/app/pyenv_setup.sh && source /config/app/venv/bin/activate && \
-    pip install --no-cache-dir poetry && poetry install"
+RUN XDG_CACHE_HOME=/config/app/.cache \
+    POETRY_CACHE_DIR=/config/app/.cache/pypoetry \
+    /bin/bash -c "source /config/app/pyenv_setup.sh && \
+    source /config/app/venv/bin/activate && \
+    pip install --no-cache-dir poetry && \
+    poetry install"
 
 # Copy the rest of your application code
 COPY --chown=abc:abc . /config/app/
 
-# Switch back to root to set up the s6 service
+# Create the logs and recordings directories and set ownership to 'abc'
+RUN mkdir -p /config/app/logs && chown -R abc:abc /config/app/logs
+RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
+
+# Switch back to root to set up the s6-overlay v3 service
 USER root
 
-# Create the s6 service directory for your application
-RUN mkdir -p /etc/services.d/uvicorn
+# Create the s6-overlay v3 service directory for your application
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn
 
-# Copy the s6 run script into the service directory
-COPY uvicorn_run /etc/services.d/uvicorn/run
+# Copy the s6-overlay v3 run script into the service directory
+COPY uvicorn_run /etc/s6-overlay/s6-rc.d/uvicorn/run
 
 # Make the run script executable
-RUN chmod +x /etc/services.d/uvicorn/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/run
 
-# Create the logs directory and set ownership to 'abc'
-RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs
-RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
+# Create the 'type' file for the service
+RUN echo 'longrun' > /etc/s6-overlay/s6-rc.d/uvicorn/type
+
+# Enable the service by creating a symlink in the 'user' bundle
+RUN ln -s ../uvicorn /etc/s6-overlay/s6-rc.d/user/contents.d/uvicorn
+
+# Set up logging for the service
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/log
+
+# Copy the s6 log run script into the log directory
+COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
+
+# Make the log run script executable
+RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
-
 
