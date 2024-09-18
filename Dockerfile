@@ -102,6 +102,7 @@ USER root
 
 ENV S6_LOGGING=1
 ENV S6_VERBOSITY=2
+ENV S6_KEEP_ENV=1
 
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
 
