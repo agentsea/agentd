@@ -118,10 +118,10 @@ RUN ln -s ../uvicorn /etc/s6-overlay/s6-rc.d/user/contents.d/uvicorn
 # Set up logging for the service
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/log
 
-# Copy the s6 log run script into the log directory
-COPY uvicorn_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
+# make the log run script executable
+COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
-# Make the log run script executable
+# make the log run script executable
 RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 # Expose the port uvicorn is running on (if needed)

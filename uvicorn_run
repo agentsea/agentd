@@ -1,12 +1,9 @@
-#!/usr/bin/execlineb -P
-
-with-contenv
+#!/command/execlineb -P
 
 s6-setuidgid abc
-
+cd /config/app
 bash -c '
-  source /config/app/pyenv_setup.sh &&
-  source /config/app/venv/bin/activate &&
-  cd /config/app &&
-  exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000 >> /config/app/logs/uvicorn.log 2>&1
+  source ./pyenv_setup.sh &&
+  source ./venv/bin/activate &&
+  exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000
 '
