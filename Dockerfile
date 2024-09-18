@@ -100,6 +100,11 @@ RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
 # Switch back to root to set up the s6-overlay v3 service
 USER root
 
+ENV S6_LOGGING=1
+ENV S6_VERBOSITY=2
+
+RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
+
 # Create the s6-overlay v3 service directory for your application
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn
 
