@@ -101,28 +101,28 @@ RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
 USER root
 
 # Create the s6-overlay v3 service directory for your application
-# RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn
 
-# # Copy the s6-overlay v3 run script into the service directory
-# COPY uvicorn_run /etc/s6-overlay/s6-rc.d/uvicorn/run
+# Copy the s6-overlay v3 run script into the service directory
+COPY uvicorn_run /etc/s6-overlay/s6-rc.d/uvicorn/run
 
-# # Make the run script executable
-# RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/run
+# Make the run script executable
+RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/run
 
-# # Create the 'type' file for the service
-# RUN echo 'longrun' > /etc/s6-overlay/s6-rc.d/uvicorn/type
+# Create the 'type' file for the service
+RUN echo 'longrun' > /etc/s6-overlay/s6-rc.d/uvicorn/type
 
-# # Enable the service by creating a symlink in the 'user' bundle
-# RUN ln -s ../uvicorn /etc/s6-overlay/s6-rc.d/user/contents.d/uvicorn
+# Enable the service by creating a symlink in the 'user' bundle
+RUN ln -s ../uvicorn /etc/s6-overlay/s6-rc.d/user/contents.d/uvicorn
 
-# # Set up logging for the service
-# RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/log
+# Set up logging for the service
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/log
 
-# # make the log run script executable
-# COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
+# make the log run script executable
+COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
-# # make the log run script executable
-# RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
+# make the log run script executable
+RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000

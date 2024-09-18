@@ -16,8 +16,9 @@ steps:
         docker buildx create --name mybuilder --use
         docker buildx inspect --bootstrap
 
-  # Build and push for multiple architectures
+  # Build and push for multiple architectures with caching
   - name: "gcr.io/cloud-builders/docker"
+    id: Build and Push
     entrypoint: "bash"
     args:
       - "-c"
@@ -27,11 +28,14 @@ steps:
           -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest \
           -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
           --build-arg PYTHON_VERSION=3.12.0 \
+          --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache \
+          --cache-to type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache,mode=max \
           --push \
           .
 
   # Verify the multi-arch image
   - name: "gcr.io/cloud-builders/docker"
+    id: Verify Images
     entrypoint: "bash"
     args:
       - "-c"
