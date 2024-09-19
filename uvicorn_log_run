@@ -1,3 +1,2 @@
-#!/command/execlineb -P
-
-s6-setuidgid abc s6-log n20 s1000000 T /config/app/logs/uvicorn
+#!/usr/bin/env bash
+exec s6-log n20 s1000000 T /config/app/logs/uvicorn

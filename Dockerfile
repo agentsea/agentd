@@ -107,6 +107,7 @@ ENV S6_RC_VERBOSE=1
 
 RUN touch /config/app/audit.log && chown abc:abc /config/app/audit.log && chmod 644 /config/app/audit.log
 RUN touch /config/app/logs/uvicorn_env.log && chown abc:abc /config/app/logs/uvicorn_env.log && chmod 644 /config/app/logs/uvicorn_env.log
+
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
 
 # Create the s6-overlay v3 service directory for your application
@@ -132,6 +133,10 @@ COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 # make the log run script executable
 RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
+
+# Create the 'data' directory for the service and set the user
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/data && \
+    echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/data/user
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
