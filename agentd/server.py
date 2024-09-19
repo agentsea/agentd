@@ -5,12 +5,12 @@ import platform
 import random
 import subprocess
 import sys
-import tempfile
 import time
 import uuid
 from datetime import datetime
 from typing import Optional
 import threading
+import getpass
 
 import psutil
 import pyautogui
@@ -49,6 +49,9 @@ from .models import (
     TypeTextModel,
 )
 from .recording import RecordingSession, lock, sessions
+
+current_user: str = getpass.getuser()
+print("current user: ", current_user)
 
 app = FastAPI()
 
@@ -276,6 +279,39 @@ async def take_screenshot() -> ScreenshotResponseModel:
         with mss(with_cursor=True) as sct:
             # Save to the picture file
             sct.shot(output=file_path)
+
+        # Read and encode the image
+        with open(file_path, "rb") as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+
+        # Return the encoded image and the file path
+        response = ScreenshotResponseModel(
+            status="success", image=encoded_image, file_path=file_path
+        )
+
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/screenshot_new", response_model=ScreenshotResponseModel)
+async def take_screenshot_new() -> ScreenshotResponseModel:
+    try:
+        # Set the DISPLAY environment variable
+        os.environ["DISPLAY"] = ":1.0"
+
+        # Create a directory for screenshots if it doesn't exist
+        screenshots_dir = "screenshots"
+        os.makedirs(screenshots_dir, exist_ok=True)
+
+        # Generate a unique file name based on the current timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = os.path.join(screenshots_dir, f"screenshot_{timestamp}.png")
+
+        # Capture the screen using pyautogui
+        screenshot = pyautogui.screenshot()
+        screenshot.save(file_path)
 
         # Read and encode the image
         with open(file_path, "rb") as image_file:

@@ -138,5 +138,7 @@ RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/data && \
     echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/data/user
 
+RUN apk add scrot xrandr
+
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
