@@ -268,6 +268,8 @@ async def drag_mouse(request: DragMouseModel):
 @app.post("/screenshot", response_model=ScreenshotResponseModel)
 async def take_screenshot() -> ScreenshotResponseModel:
     try:
+        os.environ["DISPLAY"] = ":1.0"
+
         # Create a directory for screenshots if it doesn't exist
         screenshots_dir = "screenshots"
         os.makedirs(screenshots_dir, exist_ok=True)
@@ -276,7 +278,7 @@ async def take_screenshot() -> ScreenshotResponseModel:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = os.path.join(screenshots_dir, f"screenshot_{timestamp}.png")
 
-        with mss(with_cursor=True) as sct:
+        with mss(with_cursor=True, backend="x11") as sct:
             # Save to the picture file
             sct.shot(output=file_path)
 
