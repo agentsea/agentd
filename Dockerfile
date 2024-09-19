@@ -103,7 +103,10 @@ USER root
 ENV S6_LOGGING=1
 ENV S6_VERBOSITY=2
 ENV S6_KEEP_ENV=1
+ENV S6_RC_VERBOSE=1
 
+RUN touch /config/app/audit.log && chown abc:abc /config/app/audit.log && chmod 644 /config/app/audit.log
+RUN touch /config/app/logs/uvicorn_env.log && chown abc:abc /config/app/logs/uvicorn_env.log && chmod 644 /config/app/logs/uvicorn_env.log
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
 
 # Create the s6-overlay v3 service directory for your application

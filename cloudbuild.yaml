@@ -43,10 +43,6 @@ steps:
         docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest
         docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA}
 
-images:
-  - "us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest"
-  - "us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA}"
-
 timeout: "3600s"
 
 options:
