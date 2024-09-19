@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+echo "Test log message from uvicorn_run script" >&2
+
 # Log the environment variables
 env > /config/app/logs/uvicorn_env.log
 
@@ -11,4 +13,4 @@ source ./venv/bin/activate
 
 export DISPLAY=:1
 
-exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000
+exec uvicorn agentd.server:app --host 0.0.0.0 --port 8000 --log-level debug  >> /config/app/logs/uvicorn/uvicorn_server.log 2>&1
