@@ -56,8 +56,7 @@ class DragMouseModel(BaseModel):
 
 class ScreenshotResponseModel(BaseModel):
     status: str
-    image: str
-    file_path: str
+    images: List[str]
 
 
 class CoordinatesModel(BaseModel):
@@ -67,6 +66,8 @@ class CoordinatesModel(BaseModel):
 
 class RecordRequest(BaseModel):
     description: str
+    token: str
+    server_address: str
 
 
 class RecordResponse(BaseModel):

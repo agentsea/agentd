@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mss import mss
 from pydantic import BaseModel
 from fastapi.responses import FileResponse
-
+from taskara import Task
 
 from .firefox import (
     gracefully_terminate_firefox,
@@ -266,7 +266,9 @@ async def drag_mouse(request: DragMouseModel):
 
 
 @app.post("/screenshot", response_model=ScreenshotResponseModel)
-async def take_screenshot() -> ScreenshotResponseModel:
+async def take_screenshot(
+    count: int = 1, delay: float = 0.0
+) -> ScreenshotResponseModel:
     try:
         os.environ["DISPLAY"] = ":1.0"
 
@@ -274,21 +276,41 @@ async def take_screenshot() -> ScreenshotResponseModel:
         screenshots_dir = "screenshots"
         os.makedirs(screenshots_dir, exist_ok=True)
 
-        # Generate a unique file name based on the current timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(screenshots_dir, f"screenshot_{timestamp}.png")
+        file_paths = []
 
-        with mss(with_cursor=True, backend="x11") as sct:
-            # Save to the picture file
-            sct.shot(output=file_path)
+        # Loop for the number of screenshots specified by 'count'
+        for i in range(count):
+            # Generate a unique file name based on the current timestamp and index
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(
+                screenshots_dir, f"screenshot_{timestamp}_{i + 1}.png"
+            )
 
-        # Read and encode the image
-        with open(file_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+            # Use scrot to take a screenshot with the cursor (-p flag)
+            subprocess.run(["scrot", "-p", file_path], check=True)
 
-        # Return the encoded image and the file path
+            file_paths.append(file_path)
+
+            # Delay between screenshots if specified
+            if i < count - 1:
+                time.sleep(delay)
+
+        # Now that all screenshots are taken, read, encode, and delete them
+        encoded_images = []
+
+        for file_path in file_paths:
+            # Read and encode the image
+            with open(file_path, "rb") as image_file:
+                encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+                encoded_images.append(encoded_image)
+
+            # Delete the file after encoding
+            os.remove(file_path)
+
+        # Return the list of encoded images
         response = ScreenshotResponseModel(
-            status="success", image=encoded_image, file_path=file_path
+            status="success",
+            images=encoded_images,  # List of all encoded images
         )
 
         return response
@@ -297,37 +319,37 @@ async def take_screenshot() -> ScreenshotResponseModel:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/screenshot_new", response_model=ScreenshotResponseModel)
-async def take_screenshot_new() -> ScreenshotResponseModel:
-    try:
-        # Set the DISPLAY environment variable
-        os.environ["DISPLAY"] = ":1.0"
+# @app.post("/screenshot_new", response_model=ScreenshotResponseModel)
+# async def take_screenshot_new() -> ScreenshotResponseModel:
+#     try:
+#         # Set the DISPLAY environment variable
+#         os.environ["DISPLAY"] = ":1.0"
 
-        # Create a directory for screenshots if it doesn't exist
-        screenshots_dir = "screenshots"
-        os.makedirs(screenshots_dir, exist_ok=True)
+#         # Create a directory for screenshots if it doesn't exist
+#         screenshots_dir = "screenshots"
+#         os.makedirs(screenshots_dir, exist_ok=True)
 
-        # Generate a unique file name based on the current timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(screenshots_dir, f"screenshot_{timestamp}.png")
+#         # Generate a unique file name based on the current timestamp
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         file_path = os.path.join(screenshots_dir, f"screenshot_{timestamp}.png")
 
-        # Capture the screen using pyautogui
-        screenshot = pyautogui.screenshot()
-        screenshot.save(file_path)
+#         # Capture the screen using pyautogui
+#         screenshot = pyautogui.screenshot()
+#         screenshot.save(file_path)
 
-        # Read and encode the image
-        with open(file_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+#         # Read and encode the image
+#         with open(file_path, "rb") as image_file:
+#             encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
 
-        # Return the encoded image and the file path
-        response = ScreenshotResponseModel(
-            status="success", image=encoded_image, file_path=file_path
-        )
+#         # Return the encoded image and the file path
+#         response = ScreenshotResponseModel(
+#             status="success", image=encoded_image, file_path=file_path
+#         )
 
-        return response
+#         return response
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/exec")
@@ -359,8 +381,16 @@ async def exec_command(command: str = Body(..., embed=True)):
 @app.post("/recordings", response_model=RecordResponse)
 async def start_recording(request: RecordRequest):
     session_id = str(uuid.uuid4())
+    task = Task(
+        description=request.description,
+        remote=request.server_address,
+        auth_token=request.token,
+    )
+
     with lock:
-        session = RecordingSession(session_id, request.description)
+        session = RecordingSession(
+            id=session_id, description=request.description, task=task
+        )
         sessions[session_id] = session
         session.start()
     return RecordResponse(session_id=session_id)

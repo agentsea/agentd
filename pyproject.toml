@@ -8,7 +8,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = {extras = ["all"], version = "^0.108.0"}
 pyautogui = "^0.9.54"
 mss = "^9.0.1"
 pynput = "^1.7.6"
@@ -16,6 +15,8 @@ psutil = "^5.9.8"
 python-xlib = "^0.33"
 pillow = "^10.4.0"
 pyscreeze = "^1.0.1"
+fastapi = {version = "0.109", extras = ["all"]}
+taskara = "^0.1.131"
 
 
 [tool.poetry.group.dev.dependencies]

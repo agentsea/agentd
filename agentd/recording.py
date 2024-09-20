@@ -16,6 +16,8 @@ import pyautogui
 from mss import mss
 from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
+from taskara import Task
+from skillpacks import V1Action
 
 from .models import (
     ClickData,
@@ -38,9 +40,10 @@ SCREENSHOT_INTERVAL = 0.5
 class RecordingSession:
     """A recording session"""
 
-    def __init__(self, id: str, description: str) -> None:
+    def __init__(self, id: str, description: str, task: Task) -> None:
         self._start_time = time.time()
         self._id = id
+        self._task = task
         self._description = description
         self.keyboard_listener = keyboard.Listener(
             on_press=self.on_press, on_release=self.on_release
@@ -223,6 +226,7 @@ if __name__ == "__main__":
                 self._data[-1].text_data.text = self.text_buffer
         elif self.text_buffer.strip():
             # Add a new text event if the text buffer is not just whitespace
+
             event = RecordedEvent(
                 id=str(uuid.uuid4()),
                 type="text",
