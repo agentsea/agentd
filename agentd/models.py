@@ -68,10 +68,11 @@ class RecordRequest(BaseModel):
     description: str
     token: str
     server_address: str
+    owner_id: str
 
 
 class RecordResponse(BaseModel):
-    session_id: str
+    task_id: str
 
 
 class ClickData(BaseModel):
@@ -113,6 +114,7 @@ class Recording(BaseModel):
     start_time: float
     end_time: float
     events: List[RecordedEvent] = []
+    task_id: str
 
 
 class Recordings(BaseModel):

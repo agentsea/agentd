@@ -18,7 +18,17 @@ RUN apk add --no-cache \
     linux-headers \
     curl \
     git \
-    wget
+    wget \
+    scrot \
+    xrandr \
+    libx11 \
+    libxext \
+    libxcb \
+    xauth \
+    xwd \
+    imagemagick \
+    procps \
+    xdotool
 
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.0
@@ -137,8 +147,6 @@ RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 # Create the 'data' directory for the service and set the user
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/data && \
     echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/data/user
-
-RUN apk add scrot xrandr libx11 libxext libxcb xauth xwd imagemagick
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
