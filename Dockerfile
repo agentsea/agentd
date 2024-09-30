@@ -145,8 +145,11 @@ COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 # Create the 'data' directory for the service and set the user
-RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/data && \
-    echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/data/user
+# RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/data && \
+#     echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/data/user
+
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/user && \
+    echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/user
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
