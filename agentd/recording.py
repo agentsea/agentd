@@ -11,24 +11,22 @@ import signal
 import atexit
 from datetime import datetime
 import threading
+import mimetypes
+import shutil
 
 import pyautogui
 from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
 from taskara import Task
-from skillpacks import V1Action, V1EnvState, V1ToolRef
+from skillpacks import V1Action, V1EnvState, V1ToolRef, ActionEvent
 
 from .models import (
-    ClickData,
-    CoordinatesModel,
-    KeyData,
-    RecordedEvent,
     Recording,
-    ScrollData,
-    TextData,
 )
 
-DESKTOP_TOOL_REF = V1ToolRef(module="agentdesk", type="Desktop", package="agentdesk")
+DESKTOP_TOOL_REF = V1ToolRef(
+    module="agentdesk.device", type="Desktop", package="agentdesk"
+)
 
 sessions: Dict[str, RecordingSession] = {}
 lock = Lock()
@@ -63,6 +61,9 @@ class RecordingSession:
 
         self.typing_in_progress = False
         self.text_start_state = None
+        self.last_click_time = None
+        self.last_click_button = None
+        self.actions = []
         self.lock = threading.Lock()
 
     def start(self):
@@ -81,31 +82,34 @@ class RecordingSession:
             self.mouse_listener.stop()
             self._stop_screenshot_subprocess()
             self._end_time = time.time()
+            for action in self.actions:
+                self._task.record_action_event(action)
+
             self._cleanup_unused_screenshots()
             self._status = "stopped"
             atexit.unregister(self.stop)
 
     def _start_screenshot_subprocess(self):
         screenshot_script = f"""
-    import time
-    import os
-    import subprocess
+import time
+import os
+import subprocess
 
-    SCREENSHOT_INTERVAL = {SCREENSHOT_INTERVAL}
-    SESSION_DIR = "{self._dir()}"
+SCREENSHOT_INTERVAL = {SCREENSHOT_INTERVAL}
+SESSION_DIR = "{self._dir()}"
 
-    def take_screenshots():
-        while True:
-            timestamp = time.time()
-            filename = f"screenshot_{{timestamp}}.png"
-            file_path = os.path.join(SESSION_DIR, filename)
-            # Use scrot to take a screenshot with the cursor (-p flag)
-            subprocess.run(["scrot", "-p", file_path], check=True)
-            time.sleep(SCREENSHOT_INTERVAL)
+def take_screenshots():
+    while True:
+        timestamp = time.time()
+        filename = f"screenshot_{{timestamp}}.png"
+        file_path = os.path.join(SESSION_DIR, filename)
+        # Use scrot to take a screenshot with the cursor (-p flag)
+        subprocess.run(["scrot", "-z", "-p", file_path], check=True)
+        time.sleep(SCREENSHOT_INTERVAL)
 
-    if __name__ == "__main__":
-        os.makedirs(SESSION_DIR, exist_ok=True)
-        take_screenshots()
+if __name__ == "__main__":
+    os.makedirs(SESSION_DIR, exist_ok=True)
+    take_screenshots()
     """
         screenshot_script_path = os.path.join(self._dir(), "screenshot_script.py")
         with open(screenshot_script_path, "w") as f:
@@ -141,19 +145,11 @@ class RecordingSession:
 
     def _cleanup_unused_screenshots(self):
         session_dir = self._dir()
-        for filename in os.listdir(session_dir):
-            if filename.startswith("screenshot_") and filename.endswith(".png"):
-                file_path = os.path.join(session_dir, filename)
-                if file_path not in self.used_screenshots:
-                    try:
-                        os.remove(file_path)
-                        print(f"Deleted unused screenshot: {file_path}")
-                    except OSError as e:
-                        print(f"Error deleting unused screenshot {file_path}: {e}")
+        shutil.rmtree(session_dir)
 
     def on_press(self, key: Key):
         with self.lock:
-            print("\npressed key: ", key)
+            print("\npressed key: ", key, flush=True)
 
             # Handle shift and caps lock keys
             if key in [Key.shift, Key.shift_r, Key.shift_l]:
@@ -194,13 +190,6 @@ class RecordingSession:
 
                     self.text_buffer += char
 
-            # Handle Enter key to finalize text event
-            elif key == Key.enter:
-                if self.typing_in_progress:
-                    self.record_text_action()
-                self.text_buffer = ""
-                self.typing_in_progress = False
-
             # Handle special keys (function keys, etc.)
             else:
                 if key not in [
@@ -212,6 +201,7 @@ class RecordingSession:
                 ]:
                     # If typing is in progress, record the text action first
                     if self.typing_in_progress:
+                        print("Finalizing text event due to special key...", flush=True)
                         self.record_text_action()
 
                     x, y = pyautogui.position()
@@ -231,11 +221,13 @@ class RecordingSession:
                     # Record special key event as an action
                     action = V1Action(name="press_key", parameters={"key": str(key)})
 
-                    self._task.record_action(
-                        state=state,
-                        action=action,
-                        tool=DESKTOP_TOOL_REF,
-                        end_state=end_state,
+                    self.actions.append(
+                        ActionEvent(
+                            state=state,
+                            action=action,
+                            tool=DESKTOP_TOOL_REF,
+                            end_state=end_state,
+                        )
                     )
 
     def on_release(self, key):
@@ -244,73 +236,116 @@ class RecordingSession:
                 self.shift_pressed = False
 
     def on_click(self, x, y, button, pressed):
+        if not pressed:
+            print("skipping button up event", flush=True)
+            return
         with self.lock:
-            print("clicked button: ", x, y, button, pressed)
+            current_time = time.time()
+            is_double_click = False
+            DOUBLE_CLICK_THRESHOLD = (
+                0.3  # Time threshold for double-click detection (in seconds)
+            )
+
+            if self.last_click_time and self.last_click_button == button:
+                time_since_last_click = current_time - self.last_click_time
+                if time_since_last_click <= DOUBLE_CLICK_THRESHOLD:
+                    is_double_click = True
+
+            self.last_click_time = current_time
+            self.last_click_button = button
+
+            print("clicked button: ", x, y, button, pressed, flush=True)
+
             try:
-                # Before recording the click, check if there is pending text
                 if self.typing_in_progress:
+                    print("Finalizing text event due to click...", flush=True)
                     self.record_text_action()
 
                 start_screenshot_path = self._get_latest_screenshot()
+                encoded = self.encode_image_to_base64(start_screenshot_path)
+
                 state = V1EnvState(
-                    images=[self.encode_image_to_base64(start_screenshot_path)],
+                    images=[encoded],
                     coordinates=(int(x), int(y)),
                 )
 
                 end_screenshot_path = self.take_screenshot()
+                encoded = self.encode_image_to_base64(end_screenshot_path)
+
                 end_state = V1EnvState(
-                    images=[self.encode_image_to_base64(end_screenshot_path)],
+                    images=[encoded],
                     coordinates=(int(x), int(y)),
                 )
 
-                # Record click event as an action
-                action = V1Action(
-                    name="click",
-                    parameters={
-                        "x": int(x),
-                        "y": int(y),
-                        "button": button._name_,
-                        "pressed": pressed,
-                    },
-                )
+                # Record double-click event as an action if detected
+                if is_double_click:
+                    action = V1Action(
+                        name="double_click",
+                        parameters={
+                            "x": int(x),
+                            "y": int(y),
+                            "button": button._name_,
+                        },
+                    )
+                    print("Double-click detected", flush=True)
+                else:
+                    # Record regular click event as an action
+                    action = V1Action(
+                        name="click",
+                        parameters={
+                            "x": int(x),
+                            "y": int(y),
+                            "button": button._name_,
+                            "pressed": pressed,
+                        },
+                    )
 
-                self._task.record_action(
+                action_event = ActionEvent(
                     state=state,
                     action=action,
                     tool=DESKTOP_TOOL_REF,
                     end_state=end_state,
                 )
+                self.actions.append(action_event)
+
             except Exception as e:
-                print(f"Error recording click event: {e}")
+                print(f"Error recording click event: {e}", flush=True)
 
     def on_scroll(self, x, y, dx, dy):
         with self.lock:
             mouse_x, mouse_y = pyautogui.position()
-            print("scrolled: ", x, y, dx, dy)
+            print("scrolled: ", x, y, dx, dy, flush=True)
 
             # Before recording the scroll, check if there is pending text
             if self.typing_in_progress:
+                print("Finalizing text event due to scroll...", flush=True)
                 self.record_text_action()
 
             start_screenshot_path = self._get_latest_screenshot()
+            encoded = self.encode_image_to_base64(start_screenshot_path)
+
             state = V1EnvState(
-                images=[self.encode_image_to_base64(start_screenshot_path)],
+                images=[encoded],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
 
             end_screenshot_path = self.take_screenshot()
+            encoded = self.encode_image_to_base64(end_screenshot_path)
+
             end_state = V1EnvState(
-                images=[self.encode_image_to_base64(end_screenshot_path)],
+                images=[encoded],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
 
             action = V1Action(name="scroll", parameters={"dx": dx, "dy": dy})
 
-            self._task.record_action(
-                state=state,
-                action=action,
-                end_state=end_state,
-                tool=DESKTOP_TOOL_REF,
+            self.actions.append(
+                ActionEvent(
+                    state=state,
+                    action=action,
+                    end_state=end_state,
+                    tool=DESKTOP_TOOL_REF,
+                )
             )
 
     def start_typing_sequence(self):
@@ -323,6 +358,7 @@ class RecordingSession:
         self.typing_in_progress = True
 
     def record_text_action(self):
+        print("recording text action", flush=True)
         if self.text_buffer.strip():
             x, y = pyautogui.position()
 
@@ -337,13 +373,15 @@ class RecordingSession:
             if not self.text_start_state:
                 raise ValueError("No text start state available")
 
-            self._task.record_action(
-                state=self.text_start_state,
-                action=action,
-                tool=DESKTOP_TOOL_REF,
-                end_state=end_state,
+            self.actions.append(
+                ActionEvent(
+                    state=self.text_start_state,
+                    action=action,
+                    tool=DESKTOP_TOOL_REF,
+                    end_state=end_state,
+                )
             )
-            print(f"Recorded text action: {self.text_buffer}")
+            print(f"Recorded text action: {self.text_buffer}", flush=True)
 
             # Reset the typing state
             self.text_buffer = ""
@@ -410,7 +448,7 @@ class RecordingSession:
         file_path = os.path.join(session_dir, f"screenshot_{timestamp}.png")
 
         # Use scrot to take a screenshot with the cursor (-p flag)
-        subprocess.run(["scrot", "-p", file_path], check=True)
+        subprocess.run(["scrot", "-z", "-p", file_path], check=True)
 
         # Return the file path of the screenshot
         return file_path
@@ -418,4 +456,9 @@ class RecordingSession:
     def encode_image_to_base64(self, image_path: str) -> str:
         with open(image_path, "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-        return encoded_image
+        mime_type, _ = mimetypes.guess_type(image_path)
+        if not mime_type:
+            mime_type = (
+                "application/octet-stream"  # default if cannot determine mime type
+            )
+        return f"data:{mime_type};base64,{encoded_image}"

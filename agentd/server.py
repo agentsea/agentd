@@ -283,7 +283,7 @@ async def take_screenshot(
             )
 
             # Use scrot to take a screenshot with the cursor (-p flag)
-            subprocess.run(["scrot", "-p", file_path], check=True)
+            subprocess.run(["scrot", "-z", "-p", file_path], check=True)
 
             file_paths.append(file_path)
 
