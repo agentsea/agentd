@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest
+FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest@sha256:41109089fcf80d45b25e6e3d0d8a9ae9bd13568
 
 # Install necessary build tools and libraries
 RUN apk add --no-cache \

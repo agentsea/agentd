@@ -69,3 +69,20 @@ run-latest:
 		-p 8000:8000 \
 		--restart unless-stopped \
 		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest
+
+
+.PHONY: dev
+dev:
+	docker run -d \
+		--platform linux/arm64 \
+		--name=webtop \
+		--security-opt seccomp=unconfined \
+		-e PUID=1000 \
+		-e PGID=1000 \
+		-e TZ=Etc/UTC \
+		-p 3000:3000 \
+		-p 3001:3001 \
+		-p 8000:8000 \
+		--restart unless-stopped \
+		-v $(shell pwd)/agentd:/config/app/agentd \
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest
