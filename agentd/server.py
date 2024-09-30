@@ -18,7 +18,7 @@ from fastapi import FastAPI, HTTPException, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import FileResponse
-from taskara.task import ReviewRequirement, Task
+from taskara.task import Task
 
 from .firefox import (
     gracefully_terminate_firefox,
@@ -43,7 +43,7 @@ from .models import (
     SystemUsageModel,
     TypeTextModel,
 )
-from .recording import RecordingSession, lock, sessions
+from .recording import RecordingSession, lock
 
 current_user: str = getpass.getuser()
 print("current user: ", current_user)
@@ -341,6 +341,19 @@ async def exec_command(command: str = Body(..., embed=True)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/v1/system_usage", response_model=SystemUsageModel)
+async def system_usage():
+    cpu_percent = psutil.cpu_percent()
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage("/")
+
+    return SystemUsageModel(
+        cpu_percent=cpu_percent,
+        memory_percent=memory.percent,
+        disk_percent=disk.percent,
+    )
+
+
 ##
 ### Demonstrate
 ##
@@ -382,19 +395,6 @@ async def stop_recording():
 
         active_session = None
     return
-
-
-@app.get("/v1/system_usage", response_model=SystemUsageModel)
-async def system_usage():
-    cpu_percent = psutil.cpu_percent()
-    memory = psutil.virtual_memory()
-    disk = psutil.disk_usage("/")
-
-    return SystemUsageModel(
-        cpu_percent=cpu_percent,
-        memory_percent=memory.percent,
-        disk_percent=disk.percent,
-    )
 
 
 ##

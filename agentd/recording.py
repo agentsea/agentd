@@ -46,6 +46,8 @@ class RecordingSession:
         self._id = id
         self._task = task  # Store the task object to record actions
         self._description = description
+        os.makedirs(self._dir(), exist_ok=True)
+
         self.keyboard_listener = keyboard.Listener(
             on_press=self.on_press,  # type: ignore
             on_release=self.on_release,
