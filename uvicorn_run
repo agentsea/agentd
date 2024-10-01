@@ -8,6 +8,8 @@ env > /config/app/logs/uvicorn_env.log
 
 cd /config/app
 
+chown -R abc:abc /config/app
+
 source ./pyenv_setup.sh
 source ./venv/bin/activate
 
