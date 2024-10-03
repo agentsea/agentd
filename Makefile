@@ -63,6 +63,8 @@ run-latest:
 		--security-opt seccomp=unconfined \
 		-e PUID=1000 \
 		-e PGID=1000 \
+		-e CUSTOM_USER=agentd \
+		-e PASSWORD=agentd \
 		-e TZ=Etc/UTC \
 		-p 3000:3000 \
 		-p 3001:3001 \
