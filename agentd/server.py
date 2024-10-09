@@ -44,7 +44,6 @@ from .models import (
     TypeTextModel,
 )
 from .recording import RecordingSession, lock
-from .util import run_as_user
 
 current_user: str = getpass.getuser()
 print("current user: ", current_user)
@@ -299,7 +298,7 @@ async def take_screenshot(
             # Read and encode the image
             with open(file_path, "rb") as image_file:
                 encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-                encoded_images.append(f"data:image/png;base64,{encoded_image}")
+                encoded_images.append(encoded_image)
 
             # Delete the file after encoding
             os.remove(file_path)
@@ -364,12 +363,29 @@ async def system_usage():
 async def start_recording(request: RecordRequest):
     global active_session
     session_id = str(uuid.uuid4())
-    task = Task(
-        description=request.description,
-        remote=request.server_address,
-        auth_token=request.token,
-        owner_id=request.owner_id,
-    )
+
+    if not request.description and not request.task_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Either description or task_id must be provided",
+        )
+
+    if request.description:
+        task = Task(
+            description=request.description,
+            remote=request.server_address,
+            auth_token=request.token,
+            owner_id=request.owner_id,
+        )
+    else:
+        tasks = Task.find(
+            remote=request.server_address,
+            task_id=request.task_id,
+            auth_token=request.token,
+        )
+        if not tasks:
+            raise HTTPException(status_code=404, detail="Task not found")
+        task = tasks[0]
 
     with lock:
         if active_session:
@@ -377,9 +393,7 @@ async def start_recording(request: RecordRequest):
                 status_code=400,
                 detail="A recording session is already active. Stop it first",
             )
-        session = RecordingSession(
-            id=session_id, description=request.description, task=task
-        )
+        session = RecordingSession(id=session_id, task=task)
         session.start()
         active_session = session
     return RecordResponse(task_id=task.id)

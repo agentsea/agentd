@@ -65,7 +65,8 @@ class CoordinatesModel(BaseModel):
 
 
 class RecordRequest(BaseModel):
-    description: str
+    description: Optional[str] = None
+    task_id: Optional[str] = None
     token: str
     server_address: str
     owner_id: str
@@ -110,7 +111,7 @@ class RecordedEvent(BaseModel):
 
 class Recording(BaseModel):
     id: str
-    description: str
+    description: Optional[str] = None
     start_time: float
     end_time: float
     events: List[RecordedEvent] = []

@@ -39,11 +39,10 @@ SCREENSHOT_INTERVAL = 0.5
 class RecordingSession:
     """A recording session"""
 
-    def __init__(self, id: str, description: str, task: Task) -> None:
+    def __init__(self, id: str, task: Task) -> None:
         self._start_time = time.time()
         self._id = id
         self._task = task  # Store the task object to record actions
-        self._description = description
         os.makedirs(self._dir(), exist_ok=True)
 
         self.keyboard_listener = keyboard.Listener(
@@ -391,7 +390,6 @@ if __name__ == "__main__":
     def as_schema(self) -> Recording:
         return Recording(
             id=self._id,
-            description=self._description,
             start_time=self._start_time,
             end_time=self._end_time,
             task_id=self._task.id,
@@ -416,7 +414,6 @@ if __name__ == "__main__":
         session = cls.__new__(cls)
         session._start_time = data.start_time
         session._id = data.id
-        session._description = data.description
         session.keyboard_listener = keyboard.Listener(on_press=session.on_press)  # type: ignore
         session.mouse_listener = mouse.Listener(
             on_click=session.on_click, on_scroll=session.on_scroll
