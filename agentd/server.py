@@ -380,7 +380,7 @@ async def start_recording(request: RecordRequest):
     else:
         tasks = Task.find(
             remote=request.server_address,
-            task_id=request.task_id,
+            id=request.task_id,
             auth_token=request.token,
         )
         if not tasks:
