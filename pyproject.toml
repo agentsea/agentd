@@ -17,6 +17,7 @@ pillow = "^10.4.0"
 pyscreeze = "^1.0.1"
 fastapi = {version = "0.109", extras = ["all"]}
 taskara = "^0.1.158"
+tiktoken = "0.7.0"
 
 
 [tool.poetry.group.dev.dependencies]
