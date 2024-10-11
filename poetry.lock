@@ -1542,19 +1542,19 @@ files = [
 
 [[package]]
 name = "mllm"
-version = "0.1.40"
+version = "0.1.44"
 description = "Multimodal Large Language Models"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "mllm-0.1.40-py3-none-any.whl", hash = "sha256:72ca899e95488a88800ea12950170ce58ff3c527cb190b304624f9f02d445518"},
-    {file = "mllm-0.1.40.tar.gz", hash = "sha256:3eef3dff7aa563cbe4456a41dd67186478b5931ff2274f1aa7f00df9cb8cfdec"},
+    {file = "mllm-0.1.44-py3-none-any.whl", hash = "sha256:7017d01ed45b9dbb1c51d1b7a0abd8872932a2040deaaa1c56a393576598c038"},
+    {file = "mllm-0.1.44.tar.gz", hash = "sha256:e4e757e4b24caaa2c84a724fb861797850773181ec3873008f6959ce4fee44e2"},
 ]
 
 [package.dependencies]
 litellm = ">=1.37.19,<2.0.0"
 tenacity = ">=8.2.3,<9.0.0"
-threadmem = ">=0.2.31,<0.3.0"
+threadmem = ">=0.2.33,<0.3.0"
 
 [package.extras]
 gemini = ["google-generativeai (>=0.6.0,<0.7.0)"]
@@ -2937,18 +2937,18 @@ files = [
 
 [[package]]
 name = "skillpacks"
-version = "0.1.54"
+version = "0.1.69"
 description = "Pluggable skills for AI agents"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "skillpacks-0.1.54-py3-none-any.whl", hash = "sha256:7629c5d45e5a4c1ec3d359ee6ca63d255c9159eea6cf8e3fc7ee3d36e7a725a8"},
-    {file = "skillpacks-0.1.54.tar.gz", hash = "sha256:d5cc41fbe820e86fbe3cbd7f355dfcad20b09cbb31b0467accde8f3f6f79a357"},
+    {file = "skillpacks-0.1.69-py3-none-any.whl", hash = "sha256:046793855e989708374332793b178ab2f70bcc09e67f493e475df70c8b36b562"},
+    {file = "skillpacks-0.1.69.tar.gz", hash = "sha256:ef1f4b3e26a177056b99531b12497d1ca1b673c383d3b884d3fbc3a9c78f6cc6"},
 ]
 
 [package.dependencies]
 devicebay = ">=0.1.28,<0.2.0"
-mllm = ">=0.1.40,<0.2.0"
+mllm = ">=0.1.44,<0.2.0"
 pydantic = ">=2.6.1,<3.0.0"
 shortuuid = ">=1.0.13,<2.0.0"
 sqlalchemy = ">=2.0.27,<3.0.0"
@@ -3242,13 +3242,13 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 
 [[package]]
 name = "taskara"
-version = "0.1.141"
+version = "0.1.157"
 description = "Task management for AI agents"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "taskara-0.1.141-py3-none-any.whl", hash = "sha256:bebc513ff886725b11fa66907001772d8f18ac0746e8f60f29bb5e9888581f8f"},
-    {file = "taskara-0.1.141.tar.gz", hash = "sha256:5b8a1248f95677cef4b38683a035c1298a802f9cd45e10fb97b04946923f4190"},
+    {file = "taskara-0.1.157-py3-none-any.whl", hash = "sha256:ff3805bd221015d28f3474b026c17b53c06ced7c57ef395e2ca7d6dafaa0a5d3"},
+    {file = "taskara-0.1.157.tar.gz", hash = "sha256:50ee3ba609d81fb761959cf002a9b261c985e9ac754f1bbe85e391843808e7aa"},
 ]
 
 [package.dependencies]
@@ -3256,7 +3256,7 @@ cryptography = ">=43.0.1,<44.0.0"
 namesgenerator = ">=0.3,<0.4"
 pydantic = ">=2.6.4,<3.0.0"
 shortuuid = ">=1.0.13,<2.0.0"
-skillpacks = ">=0.1.54,<0.2.0"
+skillpacks = ">=0.1.69,<0.2.0"
 sqlalchemy = ">=2.0.29,<3.0.0"
 threadmem = ">=0.2.26,<0.3.0"
 tqdm = ">=4.66.4,<5.0.0"
@@ -3283,13 +3283,13 @@ test = ["pytest", "tornado (>=4.5)", "typeguard"]
 
 [[package]]
 name = "threadmem"
-version = "0.2.31"
+version = "0.2.33"
 description = "Thread memory for AI agents"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "threadmem-0.2.31-py3-none-any.whl", hash = "sha256:3955fa9923de40d3e636e8ec9cee264e0d82b44d84a00364d978de44b0d9d3b8"},
-    {file = "threadmem-0.2.31.tar.gz", hash = "sha256:9ece3eb1890759505f028162cc9615efe62f663f172d79c58e3c56d95faed6d4"},
+    {file = "threadmem-0.2.33-py3-none-any.whl", hash = "sha256:1fea4dada42ad8ecb2b982d159bcc4f293b630fb9e74d9a1689332809f1cc3dc"},
+    {file = "threadmem-0.2.33.tar.gz", hash = "sha256:08f2e83dc99066e8a782975606170373fc5431232c08c5912cf29769b5c377bd"},
 ]
 
 [package.dependencies]
@@ -3298,6 +3298,7 @@ google-cloud-storage = ">=2.17.0,<3.0.0"
 pillow = ">=10.3.0,<11.0.0"
 pydantic = ">=2.6.3,<3.0.0"
 requests = ">=2.31.0,<3.0.0"
+shortuuid = ">=1.0.13,<2.0.0"
 sqlalchemy = ">=2.0.27,<3.0.0"
 
 [[package]]
@@ -4035,4 +4036,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6159c45c56803d20d36734859b45fd536af2ec37dd2445a1917737ee05d68d0d"
+content-hash = "277e050a15d20a0b4e887250d0014ee858df7d37c97928cfa20ce5c2f25129ee"
