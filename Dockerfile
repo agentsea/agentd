@@ -28,7 +28,8 @@ RUN apk add --no-cache \
     xwd \
     imagemagick \
     procps \
-    xdotool
+    xdotool \
+    rust
 
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.0
