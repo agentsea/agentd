@@ -16,7 +16,7 @@ python-xlib = "^0.33"
 pillow = "^10.4.0"
 pyscreeze = "^1.0.1"
 fastapi = {version = "0.109", extras = ["all"]}
-taskara = "^0.1.157"
+taskara = "^0.1.158"
 
 
 [tool.poetry.group.dev.dependencies]
