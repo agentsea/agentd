@@ -18,7 +18,7 @@ import pyautogui
 from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
 from taskara import Task
-from skillpacks import V1Action, V1EnvState, V1ToolRef, ActionEvent
+from skillpacks import V1Action, V1ToolRef, ActionEvent, EnvState
 
 from .models import (
     Recording,
@@ -206,13 +206,13 @@ if __name__ == "__main__":
                     x, y = pyautogui.position()
 
                     start_screenshot_path = self._get_latest_screenshot()
-                    state = V1EnvState(
+                    state = EnvState(
                         images=[self.encode_image_to_base64(start_screenshot_path)],
                         coordinates=(int(x), int(y)),
                     )
 
                     end_screenshot_path = self.take_screenshot()
-                    end_state = V1EnvState(
+                    end_state = EnvState(
                         images=[self.encode_image_to_base64(end_screenshot_path)],
                         coordinates=(int(x), int(y)),
                     )
@@ -263,7 +263,7 @@ if __name__ == "__main__":
                 start_screenshot_path = self._get_latest_screenshot()
                 encoded = self.encode_image_to_base64(start_screenshot_path)
 
-                state = V1EnvState(
+                state = EnvState(
                     images=[encoded],
                     coordinates=(int(x), int(y)),
                 )
@@ -271,7 +271,7 @@ if __name__ == "__main__":
                 end_screenshot_path = self.take_screenshot()
                 encoded = self.encode_image_to_base64(end_screenshot_path)
 
-                end_state = V1EnvState(
+                end_state = EnvState(
                     images=[encoded],
                     coordinates=(int(x), int(y)),
                 )
@@ -323,7 +323,7 @@ if __name__ == "__main__":
             start_screenshot_path = self._get_latest_screenshot()
             encoded = self.encode_image_to_base64(start_screenshot_path)
 
-            state = V1EnvState(
+            state = EnvState(
                 images=[encoded],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
@@ -331,7 +331,7 @@ if __name__ == "__main__":
             end_screenshot_path = self.take_screenshot()
             encoded = self.encode_image_to_base64(end_screenshot_path)
 
-            end_state = V1EnvState(
+            end_state = EnvState(
                 images=[encoded],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
@@ -350,7 +350,7 @@ if __name__ == "__main__":
     def start_typing_sequence(self):
         x, y = pyautogui.position()
         start_screenshot_path = self._get_latest_screenshot()
-        self.text_start_state = V1EnvState(
+        self.text_start_state = EnvState(
             images=[self.encode_image_to_base64(start_screenshot_path)],
             coordinates=(int(x), int(y)),
         )
@@ -362,7 +362,7 @@ if __name__ == "__main__":
             x, y = pyautogui.position()
 
             end_screenshot_path = self.take_screenshot()
-            end_state = V1EnvState(
+            end_state = EnvState(
                 images=[self.encode_image_to_base64(end_screenshot_path)],
                 coordinates=(int(x), int(y)),
             )

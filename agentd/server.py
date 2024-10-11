@@ -382,6 +382,7 @@ async def start_recording(request: RecordRequest):
             remote=request.server_address,
             id=request.task_id,
             auth_token=request.token,
+            owner_id=request.owner_id,
         )
         if not tasks:
             raise HTTPException(status_code=404, detail="Task not found")
