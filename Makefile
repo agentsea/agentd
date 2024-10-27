@@ -50,3 +50,41 @@ user-data:
 push-latest:
 	gsutil cp .vms/jammy/latest/jammy.qcow2 gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2
 	gsutil acl ch -u AllUsers:R gs://agentsea-vms/jammy/latest/agentd-jammy.qcow2
+
+.PHONY: exp-deps
+exp-deps:
+	poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+.PHONY: run-latest
+run-latest:
+	docker run -d \
+		--platform linux/arm64 \
+		--name=webtop \
+		--security-opt seccomp=unconfined \
+		-e PUID=1000 \
+		-e PGID=1000 \
+		-e CUSTOM_USER=agentd \
+		-e PASSWORD=agentd \
+		-e TZ=Etc/UTC \
+		-p 3000:3000 \
+		-p 3001:3001 \
+		-p 8000:8000 \
+		--restart unless-stopped \
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest
+
+
+.PHONY: dev
+dev:
+	docker run -d \
+		--platform linux/arm64 \
+		--name=webtop \
+		--security-opt seccomp=unconfined \
+		-e PUID=1000 \
+		-e PGID=1000 \
+		-e TZ=Etc/UTC \
+		-p 3000:3000 \
+		-p 3001:3001 \
+		-p 8000:8000 \
+		--restart unless-stopped \
+		-v $(shell pwd)/agentd:/config/app/agentd \
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest

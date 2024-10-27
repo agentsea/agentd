@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -56,8 +56,7 @@ class DragMouseModel(BaseModel):
 
 class ScreenshotResponseModel(BaseModel):
     status: str
-    image: str
-    file_path: str
+    images: List[str]
 
 
 class CoordinatesModel(BaseModel):
@@ -66,11 +65,15 @@ class CoordinatesModel(BaseModel):
 
 
 class RecordRequest(BaseModel):
-    description: str
+    description: Optional[str] = None
+    task_id: Optional[str] = None
+    token: str
+    server_address: str
+    owner_id: str
 
 
 class RecordResponse(BaseModel):
-    session_id: str
+    task_id: str
 
 
 class ClickData(BaseModel):
@@ -96,8 +99,10 @@ class RecordedEvent(BaseModel):
     type: str
     timestamp: float
     coordinates: CoordinatesModel
-    screenshot_path: Optional[str] = None
-    screenshot_b64: Optional[str] = None
+    before_screenshot_path: Optional[str] = None
+    after_screenshot_path: Optional[str] = None
+    before_screenshot_b64: Optional[str] = None
+    after_screenshot_b64: Optional[str] = None
     click_data: Optional[ClickData] = None
     key_data: Optional[KeyData] = None
     scroll_data: Optional[ScrollData] = None
@@ -106,10 +111,11 @@ class RecordedEvent(BaseModel):
 
 class Recording(BaseModel):
     id: str
-    description: str
+    description: Optional[str] = None
     start_time: float
     end_time: float
     events: List[RecordedEvent] = []
+    task_id: str
 
 
 class Recordings(BaseModel):

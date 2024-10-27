@@ -194,6 +194,7 @@ build {
       "sudo systemctl restart sshd",
     ]
   }
+  
   // post-processor "amazon-ami" {
   //   region = var.aws_region
   //   ami_users = ["all"]

@@ -5,30 +5,28 @@ import platform
 import random
 import subprocess
 import sys
-import tempfile
 import time
 import uuid
 from datetime import datetime
 from typing import Optional
 import threading
+import getpass
 
 import psutil
 import pyautogui
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
-from mss import mss
 from pydantic import BaseModel
 from fastapi.responses import FileResponse
-
+from taskara.task import Task
 
 from .firefox import (
     gracefully_terminate_firefox,
     is_firefox_running,
     is_firefox_window_open,
-    maximize_firefox_window
+    maximize_firefox_window,
 )
 from .models import (
-    Actions,
     ClickModel,
     CoordinatesModel,
     DragMouseModel,
@@ -36,9 +34,6 @@ from .models import (
     OpenURLModel,
     PressKeyModel,
     PressKeysModel,
-    RecordedEvent,
-    Recording,
-    Recordings,
     RecordRequest,
     RecordResponse,
     ScreenshotResponseModel,
@@ -48,7 +43,12 @@ from .models import (
     SystemUsageModel,
     TypeTextModel,
 )
-from .recording import RecordingSession, lock, sessions
+from .recording import RecordingSession, lock
+
+current_user: str = getpass.getuser()
+print("current user: ", current_user)
+
+active_session: Optional[RecordingSession] = None
 
 app = FastAPI()
 
@@ -86,7 +86,7 @@ async def health():
     return {"status": "ok"}
 
 
-@app.get("/info", response_model=SystemInfoModel)
+@app.get("/v1/info", response_model=SystemInfoModel)
 async def get_info():
     # Screen size
     width, height = pyautogui.size()
@@ -130,19 +130,19 @@ async def get_info():
     )
 
 
-@app.get("/screen_size")
+@app.get("/v1/screen_size")
 def get_screen_size() -> ScreenSizeModel:
     width, height = pyautogui.size()
     return ScreenSizeModel(x=width, y=height)
 
 
-@app.get("/mouse_coordinates")
+@app.get("/v1/mouse_coordinates")
 async def mouse_coordinates() -> CoordinatesModel:
     x, y = pyautogui.position()
     return CoordinatesModel(x=x, y=y)  # type: ignore
 
 
-@app.post("/open_url")
+@app.post("/v1/open_url")
 async def open_url(request: OpenURLModel):
     try:
         firefox_pids = is_firefox_running()
@@ -167,14 +167,13 @@ async def open_url(request: OpenURLModel):
 
         maximize_firefox_window()
 
-        time.sleep(5)
         return {"status": "success"}
 
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/move_mouse")
+@app.post("/v1/move_mouse")
 async def move_mouse_to(request: MoveMouseModel):
     try:
         tween_func = getattr(pyautogui, request.tween, pyautogui.linear)
@@ -186,7 +185,7 @@ async def move_mouse_to(request: MoveMouseModel):
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/click")
+@app.post("/v1/click")
 async def click(request: ClickModel):
     if request.location:
         tween_func = getattr(pyautogui, request.location.tween, pyautogui.linear)
@@ -203,7 +202,7 @@ async def click(request: ClickModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/double_click")
+@app.post("/v1/double_click")
 async def double_click():
     try:
         pyautogui.doubleClick()
@@ -212,7 +211,7 @@ async def double_click():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/type_text")
+@app.post("/v1/type_text")
 async def type_text(request: TypeTextModel):
     try:
         for char in request.text:
@@ -226,7 +225,7 @@ async def type_text(request: TypeTextModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/press_key")
+@app.post("/v1/press_key")
 async def press_key(request: PressKeyModel):
     try:
         pyautogui.press(request.key)
@@ -235,7 +234,7 @@ async def press_key(request: PressKeyModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/hot_key")
+@app.post("/v1/hot_key")
 async def hot_key(request: PressKeysModel):
     try:
         pyautogui.hotkey(*request.keys)
@@ -244,7 +243,7 @@ async def hot_key(request: PressKeysModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/scroll")
+@app.post("/v1/scroll")
 async def scroll(request: ScrollModel):
     try:
         pyautogui.scroll(request.clicks)
@@ -253,7 +252,7 @@ async def scroll(request: ScrollModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/drag_mouse")
+@app.post("/v1/drag_mouse")
 async def drag_mouse(request: DragMouseModel):
     try:
         pyautogui.dragTo(request.x, request.y)
@@ -262,28 +261,52 @@ async def drag_mouse(request: DragMouseModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/screenshot", response_model=ScreenshotResponseModel)
-async def take_screenshot() -> ScreenshotResponseModel:
+@app.post("/v1/screenshot", response_model=ScreenshotResponseModel)
+async def take_screenshot(
+    count: int = 1, delay: float = 0.0
+) -> ScreenshotResponseModel:
     try:
+        os.environ["DISPLAY"] = ":1.0"
+
         # Create a directory for screenshots if it doesn't exist
         screenshots_dir = "screenshots"
         os.makedirs(screenshots_dir, exist_ok=True)
 
-        # Generate a unique file name based on the current timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(screenshots_dir, f"screenshot_{timestamp}.png")
+        file_paths = []
 
-        with mss(with_cursor=True) as sct:
-            # Save to the picture file
-            sct.shot(output=file_path)
+        # Loop for the number of screenshots specified by 'count'
+        for i in range(count):
+            # Generate a unique file name based on the current timestamp and index
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(
+                screenshots_dir, f"screenshot_{timestamp}_{i + 1}.png"
+            )
 
-        # Read and encode the image
-        with open(file_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+            # Use scrot to take a screenshot with the cursor (-p flag)
+            subprocess.run(["scrot", "-z", "-p", file_path], check=True)
 
-        # Return the encoded image and the file path
+            file_paths.append(file_path)
+
+            # Delay between screenshots if specified
+            if i < count - 1:
+                time.sleep(delay)
+
+        # Now that all screenshots are taken, read, encode, and delete them
+        encoded_images = []
+
+        for file_path in file_paths:
+            # Read and encode the image
+            with open(file_path, "rb") as image_file:
+                encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+                encoded_images.append(encoded_image)
+
+            # Delete the file after encoding
+            os.remove(file_path)
+
+        # Return the list of encoded images
         response = ScreenshotResponseModel(
-            status="success", image=encoded_image, file_path=file_path
+            status="success",
+            images=encoded_images,  # List of all encoded images
         )
 
         return response
@@ -292,125 +315,33 @@ async def take_screenshot() -> ScreenshotResponseModel:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/recordings", response_model=RecordResponse)
-async def start_recording(request: RecordRequest):
-    session_id = str(uuid.uuid4())
-    with lock:
-        session = RecordingSession(session_id, request.description)
-        sessions[session_id] = session
-        session.start()
-    return RecordResponse(session_id=session_id)
+@app.post("/v1/exec")
+async def exec_command(command: str = Body(..., embed=True)):
+    try:
+        # Execute the provided command
+        result = subprocess.run(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        # Check if the command was successful
+        if result.returncode == 0:
+            return {"status": "success", "output": result.stdout.strip()}
+        else:
+            return {
+                "status": "error",
+                "output": result.stderr.strip(),
+                "return_code": result.returncode,
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/recordings", response_model=Recordings)
-async def list_recordings():
-    out = await RecordingSession.list_recordings()
-    return Recordings(recordings=out)
-
-
-@app.post("/recordings/{session_id}/stop")
-async def stop_recording(session_id: str):
-    with lock:
-        session: Optional[RecordingSession] = sessions.get(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-        session.stop()
-        path = session.save_to_file()
-        print("Saved recording to file:", path)
-
-        # print("uploading to gcs")
-        # bucket_name = "agentdesk-temp"
-        # destination_blob_prefix = f"recordings/{session_id}"
-        # upload_directory_to_gcs(bucket_name, session._dir(), destination_blob_prefix)
-
-        del sessions[session_id]
-    return
-
-
-@app.get("/recordings/{session_id}", response_model=Recording)
-async def get_recording(session_id: str):
-    if session_id in sessions:
-        with lock:
-            session: Optional[RecordingSession] = sessions.get(session_id)
-            print("got in-mem session: ", session)
-            if not session:
-                raise HTTPException(status_code=404, detail="Session not found")
-            return session.as_schema()
-    else:
-        rec_session = RecordingSession.load(session_id).as_schema()
-        print("got disk session: ", rec_session)
-        return rec_session
-
-
-@app.get("/recordings/{session_id}/event/{event_id}", response_model=RecordedEvent)
-async def get_event(session_id: str, event_id: str):
-    if session_id in sessions:
-        with lock:
-            rec_session: Optional[RecordingSession] = sessions.get(session_id)  # type: ignore
-            print("got in-mem session: ", rec_session)
-            if not rec_session:
-                raise HTTPException(status_code=404, detail="Session not found")
-
-    else:
-        rec_session: RecordingSession = RecordingSession.load(session_id)
-        print("got disk session: ", rec_session)
-
-    event = rec_session.find_event(event_id)
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-    return event
-
-
-@app.delete("/recordings/{session_id}/event/{event_id}", response_model=Recording)
-async def delete_event(session_id: str, event_id: str):
-    if session_id in sessions:
-        with lock:
-            # Retrieve the session
-            session: Optional[RecordingSession] = sessions.get(session_id)
-            if not session:
-                raise HTTPException(status_code=404, detail="Session not found")
-
-            # Delete the event from the session
-            session.delete_event(event_id)
-
-            return session.as_schema()
-
-    else:
-        session = RecordingSession.load(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-
-        # Delete the event from the session
-        session.delete_event(event_id)
-        session.save_to_file()
-
-        return session.as_schema()
-
-
-@app.get("/active_sessions", response_model=Recordings)
-async def list_sessions():
-    out = []
-    for id, _ in sessions.items():
-        out.append(id)
-
-    return Recordings(recordings=out)
-
-
-@app.get("/recordings/{session_id}/actions", response_model=Actions)
-async def get_actions(session_id: str):
-    if session_id in sessions:
-        with lock:
-            session: Optional[RecordingSession] = sessions.get(session_id)
-            if not session:
-                raise HTTPException(status_code=404, detail="Session not found")
-
-    else:
-        session = RecordingSession.load(session_id)
-
-    return Actions(actions=session.as_actions())
-
-
-@app.get("/system_usage", response_model=SystemUsageModel)
+@app.get("/v1/system_usage", response_model=SystemUsageModel)
 async def system_usage():
     cpu_percent = psutil.cpu_percent()
     memory = psutil.virtual_memory()
@@ -422,8 +353,68 @@ async def system_usage():
         disk_percent=disk.percent,
     )
 
+
 ##
-### Recording
+### Demonstrate
+##
+
+
+@app.post("/v1/start_recording", response_model=RecordResponse)
+async def start_recording(request: RecordRequest):
+    global active_session
+    session_id = str(uuid.uuid4())
+
+    if not request.description and not request.task_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Either description or task_id must be provided",
+        )
+
+    if request.description:
+        task = Task(
+            description=request.description,
+            remote=request.server_address,
+            auth_token=request.token,
+            owner_id=request.owner_id,
+        )
+    else:
+        tasks = Task.find(
+            remote=request.server_address,
+            id=request.task_id,
+            auth_token=request.token,
+            owner_id=request.owner_id,
+        )
+        if not tasks:
+            raise HTTPException(status_code=404, detail="Task not found")
+        task = tasks[0]
+
+    with lock:
+        if active_session:
+            raise HTTPException(
+                status_code=400,
+                detail="A recording session is already active. Stop it first",
+            )
+        session = RecordingSession(id=session_id, task=task)
+        session.start()
+        active_session = session
+    return RecordResponse(task_id=task.id)
+
+
+@app.post("/v1/stop_recording")
+async def stop_recording():
+    global active_session
+    with lock:
+        if not active_session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        active_session.stop()
+        print("Stopped recording session")
+
+        active_session = None
+    return
+
+
+##
+### Video Recording
 ##
 
 video_recording_process = None
@@ -435,42 +426,59 @@ os.makedirs(video_recordings_dir, exist_ok=True)
 class VideoRecordRequest(BaseModel):
     framerate: int
 
+
 class VideoRecordResponse(BaseModel):
     session_id: str
 
+
 class VideoRecordings(BaseModel):
     recordings: list[str]
+
 
 class VideoRecordModel(BaseModel):
     status: str
     file_path: str
 
 
-@app.post("/start_video_recording", response_model=VideoRecordResponse)
+@app.post("/v1/start_video_recording", response_model=VideoRecordResponse)
 async def start_video_recording(request: VideoRecordRequest):
     global video_recording_process
     with video_recording_lock:
         if video_recording_process is not None:
-            raise HTTPException(status_code=400, detail="Video recording is already in progress.")
-        
+            raise HTTPException(
+                status_code=400, detail="Video recording is already in progress."
+            )
+
         session_id = str(uuid.uuid4())
         file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
 
-        video_recording_process = subprocess.Popen([
-            "ffmpeg", "-video_size", "1920x1080", "-framerate", f"{request.framerate}", "-f", "x11grab",
-            "-i", ":0.0", file_path
-        ])
+        video_recording_process = subprocess.Popen(
+            [
+                "ffmpeg",
+                "-video_size",
+                "1920x1080",
+                "-framerate",
+                f"{request.framerate}",
+                "-f",
+                "x11grab",
+                "-i",
+                ":0.0",
+                file_path,
+            ]
+        )
 
     return VideoRecordResponse(session_id=session_id)
 
 
-@app.post("/stop_video_recording", response_model=VideoRecordModel)
+@app.post("/v1/stop_video_recording", response_model=VideoRecordModel)
 async def stop_video_recording():
     global video_recording_process
     with video_recording_lock:
         if video_recording_process is None:
-            raise HTTPException(status_code=400, detail="No video recording in progress.")
-        
+            raise HTTPException(
+                status_code=400, detail="No video recording in progress."
+            )
+
         video_recording_process.terminate()
         video_recording_process = None
 
@@ -480,26 +488,26 @@ async def stop_video_recording():
     return VideoRecordModel(status="success", file_path=file_path)
 
 
-@app.get("/video_recordings", response_model=VideoRecordings)
+@app.get("/v1/video_recordings", response_model=VideoRecordings)
 async def list_video_recordings():
     recordings = os.listdir(video_recordings_dir)
     return VideoRecordings(recordings=recordings)
 
 
-@app.get("/video_recordings/{session_id}", response_class=FileResponse)
+@app.get("/v1/video_recordings/{session_id}", response_class=FileResponse)
 async def get_video_recording(session_id: str):
     file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Recording not found.")
-    
+
     return FileResponse(file_path, media_type="video/mp4", filename=f"{session_id}.mp4")
 
 
-@app.delete("/video_recordings/{session_id}", response_model=VideoRecordModel)
+@app.delete("/v1/video_recordings/{session_id}", response_model=VideoRecordModel)
 async def delete_video_recording(session_id: str):
     file_path = os.path.join(video_recordings_dir, f"{session_id}.mp4")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Recording not found.")
-    
+
     os.remove(file_path)
     return VideoRecordModel(status="success", file_path=file_path)
