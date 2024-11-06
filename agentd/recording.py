@@ -147,7 +147,9 @@ if __name__ == "__main__":
         shutil.rmtree(session_dir)
 
     def on_press(self, key: Key):
+        print(f"on_press waiting for lock with key {key} count of actions {len(self.actions)}", flush=True)
         with self.lock:
+            print(f"on_press acquired lock with key {key} count of actions {len(self.actions)}", flush=True)
             print("\npressed key: ", key, flush=True)
 
             # Handle shift and caps lock keys
@@ -228,17 +230,23 @@ if __name__ == "__main__":
                             end_state=end_state,
                         )
                     )
+            print(f"on_press releasing lock with key {key} count of actions {len(self.actions)}", flush=True)
 
     def on_release(self, key):
+        print(f"on_release waiting lock with key {key} count of actions {len(self.actions)}", flush=True)
         with self.lock:
+            print(f"on_release acquired lock with key {key} count of actions {len(self.actions)}", flush=True)
             if key in [Key.shift, Key.shift_r, Key.shift_l]:
                 self.shift_pressed = False
+            print(f"on_release releasing lock with key {key} count of actions {len(self.actions)}", flush=True)
 
     def on_click(self, x, y, button, pressed):
         if not pressed:
             print("skipping button up event", flush=True)
             return
+        print(f"on_click waiting lock with x,y: {x}, {y} count of actions {len(self.actions)}", flush=True)
         with self.lock:
+            print(f"on_click acquired lock with x,y: {x}, {y} count of actions {len(self.actions)}", flush=True)
             current_time = time.time()
             is_double_click = False
             DOUBLE_CLICK_THRESHOLD = (
@@ -309,9 +317,12 @@ if __name__ == "__main__":
 
             except Exception as e:
                 print(f"Error recording click event: {e}", flush=True)
+            print(f"on_click releasing lock with x,y: {x}, {y} count of actions {len(self.actions)}", flush=True)
 
     def on_scroll(self, x, y, dx, dy):
+        print(f"on_scroll waiting lock with x,y: {x}, {y}; dx, dy: {dx} count of actions {len(self.actions)}", flush=True)
         with self.lock:
+            print(f"on_scroll acquired lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}", flush=True)
             mouse_x, mouse_y = pyautogui.position()
             print("scrolled: ", x, y, dx, dy, flush=True)
 
@@ -346,6 +357,7 @@ if __name__ == "__main__":
                     tool=DESKTOP_TOOL_REF,
                 )
             )
+            print(f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}", flush=True)
 
     def start_typing_sequence(self):
         x, y = pyautogui.position()

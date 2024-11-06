@@ -40,8 +40,10 @@ steps:
     args:
       - "-c"
       - |
-        docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest
         docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA}
+        if [ "$BRANCH_NAME" == "main" ]; then
+          docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest
+        fi
 
 timeout: "3600s"
 
