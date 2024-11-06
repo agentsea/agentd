@@ -18,6 +18,8 @@ pyscreeze = "^1.0.1"
 fastapi = {version = "0.109", extras = ["all"]}
 taskara = "^0.1.159"
 tiktoken = "0.7.0"
+celery = "^5.4.0"
+celery-types = "^0.22.0"
 
 
 [tool.poetry.group.dev.dependencies]
