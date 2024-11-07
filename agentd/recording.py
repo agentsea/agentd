@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from itertools import chain
 import json
 import os
 import time
@@ -20,6 +21,8 @@ from pynput.keyboard import Key, KeyCode
 from taskara import Task
 from skillpacks import V1Action, V1ToolRef, ActionEvent, EnvState
 
+from .celery_worker import celery_app, send_action
+
 from .models import (
     Recording,
 )
@@ -34,6 +37,23 @@ lock = Lock()
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.5
+
+def wait_for_celery_tasks():
+    inspect = celery_app.control.inspect()
+    reserved_tasks = inspect.reserved() # these are pending tasks enqueued
+    reserved_tasks = list(chain(*reserved_tasks.values())) if reserved_tasks else None # merge all the arrays
+    active_tasks = inspect.active()
+    active_tasks = list(chain(*active_tasks.values())) if active_tasks else None # merge all the arrays
+    while active_tasks or reserved_tasks:
+        print("waiting for celery worker to finish tasks...", flush=True)
+        # no need for a sleep function as the inspect functions do take time
+        reserved_tasks = inspect.reserved() #reassign to retest
+        reserved_tasks = list(chain(*reserved_tasks.values())) if reserved_tasks else None # merge all the arrays
+        active_tasks = inspect.active() #reassign to retest
+        active_tasks = list(chain(*active_tasks.values())) if active_tasks else None # merge all the arrays
+
+    print("celery worker completed all tasks", flush=True)
+    return {"active_tasks": active_tasks,"reserved_tasks": reserved_tasks}
 
 
 class RecordingSession:
@@ -81,9 +101,9 @@ class RecordingSession:
             self.mouse_listener.stop()
             self._stop_screenshot_subprocess()
             self._end_time = time.time()
-            for action in self.actions:
-                self._task.record_action_event(action)
-
+            # for action in self.actions:
+            #     self._task.record_action_event(action)
+            wait_for_celery_tasks()
             self._cleanup_unused_screenshots()
             self._status = "stopped"
             atexit.unregister(self.stop)
@@ -221,15 +241,15 @@ if __name__ == "__main__":
 
                     # Record special key event as an action
                     action = V1Action(name="press_key", parameters={"key": str(key)})
-
-                    self.actions.append(
-                        ActionEvent(
+                    action_event = ActionEvent(
                             state=state,
                             action=action,
                             tool=DESKTOP_TOOL_REF,
                             end_state=end_state,
                         )
-                    )
+                    self.actions.append( action_event )
+                    # kicking off celery job
+                    send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
             print(f"on_press releasing lock with key {key} count of actions {len(self.actions)}", flush=True)
 
     def on_release(self, key):
@@ -314,6 +334,8 @@ if __name__ == "__main__":
                     end_state=end_state,
                 )
                 self.actions.append(action_event)
+                # kicking off celery job
+                send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
 
             except Exception as e:
                 print(f"Error recording click event: {e}", flush=True)
@@ -348,15 +370,15 @@ if __name__ == "__main__":
             )
 
             action = V1Action(name="scroll", parameters={"dx": dx, "dy": dy})
-
-            self.actions.append(
-                ActionEvent(
+            action_event = ActionEvent(
                     state=state,
                     action=action,
                     end_state=end_state,
                     tool=DESKTOP_TOOL_REF,
                 )
-            )
+            self.actions.append( action_event )
+            # kicking off celery job
+            send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
             print(f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}", flush=True)
 
     def start_typing_sequence(self):
@@ -383,15 +405,15 @@ if __name__ == "__main__":
 
             if not self.text_start_state:
                 raise ValueError("No text start state available")
-
-            self.actions.append(
-                ActionEvent(
+            action_event = ActionEvent(
                     state=self.text_start_state,
                     action=action,
                     tool=DESKTOP_TOOL_REF,
                     end_state=end_state,
                 )
-            )
+            self.actions.append( action_event )
+            # kicking off celery job
+            send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
             print(f"Recorded text action: {self.text_buffer}", flush=True)
 
             # Reset the typing state

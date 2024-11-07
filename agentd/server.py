@@ -12,6 +12,7 @@ from typing import Optional
 import threading
 import getpass
 
+from agentd.util import log_subprocess_output
 import psutil
 import pyautogui
 from fastapi import FastAPI, HTTPException, Request, Body
@@ -19,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import FileResponse
 from taskara.task import Task
+from .celery_worker import celery_app
 
 from .firefox import (
     gracefully_terminate_firefox,
@@ -348,7 +350,7 @@ async def system_usage():
     disk = psutil.disk_usage("/")
 
     return SystemUsageModel(
-        cpu_percent=cpu_percent,
+        cpu_percent=cpu_percent, # type: ignore
         memory_percent=memory.percent,
         disk_percent=disk.percent,
     )
@@ -387,6 +389,11 @@ async def start_recording(request: RecordRequest):
         if not tasks:
             raise HTTPException(status_code=404, detail="Task not found")
         task = tasks[0]
+    # launching celery worker
+    command = ["celery", "-A", "app.celery_app", "worker", "--loglevel=debug"]
+    subProc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    # starting new thread below to capture worker logs in our stdout for uvicorn
+    threading.Thread(target=log_subprocess_output, args=(subProc.stdout, "celery_worker"), daemon=True).start()
 
     with lock:
         if active_session:
