@@ -120,7 +120,7 @@ RUN touch /config/app/logs/uvicorn_env.log && chown abc:abc /config/app/logs/uvi
 
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
 
-RUN mkdir -p /config/app/celery && chown -R abc:abc /config/app/celery chmod 744 /config/app/celery
+RUN mkdir -p /config/app/celery && chown -R abc:abc /config/app/celery && chmod 744 /config/app/celery
 
 # Create the s6-overlay v3 service directory for your application
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn
