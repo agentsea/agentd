@@ -7,13 +7,14 @@ steps:
       - |
         docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-  # Set up Docker Buildx
+  # Set up Docker Buildx with a specific version
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        docker buildx create --name mybuilder --use
+        docker buildx create --driver docker-container --name mybuilder --use \
+          --driver-opt image=moby/buildkit:v0.16.0  # specify your desired Buildx version
         docker buildx inspect --bootstrap
 
   # Build and push for multiple architectures with caching
