@@ -31,7 +31,7 @@ RUN apk add --no-cache \
     xdotool
 
 # Set environment variables for Python installation
-ENV PYTHON_VERSION=3.12.0
+ENV PYTHON_VERSION=3.10.9
 ENV PYENV_ROOT="/config/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PATH"
 
