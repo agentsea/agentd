@@ -16,6 +16,7 @@ RUN apk add --no-cache \
     db-dev \
     libpcap-dev \
     linux-headers \
+    musl-dev \
     curl \
     git \
     wget \
@@ -34,6 +35,7 @@ RUN apk add --no-cache \
 ENV PYTHON_VERSION=3.12.1
 ENV PYENV_ROOT="/config/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PATH"
+ENV LDFLAGS="-L/usr/local/lib -L/usr/include"
 
 # Install pyenv as root
 RUN curl https://pyenv.run | bash
@@ -65,7 +67,8 @@ COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
 
 # Install Python using pyenv as 'abc' by sourcing the setup script
 RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c \
-    "source /config/app/pyenv_setup.sh && pyenv install ${PYTHON_VERSION}"
+    "source /config/app/pyenv_setup.sh && pyenv install ${PYTHON_VERSION}" || \
+    { echo "Build failed. Showing config.log:"; cat /tmp/python-build.*/Python-*/config.log; exit 1; }
 
 # Set the global Python version
 RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c \
