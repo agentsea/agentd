@@ -95,6 +95,7 @@ class RecordingSession:
         atexit.register(self.stop)
 
     def stop(self):
+        wait_for_celery_tasks()
         if self._status != "stopped":
             self._status = "stopping"
             self.keyboard_listener.stop()
@@ -103,7 +104,6 @@ class RecordingSession:
             self._end_time = time.time()
             # for action in self.actions:
             #     self._task.record_action_event(action)
-            wait_for_celery_tasks()
             self._cleanup_unused_screenshots()
             self._status = "stopped"
             atexit.unregister(self.stop)
