@@ -390,7 +390,7 @@ async def start_recording(request: RecordRequest):
             raise HTTPException(status_code=404, detail="Task not found")
         task = tasks[0]
     # launching celery worker
-    command = ["celery", "-A", "app.celery_app", "worker", "--loglevel=debug"]
+    command = ["celery", "-A", "agentd.celery_worker", "worker", "--loglevel=debug"]
     subProc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     # starting new thread below to capture worker logs in our stdout for uvicorn
     threading.Thread(target=log_subprocess_output, args=(subProc.stdout, "celery_worker"), daemon=True).start()
