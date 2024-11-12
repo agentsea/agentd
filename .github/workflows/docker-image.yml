@@ -34,7 +34,7 @@ jobs:
 
         docker buildx build \
           --platform linux/arm64 \
-          -t us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:${{ SHORT_SHA }} \
+          -t us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:${{ env.SHORT_SHA }} \
           --build-arg PYTHON_VERSION=3.12.0 \
           --cache-from type=registry,ref=us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:buildcache \
           --cache-to type=registry,ref=us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:buildcache,mode=max \
