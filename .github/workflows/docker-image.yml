@@ -8,7 +8,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-arm64
 
     steps:
     - uses: actions/checkout@v4
@@ -19,23 +19,6 @@ jobs:
       with:
         project_id: ${{ vars.PROJECT_ID }}
         credentials_json: ${{ secrets._GITHUB_ACTIONS_PUSH_IMAGES_KEY }}
-
-    # Step: Install Docker (macOS)
-    - name: Install Docker
-      run: |
-        # Install Docker using Homebrew (this is the recommended way on macOS)
-        if ! command -v docker &> /dev/null
-        then
-          echo "Docker could not be found, installing Docker..."
-          brew install --cask docker
-          # Start Docker (since it's a GUI app, this might require Docker Desktop for macOS to be launched)
-          open /Applications/Docker.app
-          # Wait for Docker to start up
-          while ! docker system info > /dev/null 2>&1; do
-            echo "Waiting for Docker to start..."
-            sleep 1
-          done
-        fi
 
     # Step 1: Set up Docker Buildx
     - name: Set up Docker Buildx
