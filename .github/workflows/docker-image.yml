@@ -29,7 +29,7 @@ jobs:
     - name: Build and Push
       run: |
         # Shorten the GitHub commit SHA (first 7 characters)
-        SHORT_SHA=${{ github.sha::7 }}
+        SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
         echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_ENV  # Save SHORT_SHA to the environment for use in other steps
 
         docker buildx build \
