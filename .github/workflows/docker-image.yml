@@ -1,0 +1,51 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - jhucka
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Step: Set up Google Cloud authentication
+    - name: Set up Google Cloud authentication
+      uses: google-github-actions/auth@v0
+      with:
+        credentials_json: ${{ secrets._GITHUB_ACTIONS_PUSH_IMAGES_KEY }}
+
+    # Step 1: Set up Docker Buildx
+    - name: Set up Docker Buildx
+      run: |
+        docker buildx create --name mybuilder --use
+        docker buildx inspect --bootstrap
+
+    # Step 2: Build and push for multiple architectures with caching
+    - name: Build and Push
+      run: |
+        # Shorten the GitHub commit SHA (first 7 characters)
+        SHORT_SHA=${{ github.sha::7 }}
+        echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_ENV  # Save SHORT_SHA to the environment for use in other steps
+
+        docker buildx build \
+          --platform linux/arm64 \
+          -t us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:${{ SHORT_SHA }} \
+          --build-arg PYTHON_VERSION=3.12.0 \
+          --cache-from type=registry,ref=us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:buildcache \
+          --cache-to type=registry,ref=us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:buildcache,mode=max \
+          --push \
+          .
+
+    # Step 4: Verify the multi-arch image
+    - name: Verify Images
+      run: |
+        docker buildx imagetools inspect us-docker.pkg.dev/${{ vars.PROJECT_ID }}/agentd/desktop-webtop:${{ env.SHORT_SHA }}
+
+    # Optional: Set timeout and machine type (not directly supported in GitHub Actions, but can be controlled via runners)
+    # timeout: "3600s" # GitHub actions does not directly support timeouts in YAML, can be controlled at job level.
+    # options: machineType: "N1_HIGHCPU_32" # You would need to use a custom runner for machine type configuration.
