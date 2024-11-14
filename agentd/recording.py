@@ -6,7 +6,7 @@ import json
 import os
 import time
 from threading import Lock
-from typing import Dict, Set
+from typing import Dict, Set, List
 import subprocess
 import signal
 import atexit
@@ -20,8 +20,9 @@ from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
 from taskara import Task
 from skillpacks import V1Action, V1ToolRef, ActionEvent, EnvState
+from taskara.task import V1TaskUpdate, TaskStatus
 
-from .celery_worker import celery_app, send_action
+from .celery_worker import celery_app, send_action, update_task
 
 from .models import (
     Recording,
@@ -37,6 +38,7 @@ lock = Lock()
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.5
+MULTI_END_SCREENSHOT_INTERVAL = 0.1
 
 def wait_for_celery_tasks():
     inspect = celery_app.control.inspect()
@@ -46,11 +48,12 @@ def wait_for_celery_tasks():
     active_tasks = list(chain(*active_tasks.values())) if active_tasks else None # merge all the arrays
     while active_tasks or reserved_tasks:
         print("waiting for celery worker to finish tasks...", flush=True)
+        time.sleep(1)
         # no need for a sleep function as the inspect functions do take time
         reserved_tasks = inspect.reserved() #reassign to retest
         reserved_tasks = list(chain(*reserved_tasks.values())) if reserved_tasks else None # merge all the arrays
         active_tasks = inspect.active() #reassign to retest
-        active_tasks = list(chain(*active_tasks.values())) if active_tasks else None # merge all the arrays
+        active_tasks = list(chain(*active_tasks.values())) if active_tasks else None # merge all the arrays        
 
     print("celery worker completed all tasks", flush=True)
     return {"active_tasks": active_tasks,"reserved_tasks": reserved_tasks}
@@ -92,10 +95,22 @@ class RecordingSession:
 
         self._status = "running"
         self._start_screenshot_subprocess()
+        update_task.delay(
+            self._task.id, 
+            self._task.remote, 
+            self._task.auth_token,
+            V1TaskUpdate(status=TaskStatus.IN_PROGRESS.value).model_dump()
+        )
         atexit.register(self.stop)
 
     def stop(self):
         wait_for_celery_tasks()
+        update_task.delay(
+            self._task.id, 
+            self._task.remote, 
+            self._task.auth_token,
+            V1TaskUpdate(status=TaskStatus.FINISHED.value).model_dump()
+        )
         if self._status != "stopped":
             self._status = "stopping"
             self.keyboard_listener.stop()
@@ -144,23 +159,35 @@ if __name__ == "__main__":
         if self.screenshot_process:
             os.kill(self.screenshot_process.pid, signal.SIGTERM)
             self.screenshot_process.wait()
-
-    def _get_latest_screenshot(self) -> str:
+    
+    def _get_latest_screenshots(self, n: int) -> List[str]:
         session_dir = self._dir()
         screenshot_files = [
             f
             for f in os.listdir(session_dir)
             if f.startswith("screenshot_") and f.endswith(".png")
         ]
+        
         if not screenshot_files:
-            return ""
-        latest_screenshot = max(
+            return []
+        
+        # Sort the files by modification time in descending order
+        sorted_screenshots = sorted(
             screenshot_files,
             key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
+            reverse=True
         )
-        latest_path = os.path.join(session_dir, latest_screenshot)
-        self.used_screenshots.add(latest_path)
-        return latest_path
+        
+        # Select the top n screenshots (or fewer if there are not enough files)
+        latest_screenshots = sorted_screenshots[:n]
+        
+        # Get the full paths of the screenshots
+        latest_paths = [os.path.join(session_dir, screenshot) for screenshot in latest_screenshots]
+        
+        # Add the screenshots to the used_screenshots set
+        self.used_screenshots.update(latest_paths)
+        
+        return latest_paths
 
     def _cleanup_unused_screenshots(self):
         session_dir = self._dir()
@@ -227,15 +254,17 @@ if __name__ == "__main__":
 
                     x, y = pyautogui.position()
 
-                    start_screenshot_path = self._get_latest_screenshot()
+                    start_screenshot_path = self._get_latest_screenshots(2)
                     state = EnvState(
-                        images=[self.encode_image_to_base64(start_screenshot_path)],
+                        images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
                         coordinates=(int(x), int(y)),
                     )
-
-                    end_screenshot_path = self.take_screenshot()
+                    end_screenshot_path = []
+                    end_screenshot_path.append(self.take_screenshot())
+                    time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
+                    end_screenshot_path.append(self.take_screenshot())
                     end_state = EnvState(
-                        images=[self.encode_image_to_base64(end_screenshot_path)],
+                        images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
                         coordinates=(int(x), int(y)),
                     )
 
@@ -248,7 +277,7 @@ if __name__ == "__main__":
                             end_state=end_state,
                         )
                     self.actions.append( action_event )
-                    # kicking off celery job
+                    # kicking off celery job for sending the action 
                     send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
             print(f"on_press releasing lock with key {key} count of actions {len(self.actions)}", flush=True)
 
@@ -288,19 +317,20 @@ if __name__ == "__main__":
                     print("Finalizing text event due to click...", flush=True)
                     self.record_text_action()
 
-                start_screenshot_path = self._get_latest_screenshot()
-                encoded = self.encode_image_to_base64(start_screenshot_path)
+                start_screenshot_path = self._get_latest_screenshots(2)
 
                 state = EnvState(
-                    images=[encoded],
+                    images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
                     coordinates=(int(x), int(y)),
                 )
 
-                end_screenshot_path = self.take_screenshot()
-                encoded = self.encode_image_to_base64(end_screenshot_path)
+                end_screenshot_path = []
+                end_screenshot_path.append(self.take_screenshot())
+                time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
+                end_screenshot_path.append(self.take_screenshot())
 
                 end_state = EnvState(
-                    images=[encoded],
+                    images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
                     coordinates=(int(x), int(y)),
                 )
 
@@ -353,19 +383,20 @@ if __name__ == "__main__":
                 print("Finalizing text event due to scroll...", flush=True)
                 self.record_text_action()
 
-            start_screenshot_path = self._get_latest_screenshot()
-            encoded = self.encode_image_to_base64(start_screenshot_path)
-
+            start_screenshot_path = self._get_latest_screenshots(2)
+            
             state = EnvState(
-                images=[encoded],
+                images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
 
-            end_screenshot_path = self.take_screenshot()
-            encoded = self.encode_image_to_base64(end_screenshot_path)
+            end_screenshot_path = []
+            end_screenshot_path.append(self.take_screenshot())
+            time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
+            end_screenshot_path.append(self.take_screenshot())
 
             end_state = EnvState(
-                images=[encoded],
+                images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
 
@@ -383,9 +414,9 @@ if __name__ == "__main__":
 
     def start_typing_sequence(self):
         x, y = pyautogui.position()
-        start_screenshot_path = self._get_latest_screenshot()
+        start_screenshot_path = self._get_latest_screenshots(2)
         self.text_start_state = EnvState(
-            images=[self.encode_image_to_base64(start_screenshot_path)],
+            images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
             coordinates=(int(x), int(y)),
         )
         self.typing_in_progress = True
@@ -395,9 +426,13 @@ if __name__ == "__main__":
         if self.text_buffer.strip():
             x, y = pyautogui.position()
 
-            end_screenshot_path = self.take_screenshot()
+            end_screenshot_path = []
+            end_screenshot_path.append(self.take_screenshot())
+            time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
+            end_screenshot_path.append(self.take_screenshot())
+
             end_state = EnvState(
-                images=[self.encode_image_to_base64(end_screenshot_path)],
+                images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
                 coordinates=(int(x), int(y)),
             )
 
