@@ -38,7 +38,7 @@ lock = Lock()
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.5
-MULTI_END_SCREENSHOT_INTERVAL = 0.1
+MULTI_END_SCREENSHOT_INTERVAL = 0.5
 
 def wait_for_celery_tasks():
     inspect = celery_app.control.inspect()
@@ -275,6 +275,7 @@ if __name__ == "__main__":
                             action=action,
                             tool=DESKTOP_TOOL_REF,
                             end_state=end_state,
+                            event_order=len(self.actions)
                         )
                     self.actions.append( action_event )
                     # kicking off celery job for sending the action 
@@ -362,6 +363,7 @@ if __name__ == "__main__":
                     action=action,
                     tool=DESKTOP_TOOL_REF,
                     end_state=end_state,
+                    event_order=len(self.actions)
                 )
                 self.actions.append(action_event)
                 # kicking off celery job
@@ -406,6 +408,7 @@ if __name__ == "__main__":
                     action=action,
                     end_state=end_state,
                     tool=DESKTOP_TOOL_REF,
+                    event_order=len(self.actions)
                 )
             self.actions.append( action_event )
             # kicking off celery job
@@ -445,6 +448,7 @@ if __name__ == "__main__":
                     action=action,
                     tool=DESKTOP_TOOL_REF,
                     end_state=end_state,
+                    event_order=len(self.actions)
                 )
             self.actions.append( action_event )
             # kicking off celery job
