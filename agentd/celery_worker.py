@@ -18,7 +18,7 @@ celery_app = Celery('send_actions', broker_url='filesystem://', CELERY_RESULT_BA
     })
 
 celery_app.conf.update(
-    worker_concurrency=3,
+    worker_concurrency=1,  # Set concurrency to 1 we need to either change the data model or enable object locking to do this.
     task_serializer='json', # Specify the task serializer if needed
 )
 
