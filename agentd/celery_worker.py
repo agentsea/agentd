@@ -18,7 +18,7 @@ celery_app = Celery('send_actions', broker_url='filesystem://', CELERY_RESULT_BA
     })
 
 celery_app.conf.update(
-    worker_concurrency=1,  # Set concurrency to 1 we need to add order tracking to actions in order to increase this
+    worker_concurrency=3,
     task_serializer='json', # Specify the task serializer if needed
 )
 
