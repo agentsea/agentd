@@ -38,7 +38,6 @@ lock = Lock()
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.5
-MULTI_END_SCREENSHOT_INTERVAL = 0.2
 
 def wait_for_celery_tasks():
     inspect = celery_app.control.inspect()
@@ -261,7 +260,6 @@ if __name__ == "__main__":
                     )
                     end_screenshot_path = []
                     end_screenshot_path.append(self.take_screenshot())
-                    time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
                     end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
                     end_state = EnvState(
                         images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
@@ -327,7 +325,6 @@ if __name__ == "__main__":
 
                 end_screenshot_path = []
                 end_screenshot_path.append(self.take_screenshot())
-                time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
                 end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
                 end_state = EnvState(
@@ -394,7 +391,6 @@ if __name__ == "__main__":
 
             end_screenshot_path = []
             end_screenshot_path.append(self.take_screenshot())
-            time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
             end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
             end_state = EnvState(
@@ -431,7 +427,6 @@ if __name__ == "__main__":
 
             end_screenshot_path = []
             end_screenshot_path.append(self.take_screenshot())
-            time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
             end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
             end_state = EnvState(
