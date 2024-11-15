@@ -38,7 +38,7 @@ lock = Lock()
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.5
-MULTI_END_SCREENSHOT_INTERVAL = 0.5
+MULTI_END_SCREENSHOT_INTERVAL = 0.2
 
 def wait_for_celery_tasks():
     inspect = celery_app.control.inspect()
@@ -262,7 +262,7 @@ if __name__ == "__main__":
                     end_screenshot_path = []
                     end_screenshot_path.append(self.take_screenshot())
                     time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
-                    end_screenshot_path.append(self.take_screenshot())
+                    end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
                     end_state = EnvState(
                         images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
                         coordinates=(int(x), int(y)),
@@ -328,7 +328,7 @@ if __name__ == "__main__":
                 end_screenshot_path = []
                 end_screenshot_path.append(self.take_screenshot())
                 time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
-                end_screenshot_path.append(self.take_screenshot())
+                end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
                 end_state = EnvState(
                     images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
@@ -395,7 +395,7 @@ if __name__ == "__main__":
             end_screenshot_path = []
             end_screenshot_path.append(self.take_screenshot())
             time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
-            end_screenshot_path.append(self.take_screenshot())
+            end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
             end_state = EnvState(
                 images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
@@ -432,7 +432,7 @@ if __name__ == "__main__":
             end_screenshot_path = []
             end_screenshot_path.append(self.take_screenshot())
             time.sleep(MULTI_END_SCREENSHOT_INTERVAL)
-            end_screenshot_path.append(self.take_screenshot())
+            end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
             end_state = EnvState(
                 images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
@@ -508,14 +508,15 @@ if __name__ == "__main__":
             recording = Recording(**data)
             return cls.from_schema(recording)
 
-    def take_screenshot(self) -> str:
+    def take_screenshot(self, name=None) -> str:
         # Get the session directory and create it if it doesn't exist
         session_dir = self._dir()
         os.makedirs(session_dir, exist_ok=True)
 
         # Generate a unique file name based on the current timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(session_dir, f"screenshot_{timestamp}.png")
+        filename = f"{name}_screenshot_{timestamp}.png" if name else f"screenshot_{timestamp}.png"
+        file_path = os.path.join(session_dir, filename)
 
         # Use scrot to take a screenshot with the cursor (-p flag)
         subprocess.run(["scrot", "-z", "-p", file_path], check=True)
