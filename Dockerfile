@@ -127,6 +127,8 @@ RUN mkdir -p /config/app/celery && chown -R abc:abc /config/app/celery && chmod 
 RUN mkdir -p /config/.agentsea && chown -R abc:abc /config/.agentsea
 RUN mkdir -p /config/.agentsea/data && chown -R abc:abc /config/.agentsea/data
 
+RUN mkdir -p /tmp/.X11-unix && chown -R abc:abc /tmp/.X11-unix && chmod 744 /tmp/.X11-unix
+
 # Create the s6-overlay v3 service directory for your application
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn
 
