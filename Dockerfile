@@ -16,7 +16,6 @@ RUN apk add --no-cache \
     db-dev \
     libpcap-dev \
     linux-headers \
-    musl-dev \
     curl \
     git \
     wget \
@@ -35,7 +34,6 @@ RUN apk add --no-cache \
 ENV PYTHON_VERSION=3.12.1
 ENV PYENV_ROOT="/config/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PATH"
-ENV LDFLAGS="-L/usr/local/lib -L/usr/include"
 
 # Install pyenv as root
 RUN curl https://pyenv.run | bash
