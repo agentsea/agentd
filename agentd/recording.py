@@ -113,7 +113,9 @@ class RecordingSession:
         atexit.register(self.stop)
 
     def stop(self):
+
         wait_for_celery_tasks()
+        print("send update_task to celery for finished", flush=True)
         update_task.delay(
             self._task.id,
             self._task.remote,
