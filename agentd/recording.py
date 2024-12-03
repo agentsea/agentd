@@ -1,29 +1,30 @@
 from __future__ import annotations
 
-import base64
-from itertools import chain
-import json
-import os
-import time
-from threading import Lock
-from typing import Dict, Set, List
-import subprocess
-import signal
 import atexit
-from datetime import datetime
-import threading
+import base64
+import io
+import json
 import mimetypes
+import os
 import shutil
+import signal
+import subprocess
+import threading
+import time
+from datetime import datetime
+from itertools import chain
+from threading import Lock
+from typing import Dict, List, Optional, Set
 
 import pyautogui
+from PIL import Image
 from pynput import keyboard, mouse
 from pynput.keyboard import Key, KeyCode
+from skillpacks import ActionEvent, EnvState, V1Action, V1ToolRef
 from taskara import Task
-from skillpacks import V1Action, V1ToolRef, ActionEvent, EnvState
-from taskara.task import V1TaskUpdate, TaskStatus
+from taskara.task import TaskStatus, V1TaskUpdate
 
 from .celery_worker import celery_app, send_action, update_task
-
 from .models import (
     Recording,
 )
@@ -39,23 +40,32 @@ RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.5
 
+
 def wait_for_celery_tasks():
     inspect = celery_app.control.inspect()
-    reserved_tasks = inspect.reserved() # these are pending tasks enqueued
-    reserved_tasks = list(chain(*reserved_tasks.values())) if reserved_tasks else None # merge all the arrays
+    reserved_tasks = inspect.reserved()  # these are pending tasks enqueued
+    reserved_tasks = (
+        list(chain(*reserved_tasks.values())) if reserved_tasks else None
+    )  # merge all the arrays
     active_tasks = inspect.active()
-    active_tasks = list(chain(*active_tasks.values())) if active_tasks else None # merge all the arrays
+    active_tasks = (
+        list(chain(*active_tasks.values())) if active_tasks else None
+    )  # merge all the arrays
     while active_tasks or reserved_tasks:
         print("waiting for celery worker to finish tasks...", flush=True)
         time.sleep(1)
         # no need for a sleep function as the inspect functions do take time
-        reserved_tasks = inspect.reserved() #reassign to retest
-        reserved_tasks = list(chain(*reserved_tasks.values())) if reserved_tasks else None # merge all the arrays
-        active_tasks = inspect.active() #reassign to retest
-        active_tasks = list(chain(*active_tasks.values())) if active_tasks else None # merge all the arrays        
+        reserved_tasks = inspect.reserved()  # reassign to retest
+        reserved_tasks = (
+            list(chain(*reserved_tasks.values())) if reserved_tasks else None
+        )  # merge all the arrays
+        active_tasks = inspect.active()  # reassign to retest
+        active_tasks = (
+            list(chain(*active_tasks.values())) if active_tasks else None
+        )  # merge all the arrays
 
     print("celery worker completed all tasks", flush=True)
-    return {"active_tasks": active_tasks,"reserved_tasks": reserved_tasks}
+    return {"active_tasks": active_tasks, "reserved_tasks": reserved_tasks}
 
 
 class RecordingSession:
@@ -95,20 +105,20 @@ class RecordingSession:
         self._status = "running"
         self._start_screenshot_subprocess()
         update_task.delay(
-            self._task.id, 
-            self._task.remote, 
+            self._task.id,
+            self._task.remote,
             self._task.auth_token,
-            V1TaskUpdate(status=TaskStatus.IN_PROGRESS.value).model_dump()
+            V1TaskUpdate(status=TaskStatus.IN_PROGRESS.value).model_dump(),
         )
         atexit.register(self.stop)
 
     def stop(self):
         wait_for_celery_tasks()
         update_task.delay(
-            self._task.id, 
-            self._task.remote, 
+            self._task.id,
+            self._task.remote,
             self._task.auth_token,
-            V1TaskUpdate(status=TaskStatus.FINISHED.value).model_dump()
+            V1TaskUpdate(status=TaskStatus.FINISHED.value).model_dump(),
         )
         if self._status != "stopped":
             self._status = "stopping"
@@ -158,7 +168,7 @@ if __name__ == "__main__":
         if self.screenshot_process:
             os.kill(self.screenshot_process.pid, signal.SIGTERM)
             self.screenshot_process.wait()
-    
+
     def _get_latest_screenshots(self, n: int) -> List[str]:
         session_dir = self._dir()
         screenshot_files = [
@@ -166,26 +176,28 @@ if __name__ == "__main__":
             for f in os.listdir(session_dir)
             if f.startswith("screenshot_") and f.endswith(".png")
         ]
-        
+
         if not screenshot_files:
             return []
-        
+
         # Sort the files by modification time in descending order
         sorted_screenshots = sorted(
             screenshot_files,
             key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
-            reverse=True
+            reverse=True,
         )
-        
+
         # Select the top n screenshots (or fewer if there are not enough files)
         latest_screenshots = sorted_screenshots[:n]
-        
+
         # Get the full paths of the screenshots
-        latest_paths = [os.path.join(session_dir, screenshot) for screenshot in latest_screenshots]
-        
+        latest_paths = [
+            os.path.join(session_dir, screenshot) for screenshot in latest_screenshots
+        ]
+
         # Add the screenshots to the used_screenshots set
         self.used_screenshots.update(latest_paths)
-        
+
         return latest_paths
 
     def _cleanup_unused_screenshots(self):
@@ -193,9 +205,15 @@ if __name__ == "__main__":
         shutil.rmtree(session_dir)
 
     def on_press(self, key: Key):
-        print(f"on_press waiting for lock with key {key} count of actions {len(self.actions)}", flush=True)
+        print(
+            f"on_press waiting for lock with key {key} count of actions {len(self.actions)}",
+            flush=True,
+        )
         with self.lock:
-            print(f"on_press acquired lock with key {key} count of actions {len(self.actions)}", flush=True)
+            print(
+                f"on_press acquired lock with key {key} count of actions {len(self.actions)}",
+                flush=True,
+            )
             print("\npressed key: ", key, flush=True)
 
             # Handle shift and caps lock keys
@@ -255,46 +273,76 @@ if __name__ == "__main__":
 
                     start_screenshot_path = self._get_latest_screenshots(2)
                     state = EnvState(
-                        images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
+                        images=[
+                            self.encode_image_to_base64(screenShot)
+                            for screenShot in start_screenshot_path
+                        ],
                         coordinates=(int(x), int(y)),
                     )
                     end_screenshot_path = []
                     end_screenshot_path.append(self.take_screenshot())
                     end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
                     end_state = EnvState(
-                        images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
+                        images=[
+                            self.encode_image_to_base64(screenShot)
+                            for screenShot in end_screenshot_path
+                        ],
                         coordinates=(int(x), int(y)),
                     )
 
                     # Record special key event as an action
                     action = V1Action(name="press_key", parameters={"key": str(key)})
                     action_event = ActionEvent(
-                            state=state,
-                            action=action,
-                            tool=DESKTOP_TOOL_REF,
-                            end_state=end_state,
-                            event_order=len(self.actions)
-                        )
-                    self.actions.append( action_event )
-                    # kicking off celery job for sending the action 
-                    send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
-            print(f"on_press releasing lock with key {key} count of actions {len(self.actions)}", flush=True)
+                        state=state,
+                        action=action,
+                        tool=DESKTOP_TOOL_REF,
+                        end_state=end_state,
+                        event_order=len(self.actions),
+                    )
+                    self.actions.append(action_event)
+                    # kicking off celery job for sending the action
+                    send_action.delay(
+                        self._task.id,
+                        self._task.remote,
+                        self._task.auth_token,
+                        self._task.owner_id,
+                        action_event.to_v1().model_dump(),
+                    )
+            print(
+                f"on_press releasing lock with key {key} count of actions {len(self.actions)}",
+                flush=True,
+            )
 
     def on_release(self, key):
-        print(f"on_release waiting lock with key {key} count of actions {len(self.actions)}", flush=True)
+        print(
+            f"on_release waiting lock with key {key} count of actions {len(self.actions)}",
+            flush=True,
+        )
         with self.lock:
-            print(f"on_release acquired lock with key {key} count of actions {len(self.actions)}", flush=True)
+            print(
+                f"on_release acquired lock with key {key} count of actions {len(self.actions)}",
+                flush=True,
+            )
             if key in [Key.shift, Key.shift_r, Key.shift_l]:
                 self.shift_pressed = False
-            print(f"on_release releasing lock with key {key} count of actions {len(self.actions)}", flush=True)
+            print(
+                f"on_release releasing lock with key {key} count of actions {len(self.actions)}",
+                flush=True,
+            )
 
     def on_click(self, x, y, button, pressed):
         if not pressed:
             print("skipping button up event", flush=True)
             return
-        print(f"on_click waiting lock with x,y: {x}, {y} count of actions {len(self.actions)}", flush=True)
+        print(
+            f"on_click waiting lock with x,y: {x}, {y} count of actions {len(self.actions)}",
+            flush=True,
+        )
         with self.lock:
-            print(f"on_click acquired lock with x,y: {x}, {y} count of actions {len(self.actions)}", flush=True)
+            print(
+                f"on_click acquired lock with x,y: {x}, {y} count of actions {len(self.actions)}",
+                flush=True,
+            )
             current_time = time.time()
             is_double_click = False
             DOUBLE_CLICK_THRESHOLD = (
@@ -319,7 +367,10 @@ if __name__ == "__main__":
                 start_screenshot_path = self._get_latest_screenshots(2)
 
                 state = EnvState(
-                    images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in start_screenshot_path
+                    ],
                     coordinates=(int(x), int(y)),
                 )
 
@@ -328,7 +379,10 @@ if __name__ == "__main__":
                 end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
                 end_state = EnvState(
-                    images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in end_screenshot_path
+                    ],
                     coordinates=(int(x), int(y)),
                 )
 
@@ -360,20 +414,35 @@ if __name__ == "__main__":
                     action=action,
                     tool=DESKTOP_TOOL_REF,
                     end_state=end_state,
-                    event_order=len(self.actions)
+                    event_order=len(self.actions),
                 )
                 self.actions.append(action_event)
                 # kicking off celery job
-                send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
+                send_action.delay(
+                    self._task.id,
+                    self._task.remote,
+                    self._task.auth_token,
+                    self._task.owner_id,
+                    action_event.to_v1().model_dump(),
+                )
 
             except Exception as e:
                 print(f"Error recording click event: {e}", flush=True)
-            print(f"on_click releasing lock with x,y: {x}, {y} count of actions {len(self.actions)}", flush=True)
+            print(
+                f"on_click releasing lock with x,y: {x}, {y} count of actions {len(self.actions)}",
+                flush=True,
+            )
 
     def on_scroll(self, x, y, dx, dy):
-        print(f"on_scroll waiting lock with x,y: {x}, {y}; dx, dy: {dx} count of actions {len(self.actions)}", flush=True)
+        print(
+            f"on_scroll waiting lock with x,y: {x}, {y}; dx, dy: {dx} count of actions {len(self.actions)}",
+            flush=True,
+        )
         with self.lock:
-            print(f"on_scroll acquired lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}", flush=True)
+            print(
+                f"on_scroll acquired lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
+                flush=True,
+            )
             mouse_x, mouse_y = pyautogui.position()
             print("scrolled: ", x, y, dx, dy, flush=True)
 
@@ -383,9 +452,12 @@ if __name__ == "__main__":
                 self.record_text_action()
 
             start_screenshot_path = self._get_latest_screenshots(2)
-            
+
             state = EnvState(
-                images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
+                images=[
+                    self.encode_image_to_base64(screenShot)
+                    for screenShot in start_screenshot_path
+                ],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
 
@@ -394,28 +466,43 @@ if __name__ == "__main__":
             end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
             end_state = EnvState(
-                images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
+                images=[
+                    self.encode_image_to_base64(screenShot)
+                    for screenShot in end_screenshot_path
+                ],
                 coordinates=(int(mouse_x), int(mouse_y)),
             )
 
             action = V1Action(name="scroll", parameters={"dx": dx, "dy": dy})
             action_event = ActionEvent(
-                    state=state,
-                    action=action,
-                    end_state=end_state,
-                    tool=DESKTOP_TOOL_REF,
-                    event_order=len(self.actions)
-                )
-            self.actions.append( action_event )
+                state=state,
+                action=action,
+                end_state=end_state,
+                tool=DESKTOP_TOOL_REF,
+                event_order=len(self.actions),
+            )
+            self.actions.append(action_event)
             # kicking off celery job
-            send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
-            print(f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}", flush=True)
+            send_action.delay(
+                self._task.id,
+                self._task.remote,
+                self._task.auth_token,
+                self._task.owner_id,
+                action_event.to_v1().model_dump(),
+            )
+            print(
+                f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
+                flush=True,
+            )
 
     def start_typing_sequence(self):
         x, y = pyautogui.position()
         start_screenshot_path = self._get_latest_screenshots(2)
         self.text_start_state = EnvState(
-            images=[self.encode_image_to_base64(screenShot) for screenShot in start_screenshot_path],
+            images=[
+                self.encode_image_to_base64(screenShot)
+                for screenShot in start_screenshot_path
+            ],
             coordinates=(int(x), int(y)),
         )
         self.typing_in_progress = True
@@ -430,7 +517,10 @@ if __name__ == "__main__":
             end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
 
             end_state = EnvState(
-                images=[self.encode_image_to_base64(screenShot) for screenShot in end_screenshot_path],
+                images=[
+                    self.encode_image_to_base64(screenShot)
+                    for screenShot in end_screenshot_path
+                ],
                 coordinates=(int(x), int(y)),
             )
 
@@ -439,15 +529,21 @@ if __name__ == "__main__":
             if not self.text_start_state:
                 raise ValueError("No text start state available")
             action_event = ActionEvent(
-                    state=self.text_start_state,
-                    action=action,
-                    tool=DESKTOP_TOOL_REF,
-                    end_state=end_state,
-                    event_order=len(self.actions)
-                )
-            self.actions.append( action_event )
+                state=self.text_start_state,
+                action=action,
+                tool=DESKTOP_TOOL_REF,
+                end_state=end_state,
+                event_order=len(self.actions),
+            )
+            self.actions.append(action_event)
             # kicking off celery job
-            send_action.delay(self._task.id, self._task.remote, self._task.auth_token, self._task.owner_id, action_event.to_v1().model_dump())
+            send_action.delay(
+                self._task.id,
+                self._task.remote,
+                self._task.auth_token,
+                self._task.owner_id,
+                action_event.to_v1().model_dump(),
+            )
             print(f"Recorded text action: {self.text_buffer}", flush=True)
 
             # Reset the typing state
@@ -477,6 +573,9 @@ if __name__ == "__main__":
     def _dir(self) -> str:
         return os.path.join(RECORDINGS_DIR, self._id)
 
+    def _temp_dir(self) -> str:
+        return os.path.join(RECORDINGS_DIR, f"{self._id}_temp")
+
     @classmethod
     def from_schema(cls, data: Recording) -> RecordingSession:
         session = cls.__new__(cls)
@@ -503,28 +602,102 @@ if __name__ == "__main__":
             recording = Recording(**data)
             return cls.from_schema(recording)
 
-    def take_screenshot(self, name=None) -> str:
-        # Get the session directory and create it if it doesn't exist
+    def take_screenshot(
+        self,
+        name: Optional[str] = None,
+        max_attempts: int = 3,
+        max_retries_per_attempt: int = 3,
+        delay: float = 0.05,
+    ) -> str:
+        # Get the temp and session directories and create them if they don't exist
+        temp_dir = self._temp_dir()
+        os.makedirs(temp_dir, exist_ok=True)
         session_dir = self._dir()
         os.makedirs(session_dir, exist_ok=True)
 
-        # Generate a unique file name based on the current timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{name}_screenshot_{timestamp}.png" if name else f"screenshot_{timestamp}.png"
-        file_path = os.path.join(session_dir, filename)
-
-        # Use scrot to take a screenshot with the cursor (-p flag)
-        subprocess.run(["scrot", "-z", "-p", file_path], check=True)
-
-        # Return the file path of the screenshot
-        return file_path
-
-    def encode_image_to_base64(self, image_path: str) -> str:
-        with open(image_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-        mime_type, _ = mimetypes.guess_type(image_path)
-        if not mime_type:
-            mime_type = (
-                "application/octet-stream"  # default if cannot determine mime type
+        for attempt_num in range(max_attempts):
+            # Generate a unique temporary file name to avoid overwriting
+            temp_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            temp_filename = (
+                f"{name}_screenshot_{temp_timestamp}_attempt{attempt_num}.png"
+                if name
+                else f"screenshot_{temp_timestamp}_attempt{attempt_num}.png"
             )
-        return f"data:{mime_type};base64,{encoded_image}"
+            temp_file_path = os.path.join(temp_dir, temp_filename)
+
+            # Take a screenshot and write it to the temp directory
+            subprocess.run(["scrot", "-z", "-p", temp_file_path], check=True)
+
+            # Try to verify the image up to max_retries_per_attempt times
+            for retry_num in range(max_retries_per_attempt):
+                try:
+                    with open(temp_file_path, "rb") as image_file:
+                        image_data = image_file.read()
+                        # Validate image using PIL
+                        image = Image.open(io.BytesIO(image_data))
+                        image.verify()  # Raises an exception if the image is invalid
+
+                    # After successful verification, generate the final filename
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = (
+                        f"{name}_screenshot_{timestamp}.png"
+                        if name
+                        else f"screenshot_{timestamp}.png"
+                    )
+                    file_path = os.path.join(session_dir, filename)
+
+                    # Move the file to the session directory with the final filename
+                    os.rename(temp_file_path, file_path)
+                    return file_path
+                except Exception as e:
+                    print(
+                        f"Verification failed for {temp_file_path}, "
+                        f"attempt {attempt_num + 1}, retry {retry_num + 1}: {e}",
+                        flush=True,
+                    )
+                    time.sleep(delay)  # Small delay before retrying verification
+
+            # If verification failed after retries, remove the temp file and try again
+            print(
+                f"Verification failed after {max_retries_per_attempt} retries for "
+                f"screenshot {temp_file_path}, taking a new screenshot...",
+                flush=True,
+            )
+            # Remove the invalid temp file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+
+        # If all attempts fail, raise an exception or handle the failure accordingly
+        raise Exception(
+            f"Failed to take a valid screenshot after {max_attempts} attempts"
+        )
+
+    def encode_image_to_base64(
+        self, image_path: str, max_retries: int = 3, delay: float = 0.1
+    ) -> Optional[str]:
+        for attempt in range(max_retries):
+            try:
+                with open(image_path, "rb") as image_file:
+                    image_data = image_file.read()
+                    # Validate image
+                    image = Image.open(io.BytesIO(image_data))
+                    image.verify()  # Raises an exception if image is invalid
+
+                encoded_image = base64.b64encode(image_data).decode("utf-8")
+                mime_type, _ = mimetypes.guess_type(image_path)
+                if not mime_type:
+                    mime_type = "application/octet-stream"  # Default if MIME type can't be determined
+                return f"data:{mime_type};base64,{encoded_image}"
+
+            except Exception as e:
+                print(
+                    f"Error encoding image {image_path} on attempt {attempt + 1}: {e}",
+                    flush=True,
+                )
+                time.sleep(delay)
+
+        print(
+            f"Failed to encode image {image_path} after {max_retries} attempts",
+            flush=True,
+        )
+        return None

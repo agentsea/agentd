@@ -31,6 +31,15 @@ sphinx = "^7.2.6"
 sphinx-rtd-theme = "^2.0.0"
 recommonmark = "^0.7.1"
 
+[tool.pyright]
+reportUnknownParameterType = false
+reportMissingTypeArgument = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportPrivateUsage = false
+reportMissingParameterType = false
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
