@@ -25,9 +25,9 @@ celery_app.conf.update(
 
 @celery_app.task
 def send_action(taskID, remote_address, auth_token, owner_id, v1actionEvent: dict):
-    print("starting send action function in worker")
+    print("send_action: starting send action function in worker")
     action = ActionEvent.from_v1(V1ActionEvent(**v1actionEvent))
-    print(f"action {action.id} variable created in worker process")
+    print(f"send_action: action {action.id} variable created in worker process")
     tasks = App_task.find( # TODO avoid having to get the task every time
             remote=remote_address,
             id=taskID,
@@ -35,10 +35,13 @@ def send_action(taskID, remote_address, auth_token, owner_id, v1actionEvent: dic
             owner_id=owner_id,
         )
     task = tasks[0]
-    print(f"task {task.id} variable created in worker process")
-    task.record_action_event(action)
-    print(f"finished sending action {action.id} for task {task.id}")
-    return f"finished sending action {action.id} for task {task.id}"
+    print(f"send_action: task {task.id} variable created in worker process")
+    try:
+        task.record_action_event(action)
+    except Exception as e:
+         print(f"send_action: record_action_event failed due to error: {e} for task ID: {taskID} and action {v1actionEvent}")
+    print(f"send_action: finished sending action {action.id} for task {task.id}")
+    return f"send_action: finished sending action {action.id} for task {task.id}"
 
 @celery_app.task
 def update_task(taskID, remote_address, auth_token, v1taskupdate: dict):
