@@ -39,7 +39,7 @@ def send_action(taskID, remote_address, auth_token, owner_id, v1actionEvent: dic
     try:
         task.record_action_event(action)
     except Exception as e:
-         print(f"send_action: record_action_event failed due to error: {e} for task ID: {taskID} and action {v1actionEvent}")
+         print(f"send_action: record_action_event failed due to error: {e} for task ID: {taskID} and action {action.action.model_dump()} and event order {action.event_order}")
     print(f"send_action: finished sending action {action.id} for task {task.id}")
     return f"send_action: finished sending action {action.id} for task {task.id}"
 
