@@ -1,8 +1,6 @@
-import os
-import subprocess
 from celery import Celery
 import requests
-from skillpacks import V1Action, V1ActionEvent, V1ToolRef, ActionEvent, EnvState
+from skillpacks import V1ActionEvent, ActionEvent
 from celery.app.task import Task
 from taskara.task import V1TaskUpdate
 from taskara.task import Task as App_task
