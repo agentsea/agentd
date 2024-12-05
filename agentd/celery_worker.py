@@ -22,11 +22,11 @@ celery_app.conf.update(
 
 
 @celery_app.task
-def send_action(taskID, v1Task: dict, v1actionEvent: dict):
+def send_action(taskID, auth_token, owner_id, v1Task: dict, v1actionEvent: dict):
     print("send_action: starting send action function in worker")
     action = ActionEvent.from_v1(V1ActionEvent(**v1actionEvent))
     print(f"send_action: action {action.id} variable created in worker process")
-    task = App_task.from_v1(V1Task(**v1Task))
+    task = App_task.from_v1_remote_actions(V1Task(**v1Task), owner_id=owner_id, auth_token=auth_token)
     print(f"send_action: task {task.id} variable created in worker process")
     try:
         task.record_action_event(action)

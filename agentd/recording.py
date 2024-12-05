@@ -305,6 +305,8 @@ if __name__ == "__main__":
                     # kicking off celery job for sending the action
                     send_action.delay(
                         self._task.id,
+                        self._task.auth_token,
+                        self._task.owner_id,
                         self._task.to_v1().model_dump(),
                         action_event.to_v1().model_dump(),
                     )
@@ -420,9 +422,9 @@ if __name__ == "__main__":
                 # kicking off celery job
                 send_action.delay(
                     self._task.id,
-                    self._task.remote,
                     self._task.auth_token,
                     self._task.owner_id,
+                    self._task.to_v1().model_dump(),
                     action_event.to_v1().model_dump(),
                 )
 
@@ -485,9 +487,9 @@ if __name__ == "__main__":
             # kicking off celery job
             send_action.delay(
                 self._task.id,
-                self._task.remote,
                 self._task.auth_token,
                 self._task.owner_id,
+                self._task.to_v1().model_dump(),
                 action_event.to_v1().model_dump(),
             )
             print(
@@ -539,9 +541,9 @@ if __name__ == "__main__":
             # kicking off celery job
             send_action.delay(
                 self._task.id,
-                self._task.remote,
                 self._task.auth_token,
                 self._task.owner_id,
+                self._task.to_v1().model_dump(),
                 action_event.to_v1().model_dump(),
             )
             print(f"Recorded text action: {self.text_buffer}", flush=True)
