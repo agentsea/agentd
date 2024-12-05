@@ -2,7 +2,7 @@ from celery import Celery
 import requests
 from skillpacks import V1ActionEvent, ActionEvent
 from celery.app.task import Task
-from taskara.task import V1TaskUpdate
+from taskara.task import V1TaskUpdate, V1Task
 from taskara.task import Task as App_task
 Task.__class_getitem__ = classmethod(lambda cls, *args, **kwargs: cls) # type: ignore[attr-defined]
 
@@ -22,17 +22,11 @@ celery_app.conf.update(
 
 
 @celery_app.task
-def send_action(taskID, remote_address, auth_token, owner_id, v1actionEvent: dict):
+def send_action(taskID, v1Task: dict, v1actionEvent: dict):
     print("send_action: starting send action function in worker")
     action = ActionEvent.from_v1(V1ActionEvent(**v1actionEvent))
     print(f"send_action: action {action.id} variable created in worker process")
-    tasks = App_task.find( # TODO avoid having to get the task every time
-            remote=remote_address,
-            id=taskID,
-            auth_token=auth_token,
-            owner_id=owner_id,
-        )
-    task = tasks[0]
+    task = App_task.from_v1(V1Task(**v1Task))
     print(f"send_action: task {task.id} variable created in worker process")
     try:
         task.record_action_event(action)
