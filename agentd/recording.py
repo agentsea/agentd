@@ -94,6 +94,10 @@ class RecordingSession:
         self.text_start_state = None
         self.last_click_time = None
         self.last_click_button = None
+        self.scroll_timer = None
+        self.scroll_dx = 0
+        self.scroll_dy = 0
+        self.scroll_start_state = None
         self.actions = []
         self.lock = threading.Lock()
 
@@ -445,24 +449,61 @@ if __name__ == "__main__":
                 f"on_scroll acquired lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
                 flush=True,
             )
-            mouse_x, mouse_y = pyautogui.position()
-            print("scrolled: ", x, y, dx, dy, flush=True)
 
             # Before recording the scroll, check if there is pending text
             if self.typing_in_progress:
                 print("Finalizing text event due to scroll...", flush=True)
                 self.record_text_action()
 
-            start_screenshot_path = self._get_latest_screenshots(2)
+            self.scroll_dx += dx
+            self.scroll_dy += dy
 
-            state = EnvState(
-                images=[
-                    self.encode_image_to_base64(screenShot)
-                    for screenShot in start_screenshot_path
-                ],
-                coordinates=(int(mouse_x), int(mouse_y)),
+            if self.scroll_timer:
+                self.scroll_timer.cancel()
+
+            if self.scroll_start_state is None:
+                start_screenshot_path = self._get_latest_screenshots(2)
+                mouse_x, mouse_y = pyautogui.position()
+                self.scroll_start_state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in start_screenshot_path
+                    ],
+                    coordinates=(int(mouse_x), int(mouse_y)),
+                )
+
+            self.scroll_timer = threading.Timer(0.25, self._send_scroll_action, args=(x, y, len(self.actions)))
+            self.scroll_timer.start()
+            print(
+                f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
+                flush=True,
             )
 
+    def _send_scroll_action(self, x, y, action_order):
+        print(
+            f"_send_scroll_action waiting lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}",
+            flush=True,
+        )
+        with self.lock:
+            print(
+                f"_send_scroll_action acquired lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}",
+                flush=True,
+            )
+
+            state = self.scroll_start_state
+            if state is None:
+                print("_send_scroll_action: scroll_start_state is None, setting state here.", flush=True)
+                start_screenshot_path = self._get_latest_screenshots(2)
+                mouse_x, mouse_y = pyautogui.position()
+                state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in start_screenshot_path
+                    ],
+                    coordinates=(int(mouse_x), int(mouse_y)),
+                )
+
+            # Get the end screenshots
             end_screenshot_path = []
             end_screenshot_path.append(self.take_screenshot())
             end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
@@ -472,19 +513,21 @@ if __name__ == "__main__":
                     self.encode_image_to_base64(screenShot)
                     for screenShot in end_screenshot_path
                 ],
-                coordinates=(int(mouse_x), int(mouse_y)),
+                coordinates=(int(x), int(y)),
             )
 
-            action = V1Action(name="scroll", parameters={"dx": dx, "dy": dy})
+            action = V1Action(name="scroll", parameters={"dx": self.scroll_dx, "dy": self.scroll_dy})
             action_event = ActionEvent(
                 state=state,
                 action=action,
                 end_state=end_state,
                 tool=DESKTOP_TOOL_REF,
-                event_order=len(self.actions),
+                event_order=action_order,
             )
+
             self.actions.append(action_event)
-            # kicking off celery job
+
+            # Send the action to Celery
             send_action.delay(
                 self._task.id,
                 self._task.auth_token,
@@ -492,10 +535,13 @@ if __name__ == "__main__":
                 self._task.to_v1().model_dump(),
                 action_event.to_v1().model_dump(),
             )
-            print(
-                f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
-                flush=True,
-            )
+
+            # Reset scroll deltas
+            self.scroll_dx = 0
+            self.scroll_dy = 0
+            self.scroll_start_state = None
+            self.scroll_timer = None
+            print(f"_send_scroll_action releasing lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}", flush=True)
 
     def start_typing_sequence(self):
         x, y = pyautogui.position()
