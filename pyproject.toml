@@ -20,6 +20,7 @@ taskara = "0.1.167"
 tiktoken = "0.7.0"
 celery = "^5.4.0"
 celery-types = "^0.22.0"
+redis = "^5.2.1"
 
 
 [tool.poetry.group.dev.dependencies]

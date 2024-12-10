@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+echo "Test log message from redis_run script" >&2
+
+
+# Log the environment variables
+env > /config/app/logs/redis_env.log
+
+# Set default log level and log file path
+LOG_LEVEL=${LOG_LEVEL:-notice}
+LOG_FILE=${LOG_FILE:-/config/app/logs/redis.log}
+
+exec redis-server --bind 0.0.0.0 --maxmemory ${MAXMEMORY:-256mb} --maxmemory-policy allkeys-lru --loglevel $LOG_LEVEL --logfile $LOG_FILE

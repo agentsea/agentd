@@ -28,7 +28,8 @@ RUN apk add --no-cache \
     xwd \
     imagemagick \
     procps \
-    xdotool
+    xdotool \
+    redis
 
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.1
@@ -118,6 +119,8 @@ ENV S6_RC_VERBOSE=1
 
 RUN touch /config/app/audit.log && chown abc:abc /config/app/audit.log && chmod 644 /config/app/audit.log
 RUN touch /config/app/logs/uvicorn_env.log && chown abc:abc /config/app/logs/uvicorn_env.log && chmod 644 /config/app/logs/uvicorn_env.log
+RUN touch /config/app/logs/redis_env.log && chown abc:abc /config/app/logs/redis_env.log && chmod 644 /config/app/logs/redis_env.log
+RUN touch /config/app/logs/redis.log && chown abc:abc /config/app/logs/redis.log && chmod 644 /config/app/logs/redis.log
 
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
 
@@ -128,17 +131,33 @@ RUN mkdir -p /config/.agentsea/data && chown -R abc:abc /config/.agentsea/data
 # Create the s6-overlay v3 service directory for your application
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn
 
+# Create Redis service directory
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/redis
+
 # Copy the s6-overlay v3 run script into the service directory
 COPY uvicorn_run /etc/s6-overlay/s6-rc.d/uvicorn/run
+
+
+# Copy the s6-overlay v3 run script into the service directory
+COPY redis_run /etc/s6-overlay/s6-rc.d/redis/run
 
 # Make the run script executable
 RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/run
 
+# Make the run script executable for redis
+RUN chmod +x /etc/s6-overlay/s6-rc.d/redis/run
+
 # Create the 'type' file for the service
 RUN echo 'longrun' > /etc/s6-overlay/s6-rc.d/uvicorn/type
 
+# Create the 'type' file for Redis service
+RUN echo 'longrun' > /etc/s6-overlay/s6-rc.d/redis/type
+
 # Enable the service by creating a symlink in the 'user' bundle
 RUN ln -s ../uvicorn /etc/s6-overlay/s6-rc.d/user/contents.d/uvicorn
+
+# Enable Redis service by creating a symlink in the 'user' bundle
+RUN ln -s ../redis /etc/s6-overlay/s6-rc.d/user/contents.d/redis
 
 # Set up logging for the service
 RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/log
@@ -155,5 +174,11 @@ RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 RUN echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/user
 
+# Set the user for Redis service
+RUN echo 'abc' > /etc/s6-overlay/s6-rc.d/redis/user
+
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
+
+# Expose Redis Port, we don't need to because it should only be used internally but this is there just incase
+# EXPOSE 6379
