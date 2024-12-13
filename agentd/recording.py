@@ -523,7 +523,7 @@ if __name__ == "__main__":
                 coordinates=(int(x), int(y)),
             )
 
-            clicks = -int(dy)
+            clicks = -int(self.scroll_dy)
 
             action = V1Action(name="scroll", parameters={"clicks": clicks})
             action_event = ActionEvent(
