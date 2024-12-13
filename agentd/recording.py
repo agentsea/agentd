@@ -396,10 +396,8 @@ if __name__ == "__main__":
                     action = V1Action(
                         name="double_click",
                         parameters={
-                            "location": {
-                                "x": int(x),
-                                "y": int(y),
-                            },
+                            "x": int(x),
+                            "y": int(y),
                             "button": button._name_,
                         },
                     )
@@ -409,10 +407,8 @@ if __name__ == "__main__":
                     action = V1Action(
                         name="click",
                         parameters={
-                            "location": {
-                                "x": int(x),
-                                "y": int(y),
-                            },
+                            "x": int(x),
+                            "y": int(y),
                             "button": button._name_,
                         },
                     )
