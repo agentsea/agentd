@@ -1,26 +1,26 @@
 import base64
+import getpass
 import logging
 import os
 import platform
 import random
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from datetime import datetime
 from typing import Optional
-import threading
-import getpass
 
-from agentd.util import log_subprocess_output
 import psutil
 import pyautogui
-from fastapi import FastAPI, HTTPException, Request, Body
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from taskara.task import Task
-from .celery_worker import celery_app
+
+from agentd.util import log_subprocess_output
 
 from .firefox import (
     gracefully_terminate_firefox,
@@ -205,9 +205,17 @@ async def click(request: ClickModel):
 
 
 @app.post("/v1/double_click")
-async def double_click():
+async def double_click(request: ClickModel):
+    if request.location:
+        tween_func = getattr(pyautogui, request.location.tween, pyautogui.linear)
+        pyautogui.moveTo(
+            request.location.x,
+            request.location.y,
+            duration=request.location.duration,
+            tween=tween_func,
+        )
     try:
-        pyautogui.doubleClick()
+        pyautogui.doubleClick(button=request.button)
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -248,6 +256,8 @@ async def hot_key(request: PressKeysModel):
 @app.post("/v1/scroll")
 async def scroll(request: ScrollModel):
     try:
+        # clicks > 0: scrolls UP
+        # clicks < 0: scrolls DOWN
         pyautogui.scroll(request.clicks)
         return {"status": "success"}
     except Exception as e:
@@ -350,7 +360,7 @@ async def system_usage():
     disk = psutil.disk_usage("/")
 
     return SystemUsageModel(
-        cpu_percent=cpu_percent, # type: ignore
+        cpu_percent=cpu_percent,  # type: ignore
         memory_percent=memory.percent,
         disk_percent=disk.percent,
     )
@@ -391,9 +401,15 @@ async def start_recording(request: RecordRequest):
         task = tasks[0]
     # launching celery worker
     command = ["celery", "-A", "agentd.celery_worker", "worker", "--loglevel=debug"]
-    subProc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    subProc = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+    )
     # starting new thread below to capture worker logs in our stdout for uvicorn
-    threading.Thread(target=log_subprocess_output, args=(subProc.stdout, "celery_worker"), daemon=True).start()
+    threading.Thread(
+        target=log_subprocess_output,
+        args=(subProc.stdout, "celery_worker"),
+        daemon=True,
+    ).start()
 
     with lock:
         if active_session:

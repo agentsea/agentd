@@ -117,7 +117,6 @@ class RecordingSession:
         atexit.register(self.stop)
 
     def stop(self):
-
         wait_for_celery_tasks()
         print("send update_task to celery for finished", flush=True)
         update_task.delay(
@@ -397,8 +396,10 @@ if __name__ == "__main__":
                     action = V1Action(
                         name="double_click",
                         parameters={
-                            "x": int(x),
-                            "y": int(y),
+                            "location": {
+                                "x": int(x),
+                                "y": int(y),
+                            },
                             "button": button._name_,
                         },
                     )
@@ -408,10 +409,11 @@ if __name__ == "__main__":
                     action = V1Action(
                         name="click",
                         parameters={
-                            "x": int(x),
-                            "y": int(y),
+                            "location": {
+                                "x": int(x),
+                                "y": int(y),
+                            },
                             "button": button._name_,
-                            "pressed": pressed,
                         },
                     )
 
@@ -472,7 +474,9 @@ if __name__ == "__main__":
                     coordinates=(int(mouse_x), int(mouse_y)),
                 )
 
-            self.scroll_timer = threading.Timer(0.25, self._send_scroll_action, args=(x, y, len(self.actions)))
+            self.scroll_timer = threading.Timer(
+                0.25, self._send_scroll_action, args=(x, y, len(self.actions))
+            )
             self.scroll_timer.start()
             print(
                 f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
@@ -492,7 +496,10 @@ if __name__ == "__main__":
 
             state = self.scroll_start_state
             if state is None:
-                print("_send_scroll_action: scroll_start_state is None, setting state here.", flush=True)
+                print(
+                    "_send_scroll_action: scroll_start_state is None, setting state here.",
+                    flush=True,
+                )
                 start_screenshot_path = self._get_latest_screenshots(2)
                 mouse_x, mouse_y = pyautogui.position()
                 state = EnvState(
@@ -516,7 +523,9 @@ if __name__ == "__main__":
                 coordinates=(int(x), int(y)),
             )
 
-            action = V1Action(name="scroll", parameters={"dx": self.scroll_dx, "dy": self.scroll_dy})
+            clicks = -int(dy)
+
+            action = V1Action(name="scroll", parameters={"clicks": clicks})
             action_event = ActionEvent(
                 state=state,
                 action=action,
@@ -541,7 +550,10 @@ if __name__ == "__main__":
             self.scroll_dy = 0
             self.scroll_start_state = None
             self.scroll_timer = None
-            print(f"_send_scroll_action releasing lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}", flush=True)
+            print(
+                f"_send_scroll_action releasing lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}",
+                flush=True,
+            )
 
     def start_typing_sequence(self):
         x, y = pyautogui.position()
