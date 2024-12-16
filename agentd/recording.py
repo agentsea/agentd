@@ -33,6 +33,55 @@ DESKTOP_TOOL_REF = V1ToolRef(
     module="agentdesk.device", type="Desktop", package="agentdesk"
 )
 
+PYNPUT_TO_PYAUTOGUI: Dict[KeyCode, str] = {
+    Key.tab: "tab",
+    Key.enter: "enter",
+    Key.space: "space",
+    Key.backspace: "backspace",
+    Key.delete: "delete",
+    Key.up: "up",
+    Key.down: "down",
+    Key.left: "left",
+    Key.right: "right",
+    Key.home: "home",
+    Key.end: "end",
+    Key.page_up: "pageup",
+    Key.page_down: "pagedown",
+    Key.insert: "insert",
+    Key.esc: "escape",
+    Key.caps_lock: "capslock",
+    Key.shift: "shift",
+    Key.shift_l: "shiftleft",
+    Key.shift_r: "shiftright",
+    Key.ctrl: "ctrl",
+    Key.ctrl_l: "ctrlleft",
+    Key.ctrl_r: "ctrlright",
+    Key.alt: "alt",
+    Key.alt_l: "altleft",
+    Key.alt_r: "altright",
+    Key.cmd: "command",
+    Key.cmd_l: "winleft",
+    Key.cmd_r: "winright",
+    Key.menu: "apps",
+    Key.num_lock: "numlock",
+    Key.scroll_lock: "scrolllock",
+    Key.print_screen: "printscreen",
+    Key.pause: "pause",
+    # Function keys
+    Key.f1: "f1",
+    Key.f2: "f2",
+    Key.f3: "f3",
+    Key.f4: "f4",
+    Key.f5: "f5",
+    Key.f6: "f6",
+    Key.f7: "f7",
+    Key.f8: "f8",
+    Key.f9: "f9",
+    Key.f10: "f10",
+    Key.f11: "f11",
+    Key.f12: "f12",
+}
+
 sessions: Dict[str, RecordingSession] = {}
 lock = Lock()
 
@@ -275,6 +324,7 @@ if __name__ == "__main__":
                         self.record_text_action()
 
                     x, y = pyautogui.position()
+                    pyautogui_key = PYNPUT_TO_PYAUTOGUI.get(key, str(key))
 
                     start_screenshot_path = self._get_latest_screenshots(2)
                     state = EnvState(
@@ -296,7 +346,9 @@ if __name__ == "__main__":
                     )
 
                     # Record special key event as an action
-                    action = V1Action(name="press_key", parameters={"key": str(key)})
+                    action = V1Action(
+                        name="press_key", parameters={"key": pyautogui_key}
+                    )
                     action_event = ActionEvent(
                         state=state,
                         action=action,
