@@ -117,7 +117,6 @@ class RecordingSession:
         atexit.register(self.stop)
 
     def stop(self):
-        wait_for_celery_tasks()
         print("send update_task to celery for finished", flush=True)
         update_task.delay(
             self._task.id,
@@ -125,6 +124,7 @@ class RecordingSession:
             self._task.auth_token,
             V1TaskUpdate(status=TaskStatus.FINISHED.value).model_dump(),
         )
+        wait_for_celery_tasks()
         if self._status != "stopped":
             self._status = "stopping"
             self.keyboard_listener.stop()
