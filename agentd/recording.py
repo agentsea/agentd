@@ -52,7 +52,7 @@ def wait_for_celery_tasks():
         list(chain(*active_tasks.values())) if active_tasks else None
     )  # merge all the arrays
     while active_tasks or reserved_tasks:
-        print("waiting for celery worker to finish tasks...", flush=True)
+        print(f"waiting for celery worker to finish tasks... reserved_tasks: {len(reserved_tasks) if reserved_tasks else 0} active_tasks: {len(active_tasks) if active_tasks else 0}", flush=True)
         time.sleep(1)
         # no need for a sleep function as the inspect functions do take time
         reserved_tasks = inspect.reserved()  # reassign to retest
