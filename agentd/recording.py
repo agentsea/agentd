@@ -171,7 +171,7 @@ class RecordingSession:
             self._task.id,
             self._task.remote,
             self._task.auth_token,
-            V1TaskUpdate(status=TaskStatus.FINISHED.value).model_dump(),
+            V1TaskUpdate(status=TaskStatus.REVIEW.value).model_dump(),
         )
         wait_for_celery_tasks()
         if self._status != "stopped":
