@@ -101,7 +101,10 @@ def wait_for_celery_tasks():
         list(chain(*active_tasks.values())) if active_tasks else None
     )  # merge all the arrays
     while active_tasks or reserved_tasks:
-        print(f"waiting for celery worker to finish tasks... reserved_tasks: {len(reserved_tasks) if reserved_tasks else 0} active_tasks: {len(active_tasks) if active_tasks else 0}", flush=True)
+        print(
+            f"waiting for celery worker to finish tasks... reserved_tasks: {len(reserved_tasks) if reserved_tasks else 0} active_tasks: {len(active_tasks) if active_tasks else 0}",
+            flush=True,
+        )
         time.sleep(1)
         # no need for a sleep function as the inspect functions do take time
         reserved_tasks = inspect.reserved()  # reassign to retest
@@ -734,7 +737,7 @@ if __name__ == "__main__":
             temp_file_path = os.path.join(temp_dir, temp_filename)
 
             # Take a screenshot and write it to the temp directory
-            subprocess.run(["scrot", "-z", "-p", temp_file_path], check=True)
+            subprocess.run(["scrot", "-z", temp_file_path], check=True)
 
             # Try to verify the image up to max_retries_per_attempt times
             for retry_num in range(max_retries_per_attempt):
