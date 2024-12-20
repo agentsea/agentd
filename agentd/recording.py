@@ -238,11 +238,11 @@ if __name__ == "__main__":
         sorted_screenshots = sorted(
             screenshot_files,
             key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
-            reverse=True,
+            reverse=False,
         )
 
         # Select the top n screenshots (or fewer if there are not enough files)
-        latest_screenshots = sorted_screenshots[:n]
+        latest_screenshots = sorted_screenshots[-n:]
 
         # Get the full paths of the screenshots
         latest_paths = [
