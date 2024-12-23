@@ -87,7 +87,7 @@ lock = Lock()
 
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
-SCREENSHOT_INTERVAL = 0.5
+SCREENSHOT_INTERVAL = 0.2
 
 
 def wait_for_celery_tasks():
@@ -366,6 +366,9 @@ if __name__ == "__main__":
         """Called when the mouse stops moving."""
         print(f"Mouse stopped at ({x}, {y})", flush=True)
         with self.lock:
+            if not self.mouse_moving:
+                print("Mouse movement already recorded", flush=True)
+                return
             # Mouse movement has stopped
             self._record_mouse_move_action(x, y)
 
