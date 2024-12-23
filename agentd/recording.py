@@ -642,6 +642,19 @@ if __name__ == "__main__":
                 print("Finalizing text event due to scroll...", flush=True)
                 self.record_text_action()
 
+            # If mouse is moving, record the movement action first
+            if self.mouse_moving:
+                # Get the latest two screenshots before the key press
+                key_start_screenshots = self._get_latest_screenshots(2)
+                print("Recording mouse movement before handling key press", flush=True)
+                mouse_x, mouse_y = pyautogui.position()
+                end_screenshot = (
+                    key_start_screenshots[-1] if key_start_screenshots else None
+                )
+                self._record_mouse_move_action(
+                    mouse_x, mouse_y, end_screenshot_path=end_screenshot
+                )
+
             self.scroll_dx += dx
             self.scroll_dy += dy
 
