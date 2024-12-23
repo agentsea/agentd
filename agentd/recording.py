@@ -134,7 +134,7 @@ class RecordingSession:
             on_release=self.on_release,
         )
         self.mouse_listener = mouse.Listener(
-            on_click=self.on_click, on_scroll=self.on_scroll
+            on_move=self.on_move, on_click=self.on_click, on_scroll=self.on_scroll
         )
         self.text_buffer = ""
         self.shift_pressed = False
@@ -151,6 +151,10 @@ class RecordingSession:
         self.scroll_dy = 0
         self.scroll_start_state = None
         self.actions = []
+        self.mouse_moving = False
+        self.mouse_move_timer = None
+        self.mouse_move_start_pos = None
+        self.mouse_move_start_state = None
         self.lock = threading.Lock()
 
     def start(self):
@@ -204,7 +208,7 @@ def take_screenshots():
         filename = f"screenshot_{{timestamp}}.png"
         file_path = os.path.join(SESSION_DIR, filename)
         # Use scrot to take a screenshot with the cursor (-p flag)
-        subprocess.run(["scrot", "-z", file_path], check=True)
+        subprocess.run(["scrot", "-z", "-p", file_path], check=True)
         time.sleep(SCREENSHOT_INTERVAL)
 
 if __name__ == "__main__":
@@ -261,6 +265,112 @@ if __name__ == "__main__":
         session_dir = self._dir()
         shutil.rmtree(session_dir)
 
+    def _record_mouse_move_action(self, x, y, end_screenshot_path=None):
+        """Records the mouse movement action."""
+        if not self.mouse_moving:
+            return  # Already recorded or not moving
+
+        self.mouse_moving = False
+
+        # Use the provided end screenshot, or take new ones
+        if end_screenshot_path is None:
+            # Take two screenshots after movement
+            end_screenshots = []
+            end_screenshots.append(self.take_screenshot("mouse_move_end"))
+            time.sleep(0.05)
+            end_screenshots.append(self.take_screenshot("mouse_move_end"))
+        else:
+            # Ensure we have two end screenshots
+            additional_screenshot = self.take_screenshot("mouse_move_end")
+            end_screenshots = [end_screenshot_path, additional_screenshot]
+
+        # Prepare end state
+        end_state = EnvState(
+            images=[
+                self.encode_image_to_base64(screenshot)
+                for screenshot in end_screenshots
+            ],
+            coordinates=(int(x), int(y)),
+        )
+
+        # Ensure start state has two images
+        if self.mouse_move_start_state and len(self.mouse_move_start_state.images) < 2:
+            # Get an additional screenshot to have two before images
+            additional_screenshots = self._get_latest_screenshots(2)
+            if additional_screenshots:
+                self.mouse_move_start_state.images.insert(
+                    0, self.encode_image_to_base64(additional_screenshots[0])
+                )
+
+        # Create and record the action event
+        action = V1Action(
+            name="move_mouse",
+            parameters={
+                "x": int(x),
+                "y": int(y),
+            },
+        )
+
+        action_event = ActionEvent(
+            state=self.mouse_move_start_state,
+            action=action,
+            tool=DESKTOP_TOOL_REF,
+            end_state=end_state,
+            event_order=len(self.actions),
+        )
+
+        self.actions.append(action_event)
+
+        # Send the action to Celery (or your task queue)
+        send_action.delay(
+            self._task.id,
+            self._task.auth_token,
+            self._task.owner_id,
+            self._task.to_v1().model_dump(),
+            action_event.to_v1().model_dump(),
+        )
+
+        # Reset movement tracking variables
+        self.mouse_move_start_pos = None
+        self.mouse_move_start_state = None
+        self.mouse_move_timer = None
+
+    def on_move(self, x, y):
+        """Handles mouse movement events."""
+        print(f"Mouse moved to ({x}, {y})", flush=True)
+        with self.lock:
+            if not self.mouse_moving:
+                # Mouse movement has started
+                self.mouse_moving = True
+                self.mouse_move_start_pos = (x, y)
+                # Get the latest two screenshots before the movement
+                start_screenshots = [self.take_screenshot(), self.take_screenshot()]
+                self.mouse_move_start_state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenshot)
+                        for screenshot in start_screenshots
+                    ],
+                    coordinates=(int(x), int(y)),
+                )
+                print("Started mouse movement", flush=True)
+
+            # Reset the timer each time the mouse moves
+            if self.mouse_move_timer:
+                self.mouse_move_timer.cancel()
+
+            # Set a timer to detect when the mouse has stopped moving
+            self.mouse_move_timer = threading.Timer(
+                0.2, self.on_mouse_stop, args=(x, y)
+            )
+            self.mouse_move_timer.start()
+
+    def on_mouse_stop(self, x, y):
+        """Called when the mouse stops moving."""
+        print(f"Mouse stopped at ({x}, {y})", flush=True)
+        with self.lock:
+            # Mouse movement has stopped
+            self._record_mouse_move_action(x, y)
+
     def on_press(self, key: Key):
         print(
             f"on_press waiting for lock with key {key} count of actions {len(self.actions)}",
@@ -272,6 +382,19 @@ if __name__ == "__main__":
                 flush=True,
             )
             print("\npressed key: ", key, flush=True)
+
+            # If mouse is moving, record the movement action first
+            if self.mouse_moving:
+                # Get the latest two screenshots before the key press
+                key_start_screenshots = self._get_latest_screenshots(2)
+                print("Recording mouse movement before handling key press", flush=True)
+                mouse_x, mouse_y = pyautogui.position()
+                end_screenshot = (
+                    key_start_screenshots[-1] if key_start_screenshots else None
+                )
+                self._record_mouse_move_action(
+                    mouse_x, mouse_y, end_screenshot_path=end_screenshot
+                )
 
             # Handle shift and caps lock keys
             if key in [Key.shift, Key.shift_r, Key.shift_l]:
@@ -425,6 +548,16 @@ if __name__ == "__main__":
                     self.record_text_action()
 
                 start_screenshot_path = self._get_latest_screenshots(2)
+
+                if self.mouse_moving:
+                    print("Recording mouse movement before handling click", flush=True)
+                    # Use the last screenshot as the end screenshot for mouse movement
+                    end_screenshot = (
+                        start_screenshot_path[-1] if start_screenshot_path else None
+                    )
+                    self._record_mouse_move_action(
+                        x, y, end_screenshot_path=end_screenshot
+                    )
 
                 state = EnvState(
                     images=[
@@ -737,7 +870,7 @@ if __name__ == "__main__":
             temp_file_path = os.path.join(temp_dir, temp_filename)
 
             # Take a screenshot and write it to the temp directory
-            subprocess.run(["scrot", "-z", temp_file_path], check=True)
+            subprocess.run(["scrot", "-z", "-p", temp_file_path], check=True)
 
             # Try to verify the image up to max_retries_per_attempt times
             for retry_num in range(max_retries_per_attempt):
