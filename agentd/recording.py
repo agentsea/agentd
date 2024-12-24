@@ -230,7 +230,7 @@ if __name__ == "__main__":
             os.kill(self.screenshot_process.pid, signal.SIGTERM)
             self.screenshot_process.wait()
 
-    def _get_latest_screenshots(self, n: int) -> List[str]:
+    def _get_latest_screenshots(self, n: int, start_index: int = 0) -> List[str]:
         session_dir = self._dir()
         screenshot_files = [
             f
@@ -241,25 +241,25 @@ if __name__ == "__main__":
         if not screenshot_files:
             return []
 
-        # Sort the files by modification time in ascending order
+        # Sort the files by modification time in descending order (newest first)
         sorted_screenshots = sorted(
             screenshot_files,
             key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
-            reverse=False,
+            reverse=True,
         )
 
-        # Select the top n screenshots (or fewer if there are not enough files)
-        latest_screenshots = sorted_screenshots[-n:]
+        # Select the n screenshots starting from start_index
+        selected_screenshots = sorted_screenshots[start_index : start_index + n]
 
         # Get the full paths of the screenshots
-        latest_paths = [
-            os.path.join(session_dir, screenshot) for screenshot in latest_screenshots
+        selected_paths = [
+            os.path.join(session_dir, screenshot) for screenshot in selected_screenshots
         ]
 
         # Add the screenshots to the used_screenshots set
-        self.used_screenshots.update(latest_paths)
+        self.used_screenshots.update(selected_paths)
 
-        return latest_paths
+        return selected_paths
 
     def _cleanup_unused_screenshots(self):
         session_dir = self._dir()
@@ -548,7 +548,8 @@ if __name__ == "__main__":
                     print("Finalizing text event due to click...", flush=True)
                     self.record_text_action()
 
-                start_screenshot_path = self._get_latest_screenshots(2)
+                start_screenshot_path = self._get_latest_screenshots(1)
+                start_screenshot_path.append(start_screenshot_path[0])
 
                 if self.mouse_moving:
                     print("Recording mouse movement before handling click", flush=True)
