@@ -309,6 +309,8 @@ if __name__ == "__main__":
         action = V1Action(
             name="move_mouse",
             parameters={
+                "start_x": int(self.mouse_move_start_pos[0]),
+                "start_y": int(self.mouse_move_start_pos[1]),
                 "x": int(x),
                 "y": int(y),
             },
@@ -481,6 +483,7 @@ if __name__ == "__main__":
                     x, y = pyautogui.position()
                     pyautogui_key = PYNPUT_TO_PYAUTOGUI.get(key, str(key))
 
+                    # This is too slow, we need to duplicate one back
                     start_screenshot_path = self._get_latest_screenshots(1, 1)
                     start_screenshot_path.append(start_screenshot_path[0])
 
@@ -578,6 +581,7 @@ if __name__ == "__main__":
                     print("Finalizing text event due to click...", flush=True)
                     self.record_text_action()
 
+                # We replicate the screenshot beforw which mimics more of what the agent will see
                 start_screenshot_path = self._get_latest_screenshots(1)
                 print("got screenshots: ", start_screenshot_path, flush=True)
                 start_screenshot_path.append(start_screenshot_path[0])
