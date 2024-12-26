@@ -388,9 +388,7 @@ if __name__ == "__main__":
 
             # Set a shorter timer to detect when the mouse stops moving
             # Adjust the duration as needed (e.g., 0.5 seconds)
-            self.mouse_move_timer = threading.Timer(
-                0.5, self.on_mouse_stop, args=(x, y)
-            )
+            self.mouse_move_timer = threading.Timer(4, self.on_mouse_stop, args=(x, y))
             self.mouse_move_timer.start()
 
     def on_mouse_stop(self, x, y):
