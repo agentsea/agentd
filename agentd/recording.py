@@ -340,6 +340,10 @@ if __name__ == "__main__":
         """Handles mouse movement events."""
         print(f"Mouse moved to ({x}, {y})", flush=True)
         with self.lock:
+            if self.typing_in_progress:
+                print("Finalizing text event due to mouse movement...", flush=True)
+                self.record_text_action()
+
             # Define a movement threshold (e.g., 5 pixels)
             MOVEMENT_THRESHOLD = 5
 
