@@ -334,17 +334,37 @@ if __name__ == "__main__":
         self.mouse_move_start_pos = None
         self.mouse_move_start_state = None
         self.mouse_move_timer = None
+        self.last_mouse_position = (x, y)
 
     def on_move(self, x, y):
         """Handles mouse movement events."""
         print(f"Mouse moved to ({x}, {y})", flush=True)
         with self.lock:
+            # Define a movement threshold (e.g., 5 pixels)
+            MOVEMENT_THRESHOLD = 5
+
+            # If this is the first movement, initialize last position
+            if not hasattr(self, "last_mouse_position"):
+                self.last_mouse_position = (x, y)
+
+            # Calculate distance moved
+            dx = x - self.last_mouse_position[0]
+            dy = y - self.last_mouse_position[1]
+            distance_moved = (dx**2 + dy**2) ** 0.5
+
+            # If movement is below threshold, ignore the event
+            if distance_moved < MOVEMENT_THRESHOLD:
+                print("Mouse movement below threshold; ignoring event.", flush=True)
+                return
+
+            # Update last mouse position
+            self.last_mouse_position = (x, y)
+
             if not self.mouse_moving:
                 # Mouse movement has started
                 self.mouse_moving = True
                 self.mouse_move_start_pos = (x, y)
                 # Get the latest two screenshots before the movement
-                # start_screenshots = [self.take_screenshot(), self.take_screenshot()]
                 start_screenshots = self._get_latest_screenshots(2)
                 self.mouse_move_start_state = EnvState(
                     images=[
@@ -355,12 +375,15 @@ if __name__ == "__main__":
                 )
                 print("Started mouse movement", flush=True)
 
-            # Reset the timer each time the mouse moves
+            # Reset the timer each time significant movement is detected
             if self.mouse_move_timer:
                 self.mouse_move_timer.cancel()
 
-            # Set a timer to detect when the mouse has stopped moving
-            self.mouse_move_timer = threading.Timer(4, self.on_mouse_stop, args=(x, y))
+            # Set a shorter timer to detect when the mouse stops moving
+            # Adjust the duration as needed (e.g., 0.5 seconds)
+            self.mouse_move_timer = threading.Timer(
+                0.5, self.on_mouse_stop, args=(x, y)
+            )
             self.mouse_move_timer.start()
 
     def on_mouse_stop(self, x, y):
