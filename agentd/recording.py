@@ -344,7 +344,8 @@ if __name__ == "__main__":
                 self.mouse_moving = True
                 self.mouse_move_start_pos = (x, y)
                 # Get the latest two screenshots before the movement
-                start_screenshots = [self.take_screenshot(), self.take_screenshot()]
+                # start_screenshots = [self.take_screenshot(), self.take_screenshot()]
+                start_screenshots = self._get_latest_screenshots(2)
                 self.mouse_move_start_state = EnvState(
                     images=[
                         self.encode_image_to_base64(screenshot)
@@ -359,7 +360,7 @@ if __name__ == "__main__":
                 self.mouse_move_timer.cancel()
 
             # Set a timer to detect when the mouse has stopped moving
-            self.mouse_move_timer = threading.Timer(2, self.on_mouse_stop, args=(x, y))
+            self.mouse_move_timer = threading.Timer(4, self.on_mouse_stop, args=(x, y))
             self.mouse_move_timer.start()
 
     def on_mouse_stop(self, x, y):
@@ -549,6 +550,7 @@ if __name__ == "__main__":
                     self.record_text_action()
 
                 start_screenshot_path = self._get_latest_screenshots(1)
+                print("got screenshots: ", start_screenshot_path, flush=True)
                 start_screenshot_path.append(start_screenshot_path[0])
 
                 if self.mouse_moving:
