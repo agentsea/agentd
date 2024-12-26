@@ -241,11 +241,10 @@ if __name__ == "__main__":
         if not screenshot_files:
             return []
 
-        # Sort the files by modification time in descending order (newest first)
         sorted_screenshots = sorted(
             screenshot_files,
             key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
-            reverse=True,
+            reverse=False,
         )
 
         # Select the n screenshots starting from start_index
