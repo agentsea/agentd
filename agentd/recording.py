@@ -387,7 +387,6 @@ if __name__ == "__main__":
                 self.mouse_move_timer.cancel()
 
             # Set a shorter timer to detect when the mouse stops moving
-            # Adjust the duration as needed (e.g., 0.5 seconds)
             self.mouse_move_timer = threading.Timer(4, self.on_mouse_stop, args=(x, y))
             self.mouse_move_timer.start()
 
@@ -482,7 +481,9 @@ if __name__ == "__main__":
                     x, y = pyautogui.position()
                     pyautogui_key = PYNPUT_TO_PYAUTOGUI.get(key, str(key))
 
-                    start_screenshot_path = self._get_latest_screenshots(2)
+                    start_screenshot_path = self._get_latest_screenshots(1, 1)
+                    start_screenshot_path.append(start_screenshot_path[0])
+
                     state = EnvState(
                         images=[
                             self.encode_image_to_base64(screenShot)
