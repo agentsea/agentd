@@ -241,14 +241,18 @@ if __name__ == "__main__":
         if not screenshot_files:
             return []
 
+        # Step 1: Sort from newest to oldest
         sorted_screenshots = sorted(
             screenshot_files,
             key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
-            reverse=False,
+            reverse=True,
         )
 
-        # Select the n screenshots starting from start_index
+        # Step 2: Select the n latest screenshots starting from start_index
         selected_screenshots = sorted_screenshots[start_index : start_index + n]
+
+        # Step 3: Reverse to have them in ascending order (oldest to newest)
+        selected_screenshots = selected_screenshots[::-1]
 
         # Get the full paths of the screenshots
         selected_paths = [
