@@ -387,11 +387,8 @@ if __name__ == "__main__":
             # Buffer the movement
             if (
                 self.last_movement_time
-                and (current_time - self.last_movement_time) < self.MOVEMENT_BUFFER_TIME
+                and (current_time - self.last_movement_time) > self.MOVEMENT_BUFFER_TIME
             ):
-                # Update the last position in the buffer
-                self.movement_buffer = [(x, y, current_time)]
-            else:
                 # Start new movement sequence
                 if not self.mouse_moving:
                     self.mouse_moving = True
@@ -405,6 +402,9 @@ if __name__ == "__main__":
                         coordinates=tuple(map(int, self.last_mouse_position)),
                     )
 
+                self.movement_buffer = [(x, y, current_time)]
+            else:
+                # Update the last position in the buffer
                 self.movement_buffer = [(x, y, current_time)]
 
             self.last_mouse_position = (x, y)
