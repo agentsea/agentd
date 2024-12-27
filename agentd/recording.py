@@ -435,6 +435,9 @@ if __name__ == "__main__":
             )
             print("\npressed key: ", key, flush=True)
 
+            if self.mouse_move_timer:
+                self.mouse_move_timer.cancel()
+
             # If mouse is moving, record the movement action first
             if self.mouse_moving:
                 # Get the latest two screenshots before the key press
@@ -585,6 +588,11 @@ if __name__ == "__main__":
             if self.mouse_move_timer:
                 self.mouse_move_timer.cancel()
 
+            # We replicate the screenshot beforw which mimics more of what the agent will see
+            start_screenshot_path = self._get_latest_screenshots(1)
+            print("got screenshots: ", start_screenshot_path, flush=True)
+            start_screenshot_path.append(start_screenshot_path[0])
+
             # If there was mouse movement, record it with the current position
             if self.mouse_moving:
                 self._record_mouse_move_action(x, y)
@@ -613,11 +621,6 @@ if __name__ == "__main__":
                 if self.typing_in_progress:
                     print("Finalizing text event due to click...", flush=True)
                     self.record_text_action()
-
-                # We replicate the screenshot beforw which mimics more of what the agent will see
-                start_screenshot_path = self._get_latest_screenshots(1)
-                print("got screenshots: ", start_screenshot_path, flush=True)
-                start_screenshot_path.append(start_screenshot_path[0])
 
                 if self.mouse_moving:
                     print("Recording mouse movement before handling click", flush=True)
@@ -710,6 +713,9 @@ if __name__ == "__main__":
             if self.typing_in_progress:
                 print("Finalizing text event due to scroll...", flush=True)
                 self.record_text_action()
+
+            if self.mouse_move_timer:
+                self.mouse_move_timer.cancel()
 
             # If mouse is moving, record the movement action first
             if self.mouse_moving:
