@@ -155,6 +155,11 @@ class RecordingSession:
         self.mouse_move_timer = None
         self.mouse_move_start_pos = None
         self.mouse_move_start_state = None
+        self.last_mouse_position = None
+        self.movement_buffer = []
+        self.MOVEMENT_BUFFER_TIME = 0.1  # 100ms buffer window
+        self.last_movement_time = None
+        self.MOVEMENT_THRESHOLD = 5
         self.lock = threading.Lock()
 
     def start(self):
@@ -273,7 +278,16 @@ if __name__ == "__main__":
         if not self.mouse_moving:
             return  # Already recorded or not moving
 
+        if not self.mouse_move_start_pos:
+            print("Warning: No start position for mouse movement", flush=True)
+            return
+
         self.mouse_moving = False
+
+        # Use the most recent valid coordinates
+        final_x, final_y = x, y
+        if self.movement_buffer:
+            final_x, final_y, _ = self.movement_buffer[-1]
 
         # Use the provided end screenshot, or take new ones
         if end_screenshot_path is None:
@@ -311,8 +325,8 @@ if __name__ == "__main__":
             parameters={
                 "start_x": int(self.mouse_move_start_pos[0]),
                 "start_y": int(self.mouse_move_start_pos[1]),
-                "x": int(x),
-                "y": int(y),
+                "x": int(final_x),
+                "y": int(final_y),
             },
         )
 
@@ -349,12 +363,13 @@ if __name__ == "__main__":
                 print("Finalizing text event due to mouse movement...", flush=True)
                 self.record_text_action()
 
-            # Define a movement threshold (e.g., 5 pixels)
-            MOVEMENT_THRESHOLD = 5
+            current_time = time.time()
 
-            # If this is the first movement, initialize last position
-            if not hasattr(self, "last_mouse_position"):
+            # Initialize last position if needed
+            if not self.last_mouse_position:
                 self.last_mouse_position = (x, y)
+                self.last_movement_time = current_time
+                return
 
             # Calculate distance moved
             dx = x - self.last_mouse_position[0]
@@ -362,34 +377,42 @@ if __name__ == "__main__":
             distance_moved = (dx**2 + dy**2) ** 0.5
 
             # If movement is below threshold, ignore the event
-            if distance_moved < MOVEMENT_THRESHOLD:
-                print("Mouse movement below threshold; ignoring event.", flush=True)
+            if distance_moved < self.MOVEMENT_THRESHOLD:
                 return
 
-            # Update last mouse position
+            # Buffer the movement
+            if (
+                self.last_movement_time
+                and (current_time - self.last_movement_time) < self.MOVEMENT_BUFFER_TIME
+            ):
+                # Update the last position in the buffer
+                self.movement_buffer = [(x, y, current_time)]
+            else:
+                # Start new movement sequence
+                if not self.mouse_moving:
+                    self.mouse_moving = True
+                    self.mouse_move_start_pos = self.last_mouse_position
+                    start_screenshots = self._get_latest_screenshots(2)
+                    self.mouse_move_start_state = EnvState(
+                        images=[
+                            self.encode_image_to_base64(screenshot)
+                            for screenshot in start_screenshots
+                        ],
+                        coordinates=tuple(map(int, self.last_mouse_position)),
+                    )
+
+                self.movement_buffer = [(x, y, current_time)]
+
             self.last_mouse_position = (x, y)
+            self.last_movement_time = current_time
 
-            if not self.mouse_moving:
-                # Mouse movement has started
-                self.mouse_moving = True
-                self.mouse_move_start_pos = (x, y)
-                # Get the latest two screenshots before the movement
-                start_screenshots = self._get_latest_screenshots(2)
-                self.mouse_move_start_state = EnvState(
-                    images=[
-                        self.encode_image_to_base64(screenshot)
-                        for screenshot in start_screenshots
-                    ],
-                    coordinates=(int(x), int(y)),
-                )
-                print("Started mouse movement", flush=True)
-
-            # Reset the timer each time significant movement is detected
+            # Reset the timer
             if self.mouse_move_timer:
                 self.mouse_move_timer.cancel()
 
-            # Set a shorter timer to detect when the mouse stops moving
-            self.mouse_move_timer = threading.Timer(4, self.on_mouse_stop, args=(x, y))
+            self.mouse_move_timer = threading.Timer(
+                0.2, self.on_mouse_stop, args=(x, y)
+            )
             self.mouse_move_timer.start()
 
     def on_mouse_stop(self, x, y):
@@ -560,6 +583,18 @@ if __name__ == "__main__":
                 f"on_click acquired lock with x,y: {x}, {y} count of actions {len(self.actions)}",
                 flush=True,
             )
+            # Cancel any pending mouse movement recording
+            if self.mouse_move_timer:
+                self.mouse_move_timer.cancel()
+
+            # If there was mouse movement, record it with the current position
+            if self.mouse_moving:
+                self._record_mouse_move_action(x, y)
+
+            # Clear movement buffer
+            self.movement_buffer = []
+            self.last_mouse_position = (x, y)
+
             current_time = time.time()
             is_double_click = False
             DOUBLE_CLICK_THRESHOLD = (
