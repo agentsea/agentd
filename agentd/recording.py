@@ -157,7 +157,7 @@ class RecordingSession:
         self.mouse_move_start_state = None
         self.last_mouse_position = None
         self.movement_buffer = []
-        self.MOVEMENT_BUFFER_TIME = 0.1  # 100ms buffer window
+        self.MOVEMENT_BUFFER_TIME = 3
         self.last_movement_time = None
         self.MOVEMENT_THRESHOLD = 5
         self.lock = threading.Lock()
@@ -410,9 +410,7 @@ if __name__ == "__main__":
             if self.mouse_move_timer:
                 self.mouse_move_timer.cancel()
 
-            self.mouse_move_timer = threading.Timer(
-                0.2, self.on_mouse_stop, args=(x, y)
-            )
+            self.mouse_move_timer = threading.Timer(4, self.on_mouse_stop, args=(x, y))
             self.mouse_move_timer.start()
 
     def on_mouse_stop(self, x, y):
