@@ -370,10 +370,10 @@ if __name__ == "__main__":
             current_time = time.time()
 
             # Initialize last position if needed
-            if not self.last_mouse_position:
+            if self.last_mouse_position is None:
                 self.last_mouse_position = (x, y)
                 self.last_movement_time = current_time
-                return
+                # Do not return here; proceed to process the movement
 
             # Calculate distance moved
             dx = x - self.last_mouse_position[0]
@@ -384,28 +384,22 @@ if __name__ == "__main__":
             if distance_moved < self.MOVEMENT_THRESHOLD:
                 return
 
-            # Buffer the movement
-            if (
-                self.last_movement_time
-                and (current_time - self.last_movement_time) > self.MOVEMENT_BUFFER_TIME
-            ):
-                # Start new movement sequence
-                if not self.mouse_moving:
-                    self.mouse_moving = True
-                    self.mouse_move_start_pos = self.last_mouse_position
-                    start_screenshots = self._get_latest_screenshots(2)
-                    self.mouse_move_start_state = EnvState(
-                        images=[
-                            self.encode_image_to_base64(screenshot)
-                            for screenshot in start_screenshots
-                        ],
-                        coordinates=tuple(map(int, self.last_mouse_position)),
-                    )
-
+            # Start a new movement sequence if not already moving
+            if not self.mouse_moving:
+                self.mouse_moving = True
+                self.mouse_move_start_pos = self.last_mouse_position
+                start_screenshots = self._get_latest_screenshots(2)
+                self.mouse_move_start_state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenshot)
+                        for screenshot in start_screenshots
+                    ],
+                    coordinates=tuple(map(int, self.last_mouse_position)),
+                )
                 self.movement_buffer = [(x, y, current_time)]
             else:
-                # Update the last position in the buffer
-                self.movement_buffer = [(x, y, current_time)]
+                # Continue existing movement sequence
+                self.movement_buffer.append((x, y, current_time))
 
             self.last_mouse_position = (x, y)
             self.last_movement_time = current_time
