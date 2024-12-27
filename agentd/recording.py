@@ -163,6 +163,10 @@ class RecordingSession:
         self.lock = threading.Lock()
 
     def start(self):
+        x, y = pyautogui.position()
+        self.last_mouse_position = (x, y)
+        self.last_movement_time = time.time()
+
         self.keyboard_listener.start()
         time.sleep(1)
         self.mouse_listener.start()
