@@ -327,8 +327,6 @@ if __name__ == "__main__":
         action = V1Action(
             name="move_mouse",
             parameters={
-                "start_x": int(self.mouse_move_start_pos[0]),
-                "start_y": int(self.mouse_move_start_pos[1]),
                 "x": int(final_x),
                 "y": int(final_y),
             },
