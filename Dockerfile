@@ -29,6 +29,7 @@ RUN apk add --no-cache \
     imagemagick \
     procps \
     xdotool \
+    speech-dispatcher \
     redis
 
 # Set environment variables for Python installation
