@@ -71,6 +71,10 @@ class RecordRequest(BaseModel):
     server_address: str
     owner_id: str
 
+class StopRequest(BaseModel):
+    result: Optional[str] = None
+    comment: Optional[str] = None
+
 
 class RecordResponse(BaseModel):
     task_id: str

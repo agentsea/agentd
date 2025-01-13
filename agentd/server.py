@@ -44,6 +44,7 @@ from .models import (
     SystemInfoModel,
     SystemUsageModel,
     TypeTextModel,
+    StopRequest
 )
 from .recording import RecordingSession, lock
 
@@ -424,12 +425,12 @@ async def start_recording(request: RecordRequest):
 
 
 @app.post("/v1/stop_recording")
-async def stop_recording():
+async def stop_recording(request: StopRequest):
     global active_session
     with lock:
         if not active_session:
             raise HTTPException(status_code=404, detail="Session not found")
-        active_session.stop()
+        active_session.stop(result=request.result, comment=request.comment )
         print("Stopped recording session")
 
         active_session = None

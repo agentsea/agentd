@@ -180,9 +180,12 @@ class RecordingSession:
             V1TaskUpdate(status=TaskStatus.IN_PROGRESS.value).model_dump(),
         )
         atexit.register(self.stop)
+    
+    
 
-    def stop(self):
+    def stop(self, result, comment):
         print("send update_task to celery for finished", flush=True)
+        self.send_final_action(result, comment)
         update_task.delay(
             self._task.id,
             self._task.remote,
@@ -749,6 +752,78 @@ if __name__ == "__main__":
             self.scroll_timer.start()
             print(
                 f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
+                flush=True,
+            )
+
+    def send_final_action(self, result, comment):
+        print(
+            f"send_final_action waiting lock with result, comment: {result}, {comment} count of actions {len(self.actions)}",
+            flush=True,
+        )
+        with self.lock:
+            print(
+                f"send_final_action acquired lock with result, comment: {result}, {comment} count of actions {len(self.actions)}",
+                flush=True,
+            )
+
+            try:
+                if self.typing_in_progress:
+                    print("Finalizing text event due to end recording...", flush=True)
+                    self.record_text_action()
+
+                x, y = pyautogui.position()
+                start_screenshot_path = self._get_latest_screenshots(2)
+
+                state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in start_screenshot_path
+                    ],
+                    coordinates=(int(x), int(y)),
+                )
+
+                end_screenshot_path = []
+                end_screenshot_path.append(self.take_screenshot())
+                end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
+
+                end_state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in end_screenshot_path
+                    ],
+                    coordinates=(int(x), int(y)),
+                )
+
+                # Record final end event as an action
+                action = V1Action(
+                    name="end",
+                    parameters={
+                        result: result,
+                        comment: comment
+                    },
+                )
+
+                action_event = ActionEvent(
+                    state=state,
+                    action=action,
+                    tool=DESKTOP_TOOL_REF,
+                    end_state=end_state,
+                    event_order=len(self.actions),
+                )
+                self.actions.append(action_event)
+                # kicking off celery job
+                send_action.delay(
+                    self._task.id,
+                    self._task.auth_token,
+                    self._task.owner_id,
+                    self._task.to_v1().model_dump(),
+                    action_event.to_v1().model_dump(),
+                )
+
+            except Exception as e:
+                print(f"Error recording final end event: {e}", flush=True)
+            print(
+                f"send_final_action releasing lock with result, comment: {result}, {comment} count of actions {len(self.actions)}",
                 flush=True,
             )
 
