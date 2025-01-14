@@ -798,8 +798,8 @@ if __name__ == "__main__":
                 action = V1Action(
                     name="end",
                     parameters={
-                        result: result,
-                        comment: comment
+                        "result": result,
+                        "comment": comment
                     },
                 )
 
