@@ -181,7 +181,77 @@ class RecordingSession:
         )
         atexit.register(self.stop)
     
-    
+    def send_useSecret_action(self, secret_name):
+        print(f"send use secret action: {secret_name} to celery", flush=True)
+        print(
+            f"send_useSecret_action waiting lock with name: {secret_name} count of actions {len(self.actions)}",
+            flush=True,
+        )
+        with self.lock:
+            print(
+                f"send_useSecret_action acquired lock with name: {secret_name} count of actions {len(self.actions)}",
+                flush=True,
+            )
+
+            try:
+                if self.typing_in_progress:
+                    print("Finalizing text event due to use secret...", flush=True)
+                    self.record_text_action()
+
+                x, y = pyautogui.position()
+                start_screenshot_path = self._get_latest_screenshots(2)
+
+                state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in start_screenshot_path
+                    ],
+                    coordinates=(int(x), int(y)),
+                )
+
+                end_screenshot_path = []
+                end_screenshot_path.append(self.take_screenshot())
+                end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
+
+                end_state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in end_screenshot_path
+                    ],
+                    coordinates=(int(x), int(y)),
+                )
+
+                # Record final end event as an action
+                action = V1Action(
+                    name="use_secret",
+                    parameters={
+                        "secret": secret_name,
+                    },
+                )
+
+                action_event = ActionEvent(
+                    state=state,
+                    action=action,
+                    tool=DESKTOP_TOOL_REF,
+                    end_state=end_state,
+                    event_order=len(self.actions),
+                )
+                self.actions.append(action_event)
+                # kicking off celery job
+                send_action.delay(
+                    self._task.id,
+                    self._task.auth_token,
+                    self._task.owner_id,
+                    self._task.to_v1().model_dump(),
+                    action_event.to_v1().model_dump(),
+                )
+
+            except Exception as e:
+                print(f"Error recording send_useSecret_action event: {e}", flush=True)
+            print(
+                f"send_useSecret_action releasing lock with name: {secret_name} count of actions {len(self.actions)}",
+                flush=True,
+            )
 
     def stop(self, result, comment):
         print("send update_task to celery for finished", flush=True)

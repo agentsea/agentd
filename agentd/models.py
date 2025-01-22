@@ -41,6 +41,16 @@ class PressKeyModel(BaseModel):
     key: str
 
 
+class useSecretRequest(BaseModel):
+    token: str
+    server_address: str
+    name: str
+
+class getSecretRequest(BaseModel):
+    token: str
+    server_address: str
+    owner_id: str
+
 class PressKeysModel(BaseModel):
     keys: List[str]
 

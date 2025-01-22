@@ -12,6 +12,8 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+import requests
+
 import psutil
 import pyautogui
 from fastapi import Body, FastAPI, HTTPException, Request
@@ -44,7 +46,9 @@ from .models import (
     SystemInfoModel,
     SystemUsageModel,
     TypeTextModel,
-    StopRequest
+    StopRequest,
+    useSecretRequest,
+    getSecretRequest
 )
 from .recording import RecordingSession, lock
 
@@ -352,6 +356,82 @@ async def exec_command(command: str = Body(..., embed=True)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/v1/use_secret")
+async def use_secret(request: useSecretRequest):
+    global active_session
+    print(f"using secret {request.name}")
+    try:
+        # Get the secret
+        url = f"{request.server_address}/v1/secrets/search"
+        json_data={"name", request.name}
+        headers= {"Authorization": f"bearer {request.token}"}
+        response = requests.post(url, json=json_data, headers=headers)
+         # Check the response status
+        if response.status_code != 200:
+            print(f"secret fetch failed, name: {request.name}, status_code: {response.status_code} detail: {response.text}")
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Failed to fetch secret: {response.text}",
+            )
+        secret = response.secrets[0]
+        print(f"secret fetched: {secret.name}")
+
+        try:
+            #TODO will encrypt secret values in transit. Will want to use a private key in the system env to decrypt.
+            # We can rotate the private key every so often. We are already using https but would be good to have another layer
+            # An example where this is useful so you won't see real secret values in the network tab on the browser
+            for char in secret.value: 
+                pyautogui.write(
+                    char,
+                    # interval=random.uniform(request.min_interval, request.max_interval),
+                )
+                # time.sleep(random.uniform(request.min_interval, request.max_interval))
+            subprocess.run("pbcopy", text=True, input=secret.value)
+            print("secret Text copied to clipboard.")
+            if active_session:
+                active_session.send_useSecret_action(secret_name=secret.name)
+
+            return {"status": "success"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/v1/get_secret")
+async def get_secret(request: getSecretRequest):
+    print("geting secrets")
+    try:
+        # Get the secret
+        url = f"{request.server_address}/v1/secrets/search"
+        json_data={}
+        headers= {"Authorization": f"bearer {request.token}"}
+        response = requests.post(url, json=json_data, headers=headers)
+         # Check the response status
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            # Extract the status code and response content
+            if response:
+                status_code = response.status_code
+                error_message = response.text
+            else:
+                status_code = 500
+                error_message = f"An unknown error occurred: {str(e)}"
+            raise HTTPException(
+                status_code=status_code,
+                detail=f"Error: {error_message}"
+            )
+
+        return response.secrets.keys()
+
+    except requests.RequestException as e:
+        # Handle general request exceptions
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unknown error occurred: {str(e)}"
+        )
 
 
 @app.get("/v1/system_usage", response_model=SystemUsageModel)
