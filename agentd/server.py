@@ -360,7 +360,7 @@ async def exec_command(command: str = Body(..., embed=True)):
 @app.post("/v1/use_secret")
 async def use_secret(request: useSecretRequest):
     global active_session
-    print(f"using secret {request.name}")
+    print(f"using secret {request.name} and applying {request.field}")
     try:
         # Get the secret
         url = f"{request.server_address}/v1/secrets/search"
@@ -387,10 +387,10 @@ async def use_secret(request: useSecretRequest):
                     # interval=random.uniform(request.min_interval, request.max_interval),
                 )
                 # time.sleep(random.uniform(request.min_interval, request.max_interval))
-            subprocess.run("pbcopy", text=True, input=secret.value)
+            subprocess.run("pbcopy", text=True, input=secret.value[request.field])
             print("secret Text copied to clipboard.")
             if active_session:
-                active_session.send_useSecret_action(secret_name=secret.name)
+                active_session.send_useSecret_action(secret_name=secret.name, field=request.field)
 
             return {"status": "success"}
         except Exception as e:
@@ -401,7 +401,7 @@ async def use_secret(request: useSecretRequest):
 
 @app.post("/v1/get_secret")
 async def get_secret(request: getSecretRequest):
-    print("geting secrets")
+    print(f"geting secrets: {request.model_dump_json()}")
     try:
         # Get the secret
         url = f"{request.server_address}/v1/secrets/search"
@@ -423,8 +423,9 @@ async def get_secret(request: getSecretRequest):
                 status_code=status_code,
                 detail=f"Error: {error_message}"
             )
-
-        return response.secrets.keys()
+        print(f"in get secret response is: {response}")
+        result = [{"name": secret.name, "fields": secret.value.keys()} for secret in response.secrets]
+        return result
 
     except requests.RequestException as e:
         # Handle general request exceptions

@@ -45,6 +45,7 @@ class useSecretRequest(BaseModel):
     token: str
     server_address: str
     name: str
+    field: str
 
 class getSecretRequest(BaseModel):
     token: str

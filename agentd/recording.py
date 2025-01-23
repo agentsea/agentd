@@ -181,8 +181,8 @@ class RecordingSession:
         )
         atexit.register(self.stop)
     
-    def send_useSecret_action(self, secret_name):
-        print(f"send use secret action: {secret_name} to celery", flush=True)
+    def send_useSecret_action(self, secret_name, field):
+        print(f"send use secret action: {secret_name} with field {field} to celery", flush=True)
         print(
             f"send_useSecret_action waiting lock with name: {secret_name} count of actions {len(self.actions)}",
             flush=True,
@@ -226,6 +226,7 @@ class RecordingSession:
                     name="use_secret",
                     parameters={
                         "secret": secret_name,
+                        "field": field
                     },
                 )
 
