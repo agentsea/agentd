@@ -63,7 +63,7 @@ RUN echo 'export PYENV_ROOT="/config/.pyenv"' > /config/app/pyenv_setup.sh && \
 WORKDIR /config/app
 
 # Copy project files (only pyproject.toml and poetry.lock to leverage caching)
-COPY --chown=abc:abc pyproject.toml poetry.lock /config/app/
+COPY --chown=abc:abc pyproject.toml README.md poetry.lock /config/app/
 
 # Install Python using pyenv as 'abc' by sourcing the setup script
 RUN XDG_CACHE_HOME=/config/app/.cache /bin/bash -c \
