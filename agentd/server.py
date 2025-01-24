@@ -374,8 +374,9 @@ async def use_secret(request: useSecretRequest):
                 status_code=response.status_code,
                 detail=f"Failed to fetch secret: {response.text}",
             )
-        secret = response.secrets[0]
-        print(f"secret fetched: {secret.name}")
+        secrets = response.json()
+        secret = secrets["secrets"][0]
+        print(f"secret fetched: {secret["name"]}")
 
         try:
             #TODO will encrypt secret values in transit. Will want to use a private key in the system env to decrypt.
@@ -387,7 +388,7 @@ async def use_secret(request: useSecretRequest):
                     # interval=random.uniform(request.min_interval, request.max_interval),
                 )
                 # time.sleep(random.uniform(request.min_interval, request.max_interval))
-            subprocess.run("pbcopy", text=True, input=secret.value[request.field])
+            subprocess.run("pbcopy", text=True, input=secret["value"][request.field])
             print("secret Text copied to clipboard.")
             if active_session:
                 active_session.send_useSecret_action(secret_name=secret.name, field=request.field)
