@@ -377,18 +377,19 @@ async def use_secret(request: useSecretRequest):
         secrets = response.json()
         secret = secrets["secrets"][0]
         print(f"secret fetched: {secret["name"]}")
-
+        
         try:
             #TODO will encrypt secret values in transit. Will want to use a private key in the system env to decrypt.
             # We can rotate the private key every so often. We are already using https but would be good to have another layer
             # An example where this is useful so you won't see real secret values in the network tab on the browser
-            for char in secret.value: 
+            password = secret["value"][request.field] # need better error if this is invalid
+            for char in password: 
                 pyautogui.write(
                     char,
                     # interval=random.uniform(request.min_interval, request.max_interval),
                 )
                 # time.sleep(random.uniform(request.min_interval, request.max_interval))
-            subprocess.run("pbcopy", text=True, input=secret["value"][request.field])
+            subprocess.run("pbcopy", text=True, input=password)
             print("secret Text copied to clipboard.")
             if active_session:
                 active_session.send_useSecret_action(secret_name=secret.name, field=request.field)
