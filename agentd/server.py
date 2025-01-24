@@ -364,7 +364,7 @@ async def use_secret(request: useSecretRequest):
     try:
         # Get the secret
         url = f"{request.server_address}/v1/secrets/search"
-        json_data={"name", request.name}
+        json_data={"name": request.name}
         headers= {"Authorization": f"bearer {request.token}"}
         response = requests.post(url, json=json_data, headers=headers)
          # Check the response status
@@ -376,13 +376,19 @@ async def use_secret(request: useSecretRequest):
             )
         secrets = response.json()
         secret = secrets["secrets"][0]
-        print(f"secret fetched: {secret["name"]}")
+        print(f"secret fetched: {secret['name']}")
         
         try:
             #TODO will encrypt secret values in transit. Will want to use a private key in the system env to decrypt.
             # We can rotate the private key every so often. We are already using https but would be good to have another layer
             # An example where this is useful so you won't see real secret values in the network tab on the browser
-            password = secret["value"][request.field] # need better error if this is invalid
+            try:
+                password = secret["value"][request.field]
+            except KeyError:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Field '{request.field}' not found in the secret."
+                )
             for char in password: 
                 pyautogui.write(
                     char,
@@ -392,7 +398,7 @@ async def use_secret(request: useSecretRequest):
             subprocess.run("pbcopy", text=True, input=password)
             print("secret Text copied to clipboard.")
             if active_session:
-                active_session.send_useSecret_action(secret_name=secret.name, field=request.field)
+                active_session.send_useSecret_action(secret_name=secret['name'], field=request.field)
 
             return {"status": "success"}
         except Exception as e:
@@ -424,8 +430,9 @@ async def get_secret(request: getSecretRequest):
                 status_code=status_code,
                 detail=f"Error: {error_message}"
             )
-        print(f"in get secret response is: {response}")
-        result = [{"name": secret.name, "fields": list(secret.value.keys())} for secret in response.secrets]
+        secrets = response.json()
+        print(f"in get secret response is: {secrets}")
+        result = [{"name": secret.name, "fields": list(secret.value.keys())} for secret in secrets["secrets"]]
         return result
 
     except requests.RequestException as e:
