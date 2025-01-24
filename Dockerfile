@@ -30,7 +30,6 @@ RUN apk add --no-cache \
     procps \
     xdotool \
     speech-dispatcher \
-    xsel \
     redis
 
 # Set environment variables for Python installation
