@@ -405,9 +405,8 @@ async def get_secret(request: getSecretRequest):
     try:
         # Get the secret
         url = f"{request.server_address}/v1/secrets"
-        json_data={}
         headers= {"Authorization": f"bearer {request.token}"}
-        response = requests.post(url, json=json_data, headers=headers)
+        response = requests.get(url, headers=headers)
          # Check the response status
         try:
             response.raise_for_status()
