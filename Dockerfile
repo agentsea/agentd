@@ -101,7 +101,7 @@ RUN XDG_CACHE_HOME=/config/app/.cache \
     /bin/bash -c "source /config/app/pyenv_setup.sh && \
     source /config/app/venv/bin/activate && \
     pip install --no-cache-dir poetry && \
-    poetry install"
+    poetry install --no-root"
 
 # Copy the rest of your application code
 COPY --chown=abc:abc . /config/app/
