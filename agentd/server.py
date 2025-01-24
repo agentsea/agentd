@@ -11,7 +11,6 @@ import time
 import uuid
 from datetime import datetime
 from typing import Optional
-import pyperclip
 import requests
 
 import psutil
