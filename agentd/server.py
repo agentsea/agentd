@@ -395,7 +395,7 @@ async def use_secret(request: useSecretRequest):
                     # interval=random.uniform(request.min_interval, request.max_interval),
                 )
                 # time.sleep(random.uniform(request.min_interval, request.max_interval))
-            pyperclip.copy(password) # TODO consider copy paste instead of writing
+            # pyperclip.copy(password) # TODO consider copy paste instead of writing
             print("secret Text copied to clipboard.")
             if active_session:
                 active_session.send_useSecret_action(secret_name=secret['name'], field=request.field)
