@@ -432,7 +432,7 @@ async def get_secret(request: getSecretRequest):
             )
         secrets = response.json()
         print(f"in get secret response is: {secrets}")
-        result = [{"name": secret.name, "fields": list(secret.value.keys())} for secret in secrets["secrets"]]
+        result = [{"name": secret["name"], "fields": list(secret["value"].keys())} for secret in secrets["secrets"]]
         return result
 
     except requests.RequestException as e:
