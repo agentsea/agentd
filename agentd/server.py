@@ -404,7 +404,7 @@ async def get_secret(request: getSecretRequest):
     print(f"geting secrets: {request.model_dump_json()}")
     try:
         # Get the secret
-        url = f"{request.server_address}/v1/secrets/search"
+        url = f"{request.server_address}/v1/secrets"
         json_data={}
         headers= {"Authorization": f"bearer {request.token}"}
         response = requests.post(url, json=json_data, headers=headers)
@@ -424,7 +424,7 @@ async def get_secret(request: getSecretRequest):
                 detail=f"Error: {error_message}"
             )
         print(f"in get secret response is: {response}")
-        result = [{"name": secret.name, "fields": secret.value.keys()} for secret in response.secrets]
+        result = [{"name": secret.name, "fields": list(secret.value.keys())} for secret in response.secrets]
         return result
 
     except requests.RequestException as e:
