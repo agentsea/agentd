@@ -11,7 +11,7 @@ import time
 import uuid
 from datetime import datetime
 from typing import Optional
-
+import pyperclip
 import requests
 
 import psutil
@@ -395,7 +395,7 @@ async def use_secret(request: useSecretRequest):
                     # interval=random.uniform(request.min_interval, request.max_interval),
                 )
                 # time.sleep(random.uniform(request.min_interval, request.max_interval))
-            subprocess.run("pbcopy", text=True, input=password)
+            pyperclip.copy(password) # TODO consider copy paste instead of writing
             print("secret Text copied to clipboard.")
             if active_session:
                 active_session.send_useSecret_action(secret_name=secret['name'], field=request.field)
