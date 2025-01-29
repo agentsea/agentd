@@ -4,7 +4,9 @@ RUN uname -m
 RUN cat /etc/alpine-release
 
 # Install necessary build tools and libraries
-RUN apk add --no-cache \
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
     build-base \
     libffi-dev \
     openssl-dev \
@@ -20,7 +22,7 @@ RUN apk add --no-cache \
     libpcap-dev \
     linux-headers \
     libreoffice \
-    gnome-themes-standard \
+    gnome-themes-extra \
     sassc \
     gtk-murrine-engine \
     gtk-engines \
