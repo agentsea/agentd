@@ -22,10 +22,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     libpcap-dev \
     linux-headers \
     libreoffice \
-    gnome-themes-extra \
-    sassc \
-    gtk-murrine-engine \
-    gtk-engines \
+    xfwm4-themes \
     curl \
     git \
     wget \
@@ -43,48 +40,6 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     xclip \
     redis
 
-########################################################################
-# Fluent theme installation
-########################################################################
-
-RUN echo $USER
-
-# Switch back to root (assuming we need to write to /usr/share/themes)
-USER root
-
-# Clone Fluent theme into a temporary location
-RUN git clone https://github.com/vinceliuice/Fluent-gtk-theme.git /tmp/fluent-theme
-
-# Install the theme
-# Adjust the install.sh options as needed:
-#   -d /usr/share/themes  --> Installs into /usr/share/themes
-#   -n "Fluent"           --> Theme name
-#   -t all                --> All color variants (blue, purple, pink, etc.)
-#   -c all                --> Light, standard, dark
-#   --tweaks              --> Additional variants like solid, float, round, blur, etc.
-RUN cd /tmp/fluent-theme && \
-    chmod +x ./install.sh && \
-    ./install.sh \
-        -d /usr/share/themes \
-        -n "Fluent" \
-        -t all \
-        -c all \
-        --tweaks round
-
-# Optional cleanup
-RUN rm -rf /tmp/fluent-theme
-
-# Return to user abc
-USER abc
-
-# Set the theme
-RUN gsettings set org.gnome.desktop.interface gtk-theme "Fluent"
-RUN gsettings set org.gnome.desktop.wm.preferences theme "Fluent"
-
-
-########################################################################
-# End Fluent theme installation
-########################################################################
 
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.1
