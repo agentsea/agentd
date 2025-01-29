@@ -1,6 +1,7 @@
 FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest@sha256:41109089fcf80d45b25e6e3d0d8a9ae9bd13568af2d020266e55c7159fc9f2eb
 
 RUN uname -m
+RUN cat /etc/alpine-release
 
 # Install necessary build tools and libraries
 RUN apk add --no-cache \
@@ -19,7 +20,6 @@ RUN apk add --no-cache \
     libpcap-dev \
     linux-headers \
     libreoffice \
-    gnome-themes-extra \
     gnome-themes-standard \
     sassc \
     gtk-murrine-engine \
