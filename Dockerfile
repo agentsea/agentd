@@ -1,5 +1,7 @@
 FROM --platform=$TARGETPLATFORM lscr.io/linuxserver/webtop:latest@sha256:41109089fcf80d45b25e6e3d0d8a9ae9bd13568af2d020266e55c7159fc9f2eb
 
+RUN uname -m
+
 # Install necessary build tools and libraries
 RUN apk add --no-cache \
     build-base \
@@ -18,6 +20,7 @@ RUN apk add --no-cache \
     linux-headers \
     libreoffice \
     gnome-themes-extra \
+    gnome-themes-standard \
     sassc \
     gtk-murrine-engine \
     gtk-engines \
