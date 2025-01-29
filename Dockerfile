@@ -42,29 +42,29 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
 
 RUN echo $USER
 
-# Clone the WhiteSur GTK Theme repository
-RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
+# # Clone the WhiteSur GTK Theme repository
+# RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
 
-# Install the theme (customize options as needed)
-RUN cd /tmp/WhiteSur-gtk-theme && \
-    ./install.sh
+# # Install the theme (customize options as needed)
+# RUN cd /tmp/WhiteSur-gtk-theme && \
+#     ./install.sh
 
-# Install WhiteSur Icon Theme (Optional)
-RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme && \
-    cd /tmp/WhiteSur-icon-theme && \
-    ./install.sh
+# # Install WhiteSur Icon Theme (Optional)
+# RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme && \
+#     cd /tmp/WhiteSur-icon-theme && \
+#     ./install.sh
 
-# Cleanup
-RUN rm -rf /tmp/WhiteSur-gtk-theme /tmp/WhiteSur-icon-theme
+# # Cleanup
+# RUN rm -rf /tmp/WhiteSur-gtk-theme /tmp/WhiteSur-icon-theme
 
-# Switch back to user 'abc'
-USER abc
+# # Switch back to user 'abc'
+# USER abc
 
 # Set the GTK and Icon theme for user 'abc'
-RUN mkdir -p /config/app/.config/gtk-3.0 && \
-    echo '[Settings]' > /config/app/.config/gtk-3.0/settings.ini && \
-    echo 'gtk-theme-name=WhiteSur-Dark' >> /config/app/.config/gtk-3.0/settings.ini && \
-    echo 'gtk-icon-theme-name=WhiteSur' >> /config/app/.config/gtk-3.0/settings.ini
+# RUN mkdir -p /config/app/.config/gtk-3.0 && \
+#     echo '[Settings]' > /config/app/.config/gtk-3.0/settings.ini && \
+#     echo 'gtk-theme-name=WhiteSur-Dark' >> /config/app/.config/gtk-3.0/settings.ini && \
+#     echo 'gtk-icon-theme-name=WhiteSur' >> /config/app/.config/gtk-3.0/settings.ini
 
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.1
