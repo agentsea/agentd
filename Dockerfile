@@ -64,7 +64,7 @@ RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /
 
 # Switch to user 'abc'
 USER abc
-g
+
 # Install WhiteSur Themes and Wallpapers
 RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
     \
