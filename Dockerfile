@@ -59,8 +59,8 @@ RUN echo $SHELL
 
 RUN which readlink && readlink --version
 
-RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers && \
-    chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers
+RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local && \
+    chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local
 
 # Switch to user 'abc'
 USER abc
