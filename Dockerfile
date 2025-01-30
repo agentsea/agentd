@@ -92,7 +92,7 @@ RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/.ic
 
 RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /config/.wallpapers/WhiteSur-wallpapers && \
     cd /config/.wallpapers/WhiteSur-wallpapers && \
-    bash ./install-wallpapers.sh -t monterey -d && \
+    bash ./install-wallpapers.sh -t monterey && \
     rm -rf /config/.wallpapers/WhiteSur-wallpapers
 
 RUN chown -R abc:abc /config/.themes /config/.icons /config/.local /config/.wallpapers
