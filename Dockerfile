@@ -46,6 +46,8 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     unzip \
     xmlstarlet \
     coreutils \
+    glib-dev \
+    libxml2-utils \
     redis
 
 # RUN echo $USER
