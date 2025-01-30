@@ -65,6 +65,13 @@ RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /
 # Switch to user 'abc'
 USER abc
 
+# Initialize Firefox by creating and running a profile in headless mode
+RUN firefox -CreateProfile "default /config/.mozilla/firefox/default" \
+ && firefox --headless --profile /config/.mozilla/firefox/default & \
+    sleep 5 && \
+    killall firefox
+
+
 # Install WhiteSur Themes and Wallpapers
 RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
     \
