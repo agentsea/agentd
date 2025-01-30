@@ -59,12 +59,12 @@ RUN echo $SHELL
 
 RUN which readlink && readlink --version
 
-RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local && \
-    chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local
+RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0 && \
+    chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0
 
 # Switch to user 'abc'
 USER abc
-
+g
 # Install WhiteSur Themes and Wallpapers
 RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
     \
