@@ -49,18 +49,21 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
 
 # RUN echo $USER
 RUN pwd
-# USER abc
+USER abc
+
+RUN mkdir -p /config/.theme
+RUN chown -R abc:abc /config/.theme
 
 # RUN echo $USER
 
 RUN echo $HOME
 
 # Install the theme (customize options as needed)
-RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/WhiteSur-gtk-theme
-WORKDIR /config/WhiteSur-gtk-theme
+RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.theme/WhiteSur-gtk-theme
+WORKDIR /config/.theme/WhiteSur-gtk-theme
 RUN bash ./install.sh -d /config/.themes
 WORKDIR /
-RUN rm -rf /config/WhiteSur-gtk-theme
+RUN rm -rf /config/.theme/WhiteSur-gtk-theme
     # ./install.sh && \
     # ./tweaks.sh -f
 
