@@ -55,12 +55,14 @@ RUN pwd
 
 RUN which readlink && readlink --version
 
-RUN mkdir -p /config/.theme
-RUN chown -R abc:abc /config/.theme
+RUN mkdir -p /config/.themes
+RUN chown -R abc:abc /config/.themes
 RUN mkdir -p /config/.icons
 RUN chown -R abc:abc /config/.icons
 RUN mkdir -p /config/.local
 RUN chown -R abc:abc /config/.local
+RUN mkdir -p /config/.wallpapers
+RUN chown -R abc:abc /config/.wallpapers
 
 USER abc
 ENV HOME=/config \
@@ -74,27 +76,27 @@ ENV HOME=/config \
 RUN echo $HOME
 
 # Install the theme (customize options as needed)
-RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.theme/WhiteSur-gtk-theme
-WORKDIR /config/.theme/WhiteSur-gtk-theme
+RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.themes/WhiteSur-gtk-theme
+WORKDIR /config/.themes/WhiteSur-gtk-theme
 RUN /bin/bash -ex ./install.sh -d /config/.themes
 WORKDIR /
-RUN rm -rf /config/.theme/WhiteSur-gtk-theme
+RUN rm -rf /config/.themes/WhiteSur-gtk-theme
     # ./install.sh && \
     # ./tweaks.sh -f
 
 # Install WhiteSur Icon Theme (Optional)
-RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/.theme/WhiteSur-icon-theme && \
-    cd /config/.theme/WhiteSur-icon-theme && \
+RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/.icons/WhiteSur-icon-theme && \
+    cd /config/.icons/WhiteSur-icon-theme && \
     bash ./install.sh -d /config/.icons && \
-    rm -rf /config/.theme/WhiteSur-icon-theme
+    rm -rf /config/.icons/WhiteSur-icon-theme
 
 
 RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /config/.theme/WhiteSur-wallpapers && \
-    cd /config/.theme/WhiteSur-wallpapers && \
+    cd /config/.wallpapers/WhiteSur-wallpapers && \
     bash ./install-wallpapers.sh -t monterey -d /config/.local/share/backgrounds && \
-    rm -rf /config/.theme/WhiteSur-wallpapers
+    rm -rf /config/.wallpapers/WhiteSur-wallpapers
 
-RUN chown -R abc:abc /config/.themes /config/.icons /config/.local
+RUN chown -R abc:abc /config/.themes /config/.icons /config/.local /config/.wallpapers
 
 # Switch back to user 'abc'
 USER abc
