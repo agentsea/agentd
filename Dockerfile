@@ -69,7 +69,7 @@ RUN echo $HOME
 # Install the theme (customize options as needed)
 RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.theme/WhiteSur-gtk-theme
 WORKDIR /config/.theme/WhiteSur-gtk-theme
-RUN /bin/bash -ex ./install.sh -d /config/.themes --silent-mode
+RUN /bin/bash -ex ./install.sh -d /config/.themes
 WORKDIR /
 RUN rm -rf /config/.theme/WhiteSur-gtk-theme
     # ./install.sh && \
