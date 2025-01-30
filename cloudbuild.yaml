@@ -24,7 +24,22 @@ steps:
       - "-c"
       - |
         docker buildx build \
-          --platform linux/amd64,linux/arm64 \
+          --platform linux/arm64 \
+          -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
+          --build-arg PYTHON_VERSION=3.12.0 \
+          --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache \
+          --cache-to type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache,mode=max \
+          --push \
+          .
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: Build and Push
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker buildx build \
+          --platform linux/amd64 \
           -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
           --build-arg PYTHON_VERSION=3.12.0 \
           --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache \
