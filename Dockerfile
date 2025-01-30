@@ -70,7 +70,7 @@ RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
     \
     # Install WhiteSur GTK Theme
     git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.themes/WhiteSur-gtk-theme && \
-    /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/install.sh -d /config/.themes && /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/tweaks.sh -f -r \
+    /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/install.sh -d /config/.themes && /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/tweaks.sh -f -r && \
     rm -rf /config/.themes/WhiteSur-gtk-theme && \
     \
     # Install WhiteSur Icon Theme
