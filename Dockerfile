@@ -63,6 +63,8 @@ RUN mkdir -p /config/.local
 RUN chown -R abc:abc /config/.local
 RUN mkdir -p /config/.wallpapers
 RUN chown -R abc:abc /config/.wallpapers
+RUN mkdir -p /config/.config/gtk-3.0
+# RUN chown -R abc:abc /config/.config/gtk-3.0
 
 USER abc
 ENV HOME=/config \
@@ -104,10 +106,9 @@ USER abc
 COPY --chown=abc:abc xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/
 
 # Set the GTK and Icon theme for user 'abc'
-RUN mkdir -p /config/app/.config/gtk-3.0 && \
-    echo '[Settings]' > /config/app/.config/gtk-3.0/settings.ini && \
-    echo 'gtk-theme-name=WhiteSur-Light' >> /config/app/.config/gtk-3.0/settings.ini && \
-    echo 'gtk-icon-theme-name=WhiteSur' >> /config/app/.config/gtk-3.0/settings.ini
+RUN echo '[Settings]' > /config/.config/gtk-3.0/settings.ini && \
+    echo 'gtk-theme-name=WhiteSur-Light' >> /config/.config/gtk-3.0/settings.ini && \
+    echo 'gtk-icon-theme-name=WhiteSur' >> /config/.config/gtk-3.0/settings.ini
 
 # # Set environment variables for Python installation
 # ENV PYTHON_VERSION=3.12.1
