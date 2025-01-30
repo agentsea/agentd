@@ -21,7 +21,6 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     db-dev \
     libpcap-dev \
     linux-headers \
-    libreoffice \
     curl \
     git \
     wget \
@@ -40,6 +39,8 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     redis
 
 RUN echo $USER
+
+USER root
 
 # Clone the WhiteSur GTK Theme repository
 RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /config/WhiteSur-gtk-theme
