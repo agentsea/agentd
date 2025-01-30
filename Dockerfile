@@ -45,9 +45,9 @@ RUN echo $USER
 RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /config/WhiteSur-gtk-theme
 
 # Install the theme (customize options as needed)
-RUN cd /config/WhiteSur-gtk-theme && \
-    ./install.sh && \
-    ./tweaks.sh -f
+RUN cd /config/WhiteSur-gtk-theme && ./install.sh
+    # ./install.sh && \
+    # ./tweaks.sh -f
 
 # Install WhiteSur Icon Theme (Optional)
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/WhiteSur-icon-theme && \
