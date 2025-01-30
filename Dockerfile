@@ -16,6 +16,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     sqlite-dev \
     ncurses-dev \
     xz-dev \
+    bash \
     tk-dev \
     gdbm-dev \
     db-dev \
@@ -36,6 +37,8 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     xdotool \
     speech-dispatcher \
     xclip \
+    gtk-murrine-engine \
+    sassc \
     redis
 
 # RUN echo $USER
@@ -44,38 +47,42 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
 
 # RUN echo $USER
 
-# # Clone the WhiteSur GTK Theme repository
-# RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /config/WhiteSur-gtk-theme
+# Clone the WhiteSur GTK Theme repository
+RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /config/WhiteSur-gtk-theme
 
-# # Install the theme (customize options as needed)
-# RUN cd /config/WhiteSur-gtk-theme && ./install.sh
-#     # ./install.sh && \
-#     # ./tweaks.sh -f
+# Install the theme (customize options as needed)
+RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme && \
+    cd /tmp/WhiteSur-gtk-theme && \
+    bash ./install.sh -d /config/.themes && \
+    rm -rf /tmp/WhiteSur-gtk-theme
+    # ./install.sh && \
+    # ./tweaks.sh -f
 
-# # Install WhiteSur Icon Theme (Optional)
-# RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/WhiteSur-icon-theme && \
-#     cd /config/WhiteSur-icon-theme && \
-#     ./install.sh
-
-# RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /config/WhiteSur-wallpapers && \
-#     cd /config/WhiteSur-wallpapers && \
-#     ./install-wallpapers.sh -t monterey
+# Install WhiteSur Icon Theme (Optional)
+RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme && \
+    cd /tmp/WhiteSur-icon-theme && \
+    bash ./install.sh -d /config/.icons && \
+    rm -rf /tmp/WhiteSur-icon-theme
 
 
-# # Switch back to user 'abc'
-# USER abc
+RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /tmp/WhiteSur-wallpapers && \
+    cd /tmp/WhiteSur-wallpapers && \
+    bash ./install-wallpapers.sh -t monterey -d /config/.local/share/backgrounds && \
+    rm -rf /tmp/WhiteSur-wallpapers
 
-# # Set Monterey-light.jpg as the desktop background using xfconf-query
-# RUN xfconf-query -c xfce4-desktop \
-#   -p /backdrop/screen0/monitor0/workspace0/last-image \
-#   -s "/config/.local/share/backgrounds/Monterey-light.jpg" \
-#   --create -t string
+RUN chown -R abc:abc /config/.themes /config/.icons /config/.local
 
-# # Set the GTK and Icon theme for user 'abc'
-# RUN mkdir -p /config/app/.config/gtk-3.0 && \
-#     echo '[Settings]' > /config/app/.config/gtk-3.0/settings.ini && \
-#     echo 'gtk-theme-name=WhiteSur-Light' >> /config/app/.config/gtk-3.0/settings.ini && \
-#     echo 'gtk-icon-theme-name=WhiteSur' >> /config/app/.config/gtk-3.0/settings.ini
+# Switch back to user 'abc'
+USER abc
+
+# Set Monterey-light.jpg as the desktop background using xfconf-query
+COPY --chown=abc:abc xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/
+
+# Set the GTK and Icon theme for user 'abc'
+RUN mkdir -p /config/app/.config/gtk-3.0 && \
+    echo '[Settings]' > /config/app/.config/gtk-3.0/settings.ini && \
+    echo 'gtk-theme-name=WhiteSur-Light' >> /config/app/.config/gtk-3.0/settings.ini && \
+    echo 'gtk-icon-theme-name=WhiteSur' >> /config/app/.config/gtk-3.0/settings.ini
 
 # # Set environment variables for Python installation
 # ENV PYTHON_VERSION=3.12.1
