@@ -59,46 +59,28 @@ RUN echo $SHELL
 
 RUN which readlink && readlink --version
 
-RUN mkdir -p /config/.themes
-RUN chown -R abc:abc /config/.themes
-RUN mkdir -p /config/.icons
-RUN chown -R abc:abc /config/.icons
-RUN mkdir -p /config/.local
-RUN chown -R abc:abc /config/.local
-RUN mkdir -p /config/.wallpapers
-RUN chown -R abc:abc /config/.wallpapers
-RUN mkdir -p /config/.config/gtk-3.0
-RUN chown -R abc:abc /config/.config/gtk-3.0
+RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers && \
+    chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers
 
+# Switch to user 'abc'
 USER abc
-ENV HOME=/config \
-    USER=abc \
-    LOGNAME=abc \
-    SHELL=/bin/bash
 
-
-# RUN echo $USER
-
-RUN echo $HOME
-
-# Install the theme (customize options as needed)
-RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.themes/WhiteSur-gtk-theme
-WORKDIR /config/.themes/WhiteSur-gtk-theme
-RUN /bin/bash -ex ./install.sh -d /config/.themes
-WORKDIR /
-RUN rm -rf /config/.themes/WhiteSur-gtk-theme
-    # ./install.sh && \
-    # ./tweaks.sh -f
-
-# Install WhiteSur Icon Theme (Optional)
-RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/.icons/WhiteSur-icon-theme && \
-    cd /config/.icons/WhiteSur-icon-theme && \
-    bash ./install.sh -d /config/.icons && \
-    rm -rf /config/.icons/WhiteSur-icon-theme
-
-RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /config/.wallpapers/WhiteSur-wallpapers && \
-    cd /config/.wallpapers/WhiteSur-wallpapers && \
-    bash ./install-wallpapers.sh -t monterey && \
+# Install WhiteSur Themes and Wallpapers
+RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
+    \
+    # Install WhiteSur GTK Theme
+    git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.themes/WhiteSur-gtk-theme && \
+    /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/install.sh -d /config/.themes && \
+    rm -rf /config/.themes/WhiteSur-gtk-theme && \
+    \
+    # Install WhiteSur Icon Theme
+    git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git --depth=1 /config/.icons/WhiteSur-icon-theme && \
+    /bin/bash -ex /config/.icons/WhiteSur-icon-theme/install.sh -d /config/.icons && \
+    rm -rf /config/.icons/WhiteSur-icon-theme && \
+    \
+    # Install WhiteSur Wallpapers
+    git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git --depth=1 /config/.wallpapers/WhiteSur-wallpapers && \
+    /bin/bash -ex /config/.wallpapers/WhiteSur-wallpapers/install-wallpapers.sh -t monterey && \
     rm -rf /config/.wallpapers/WhiteSur-wallpapers
 
 RUN chown -R abc:abc /config/.themes /config/.icons /config/.local /config/.wallpapers
