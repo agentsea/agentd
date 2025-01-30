@@ -70,7 +70,7 @@ RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
     \
     # Install WhiteSur GTK Theme
     git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.themes/WhiteSur-gtk-theme && \
-    /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/install.sh -d /config/.themes && \
+    /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/install.sh -d /config/.themes && /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/tweaks.sh -f -r \
     rm -rf /config/.themes/WhiteSur-gtk-theme && \
     \
     # Install WhiteSur Icon Theme
@@ -92,6 +92,12 @@ COPY --chown=abc:abc xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchan
 RUN echo '[Settings]' > /config/.config/gtk-3.0/settings.ini && \
     echo 'gtk-theme-name=WhiteSur-Light' >> /config/.config/gtk-3.0/settings.ini && \
     echo 'gtk-icon-theme-name=WhiteSur' >> /config/.config/gtk-3.0/settings.ini
+
+RUN xfconf-query -c xsettings -p /Net/ThemeName    -s "WhiteSur-Light" \
+    && xfconf-query -c xsettings -p /Net/IconThemeName -s "WhiteSur"       \
+    && xfconf-query -c xfwm4     -p /general/theme     -s "WhiteSur-Light" \
+    && xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "WhiteSur-cursors" \
+    && xfconf-query -c xsettings -p /Gtk/FontName        -s "Ubuntu 11"
 
 # # Set environment variables for Python installation
 # ENV PYTHON_VERSION=3.12.1
