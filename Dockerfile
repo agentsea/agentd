@@ -49,10 +49,10 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
 
 # RUN echo $USER
 RUN pwd
-USER abc
 
 RUN mkdir -p /config/.theme
 RUN chown -R abc:abc /config/.theme
+USER abc
 
 # RUN echo $USER
 
