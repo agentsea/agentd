@@ -225,7 +225,7 @@ class RecordingSession:
                 action = V1Action(
                     name="use_secret",
                     parameters={
-                        "secret": secret_name,
+                        "name": secret_name,
                         "field": field
                     },
                 )

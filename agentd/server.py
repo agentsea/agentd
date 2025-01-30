@@ -407,7 +407,7 @@ async def use_secret(request: useSecretRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/v1/get_secret")
+@app.post("/v1/get_secrets")
 async def get_secret(request: getSecretRequest):
     print(f"geting secrets: {request.model_dump_json()}")
     try:
