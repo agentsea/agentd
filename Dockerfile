@@ -56,6 +56,11 @@ RUN which readlink && readlink --version
 RUN mkdir -p /config/.theme
 RUN chown -R abc:abc /config/.theme
 USER abc
+ENV HOME=/config \
+    USER=abc \
+    LOGNAME=abc \
+    SHELL=/bin/bash
+
 
 # RUN echo $USER
 
