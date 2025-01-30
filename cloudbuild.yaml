@@ -18,7 +18,7 @@ steps:
 
   # Build and push for amd64 with caching
   - name: "gcr.io/cloud-builders/docker"
-    id: Build and Push
+    id: Build and Push ARM
     entrypoint: "bash"
     args:
       - "-c"
@@ -33,7 +33,7 @@ steps:
           .
 
   - name: "gcr.io/cloud-builders/docker"
-    id: Build and Push
+    id: Build and Push AMD
     entrypoint: "bash"
     args:
       - "-c"
