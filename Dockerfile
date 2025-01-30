@@ -22,7 +22,6 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     libpcap-dev \
     linux-headers \
     libreoffice \
-    xfwm4-themes \
     curl \
     git \
     wget \
@@ -42,29 +41,38 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
 
 RUN echo $USER
 
-# # Clone the WhiteSur GTK Theme repository
-# RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
+# Clone the WhiteSur GTK Theme repository
+RUN git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git /config/WhiteSur-gtk-theme
 
-# # Install the theme (customize options as needed)
-# RUN cd /tmp/WhiteSur-gtk-theme && \
-#     ./install.sh
+# Install the theme (customize options as needed)
+RUN cd /config/WhiteSur-gtk-theme && \
+    ./install.sh && \
+    ./tweaks.sh -f
 
-# # Install WhiteSur Icon Theme (Optional)
-# RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme && \
-#     cd /tmp/WhiteSur-icon-theme && \
-#     ./install.sh
+# Install WhiteSur Icon Theme (Optional)
+RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/WhiteSur-icon-theme && \
+    cd /config/WhiteSur-icon-theme && \
+    ./install.sh
 
-# # Cleanup
-# RUN rm -rf /tmp/WhiteSur-gtk-theme /tmp/WhiteSur-icon-theme
+RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /config/WhiteSur-wallpapers && \
+    cd /config/WhiteSur-wallpapers && \
+    ./install-wallpapers.sh -t monterey
 
-# # Switch back to user 'abc'
-# USER abc
+
+# Switch back to user 'abc'
+USER abc
+
+# Set Monterey-light.jpg as the desktop background using xfconf-query
+RUN xfconf-query -c xfce4-desktop \
+  -p /backdrop/screen0/monitor0/workspace0/last-image \
+  -s "/config/.local/share/backgrounds/Monterey-light.jpg" \
+  --create -t string
 
 # Set the GTK and Icon theme for user 'abc'
-# RUN mkdir -p /config/app/.config/gtk-3.0 && \
-#     echo '[Settings]' > /config/app/.config/gtk-3.0/settings.ini && \
-#     echo 'gtk-theme-name=WhiteSur-Dark' >> /config/app/.config/gtk-3.0/settings.ini && \
-#     echo 'gtk-icon-theme-name=WhiteSur' >> /config/app/.config/gtk-3.0/settings.ini
+RUN mkdir -p /config/app/.config/gtk-3.0 && \
+    echo '[Settings]' > /config/app/.config/gtk-3.0/settings.ini && \
+    echo 'gtk-theme-name=WhiteSur-Light' >> /config/app/.config/gtk-3.0/settings.ini && \
+    echo 'gtk-icon-theme-name=WhiteSur' >> /config/app/.config/gtk-3.0/settings.ini
 
 # Set environment variables for Python installation
 ENV PYTHON_VERSION=3.12.1
