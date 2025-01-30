@@ -90,8 +90,7 @@ RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /config/.ic
     bash ./install.sh -d /config/.icons && \
     rm -rf /config/.icons/WhiteSur-icon-theme
 
-
-RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /config/.theme/WhiteSur-wallpapers && \
+RUN git clone https://github.com/vinceliuice/WhiteSur-wallpapers.git /config/.wallpapers/WhiteSur-wallpapers && \
     cd /config/.wallpapers/WhiteSur-wallpapers && \
     bash ./install-wallpapers.sh -t monterey -d /config/.local/share/backgrounds && \
     rm -rf /config/.wallpapers/WhiteSur-wallpapers
