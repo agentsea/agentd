@@ -62,14 +62,26 @@ RUN which readlink && readlink --version
 RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0 && \
     chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0
 
+
+RUN mkdir -p /config/.cache/fontconfig && \
+    chown -R abc:abc /config/.cache && \
+    # Pre-generate font caches (optional but helps)
+    fc-cache -fv
+
 # Switch to user 'abc'
 USER abc
 
-ENV DISPLAY=
+ENV HOME=/config
+ENV XDG_CACHE_HOME=/config/.cache
+ENV FONTCONFIG_PATH=/etc/fonts
+ENV FONTCONFIG_FILE=/etc/fonts/fonts.conf
+ENV FONTCONFIG_CACHE=$XDG_CACHE_HOME/fontconfig
 ENV MOZ_HEADLESS=1
+ENV DISPLAY=
 
-RUN firefox --version && \
-    firefox -CreateProfile "default /config/.mozilla/firefox/default" && \
+RUN firefox --version
+
+RUN firefox -CreateProfile "default /config/.mozilla/firefox/default" && \
     firefox --headless --profile /config/.mozilla/firefox/default & \
     sleep 5 && \
     killall firefox
