@@ -52,6 +52,10 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
 
 # RUN echo $USER
 RUN pwd
+RUN echo $HOME
+RUN echo $USER
+RUN echo $LOGNAME
+RUN echo $SHELL
 
 RUN which readlink && readlink --version
 
