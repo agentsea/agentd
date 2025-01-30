@@ -85,9 +85,6 @@ RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
 
 RUN chown -R abc:abc /config/.themes /config/.icons /config/.local /config/.wallpapers
 
-# Switch back to user 'abc'
-USER abc
-
 # Set Monterey-light.jpg as the desktop background using xfconf-query
 COPY --chown=abc:abc xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/
 
@@ -175,7 +172,7 @@ RUN echo '[Settings]' > /config/.config/gtk-3.0/settings.ini && \
 # RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
 
 # # Switch back to root to set up the s6-overlay v3 service
-# USER root
+USER root
 
 # ENV S6_LOGGING=1
 # ENV S6_VERBOSITY=2
