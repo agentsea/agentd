@@ -64,7 +64,7 @@ RUN chown -R abc:abc /config/.local
 RUN mkdir -p /config/.wallpapers
 RUN chown -R abc:abc /config/.wallpapers
 RUN mkdir -p /config/.config/gtk-3.0
-# RUN chown -R abc:abc /config/.config/gtk-3.0
+RUN chown -R abc:abc /config/.config/gtk-3.0
 
 USER abc
 ENV HOME=/config \
