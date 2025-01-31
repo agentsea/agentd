@@ -105,17 +105,16 @@ ENV HOME=/config \
     DISPLAY=:99 \
     DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus.sock
 
-# Initialize D-Bus and X server
-RUN dbus-daemon --session --address=unix:path=/tmp/dbus.sock --print-address --nopidfile && \
-    (Xvfb :99 -screen 0 1024x768x24 -nolisten tcp -nolisten unix & sleep 2 && \
-    xauth add :99 MIT-MAGIC-COOKIE-1 $(mcookie))
-
 # Initialize Firefox profile
-RUN firefox --createprofile "default /config/.mozilla/firefox/default" && \
-    timeout 30s firefox --headless --no-remote --profile /config/.mozilla/firefox/default about:blank || true
-
-# Cleanup
-RUN rm -rf /config/.cache/* /config/.mozilla/firefox/default/lock /config/.mozilla/firefox/default/.parentlock
+RUN set -e; \
+    sh -c "dbus-daemon --session --address=unix:path=/tmp/dbus.sock --print-address --nopidfile & \
+    Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render & \
+    sleep 2 && \
+    firefox --createprofile 'default /config/.mozilla/firefox/default' && \
+    ( timeout 30s firefox --headless --no-remote --profile /config/.mozilla/firefox/default about:blank || true ) && \
+    pkill -f Xvfb; \
+    pkill -f dbus-daemon"; \
+    rm -rf /config/.cache/* /config/.mozilla/firefox/default/lock /config/.mozilla/firefox/default/.parentlock
 
 
 # Install WhiteSur Themes and Wallpapers
