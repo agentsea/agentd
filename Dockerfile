@@ -60,11 +60,8 @@ RUN echo $SHELL
 
 RUN which readlink && readlink --version
 
-RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0 && \
-    chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0
-
-RUN mkdir -p /config/.config/glib-2.0
-RUN chown -R abc:abc /config/.config/glib-2.0
+RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0 /config/.config/glib-2.0 && \
+    chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0 /config/.config/glib-2.0
 
 # Switch to user 'abc'
 USER abc
@@ -90,19 +87,22 @@ RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
 
 RUN chown -R abc:abc /config/.themes /config/.icons /config/.local /config/.wallpapers
 
-# Set Monterey-light.jpg as the desktop background using xfconf-query
-COPY --chown=abc:abc xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/
+# Copy (and overwrite) the Xfce desktop XML (wallpaper settings)
+COPY --chown=abc:abc ./theme/xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+
+# Copy in xsettings.xml to set GTK theme, icon theme, cursor, and fonts
+COPY --chown=abc:abc ./theme/xsettings.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
+
+# Copy in xfwm4.xml to set the window manager theme and titlebar font
+COPY --chown=abc:abc ./theme/xfwm4.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
+
+# TODO: ?
+# VOLUME /config
 
 # Set the GTK and Icon theme for user 'abc'
 RUN echo '[Settings]' > /config/.config/gtk-3.0/settings.ini && \
     echo 'gtk-theme-name=WhiteSur-Light' >> /config/.config/gtk-3.0/settings.ini && \
     echo 'gtk-icon-theme-name=WhiteSur' >> /config/.config/gtk-3.0/settings.ini
-
-RUN xfconf-query -c xsettings -p /Net/ThemeName    -s "WhiteSur-Light" \
-    && xfconf-query -c xsettings -p /Net/IconThemeName -s "WhiteSur"       \
-    && xfconf-query -c xfwm4     -p /general/theme     -s "WhiteSur-Light" \
-    && xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "WhiteSur-cursors" \
-    && xfconf-query -c xsettings -p /Gtk/FontName        -s "Ubuntu 11"
 
 # # Set environment variables for Python installation
 # ENV PYTHON_VERSION=3.12.1
