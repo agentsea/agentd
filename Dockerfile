@@ -196,7 +196,7 @@ COPY xconf_run /etc/s6-overlay/s6-rc.d/xconf/up
 RUN echo 'oneshot' > /etc/s6-overlay/s6-rc.d/xconf/type
 RUN ln -s ../xconf /etc/s6-overlay/s6-rc.d/user/contents.d/xconf
 
-COPY ./theme/enable-compositing.desktop /etc/xdg/autostart/enable-compositing.desktop
+# COPY ./theme/enable-compositing.desktop /etc/xdg/autostart/enable-compositing.desktop
 
 
 # RUN touch /config/app/audit.log && chown abc:abc /config/app/audit.log && chmod 644 /config/app/audit.log
