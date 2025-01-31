@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 
+# Debugging: show commands as they run
+set -x
+
 # 1) Make sure HOME points to the user’s config directory
 export HOME=/config
 export USER=abc
 
-sleep 15
+# 2) Set DISPLAY and possibly XAUTHORITY
+export DISPLAY=:0
+export XAUTHORITY=/config/.Xauthority
 
-# 2) Run xfconf-query as user "abc" (using su-exec if the container uses that)
-# exec s6-setuidgid abc xfconf-query -c xfwm4 -p /general/use_compositing -s true
+# Wait for xfwm4 (and the X server) to finish starting
+sleep 10
 
-xfconf-query -c xfwm4 -p /general/use_compositing -s true
+echo "Setting compositing to true"
 
+# 3) Run xfconf-query as user "abc"
+exec s6-setuidgid abc xfconf-query -c xfwm4 -p /general/use_compositing -s true
 # exec s6-setuidgid abc xfwm4 --replace &g
+
+echo "Set compositing to true"

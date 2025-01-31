@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Enable xfwm4 Compositing
+Exec=xfconf-query -c xfwm4 -p /general/use_compositing -s true
+Terminal=false
+NoDisplay=true

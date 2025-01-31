@@ -96,6 +96,8 @@ COPY --chown=abc:abc ./theme/xsettings.xml /config/.config/xfce4/xfconf/xfce-per
 # Copy in xfwm4.xml to set the window manager theme and titlebar font
 COPY --chown=abc:abc ./theme/xfwm4.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
 
+COPY --chown=abc:abc ./theme/enable-compositing.desktop /config/.config/autostart/enable-compositing.desktop
+
 # TODO: ?
 # VOLUME /config
 
@@ -193,6 +195,8 @@ ENV S6_RC_VERBOSE=1
 COPY xconf_run /etc/s6-overlay/s6-rc.d/xconf/up
 RUN echo 'oneshot' > /etc/s6-overlay/s6-rc.d/xconf/type
 RUN ln -s ../xconf /etc/s6-overlay/s6-rc.d/user/contents.d/xconf
+
+COPY enable-compositing.desktop /etc/xdg/autostart/enable-compositing.desktop
 
 
 # RUN touch /config/app/audit.log && chown abc:abc /config/app/audit.log && chmod 644 /config/app/audit.log
