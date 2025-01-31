@@ -48,6 +48,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     coreutils \
     glib-dev \
     libxml2-utils \
+    mesa-gl \
     redis
 
 # RUN echo $USER
@@ -70,6 +71,7 @@ RUN mkdir -p /config/.cache/fontconfig && \
 
 # Switch to user 'abc'
 USER abc
+RUN env
 
 ENV HOME=/config
 ENV XDG_CACHE_HOME=/config/.cache
@@ -78,11 +80,12 @@ ENV FONTCONFIG_FILE=/etc/fonts/fonts.conf
 ENV FONTCONFIG_CACHE=$XDG_CACHE_HOME/fontconfig
 ENV MOZ_HEADLESS=1
 ENV DISPLAY=
+ENV MOZ_DISABLE_GLX_TEST=1
 
 RUN firefox --version
 
 RUN firefox -CreateProfile "default /config/.mozilla/firefox/default" && \
-    firefox --headless --profile /config/.mozilla/firefox/default & \
+    firefox --headless --profile /config/.mozilla/firefox/default \
     sleep 5 && \
     killall firefox
 
