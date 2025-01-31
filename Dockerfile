@@ -96,7 +96,7 @@ COPY --chown=abc:abc ./theme/xsettings.xml /config/.config/xfce4/xfconf/xfce-per
 # Copy in xfwm4.xml to set the window manager theme and titlebar font
 COPY --chown=abc:abc ./theme/xfwm4.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
 
-COPY --chown=abc:abc ./theme/enable-compositing.desktop /config/.config/autostart/enable-compositing.desktop
+# COPY --chown=abc:abc ./theme/enable-compositing.desktop /config/.config/autostart/enable-compositing.desktop
 
 # TODO: ?
 # VOLUME /config
