@@ -87,14 +87,14 @@ RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
 
 RUN chown -R abc:abc /config/.themes /config/.icons /config/.local /config/.wallpapers
 
-# Copy (and overwrite) the Xfce desktop XML (wallpaper settings)
-COPY --chown=abc:abc ./theme/xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+# # Copy (and overwrite) the Xfce desktop XML (wallpaper settings)
+# COPY --chown=abc:abc ./theme/xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
 
-# Copy in xsettings.xml to set GTK theme, icon theme, cursor, and fonts
-COPY --chown=abc:abc ./theme/xsettings.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
+# # Copy in xsettings.xml to set GTK theme, icon theme, cursor, and fonts
+# COPY --chown=abc:abc ./theme/xsettings.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
 
-# Copy in xfwm4.xml to set the window manager theme and titlebar font
-COPY --chown=abc:abc ./theme/xfwm4.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
+# # Copy in xfwm4.xml to set the window manager theme and titlebar font
+# COPY --chown=abc:abc ./theme/xfwm4.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
 
 # TODO: ?
 # VOLUME /config
