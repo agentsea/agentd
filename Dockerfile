@@ -88,7 +88,7 @@ ENV MOZ_DISABLE_GLX_TEST=1
 RUN firefox --version
 
 RUN firefox -CreateProfile "default /config/.mozilla/firefox/default" && \
-    firefox --headless --profile /config/.mozilla/firefox/default \
+    firefox --headless --profile /config/.mozilla/firefox/default & \
     sleep 5 && \
     killall firefox
 
