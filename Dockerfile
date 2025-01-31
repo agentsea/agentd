@@ -76,30 +76,29 @@ RUN chown -R abc:abc /config/.config/glib-2.0
 USER abc
 RUN env
 
-ENV HOME=/config
-ENV XDG_CACHE_HOME=/config/.cache
-ENV FONTCONFIG_PATH=/etc/fonts
-ENV FONTCONFIG_FILE=/etc/fonts/fonts.conf
-ENV FONTCONFIG_CACHE=$XDG_CACHE_HOME/fontconfig
-ENV MOZ_HEADLESS=1
-ENV MOZ_DISABLE_GLX_TEST=1
-ENV MOZ_HEADLESS=1
-ENV MOZ_DISABLE_GLX_TEST=1
-ENV MOZ_DISABLE_RDD_SANDBOX=1
-ENV MOZ_DISABLE_GPU_SANDBOX=1
-ENV MOZ_X11=0
-ENV DISPLAY=
+ENV HOME=/config \
+    XDG_RUNTIME_DIR=/tmp/runtime-abc \
+    XDG_CACHE_HOME=/config/.cache \
+    FONTCONFIG_PATH=/etc/fonts \
+    FONTCONFIG_FILE=/etc/fonts/fonts.conf \
+    FONTCONFIG_CACHE=/config/.cache/fontconfig \
+    MOZ_HEADLESS=1 \
+    MOZ_DISABLE_GLX_TEST=1 \
+    MOZ_DISABLE_RDD_SANDBOX=1 \
+    MOZ_DISABLE_GPU_SANDBOX=1 \
+    MOZ_X11=1 \
+    DISPLAY=:99 \
+    DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus.socket
 
-RUN firefox --version
+# Initialize Firefox profile
+RUN mkdir -p /tmp/runtime-abc && \
+    chmod 700 /tmp/runtime-abc && \
+    dbus-daemon --session --print-address=3 --fork && \
+    firefox --headless --createprofile "default /config/.mozilla/firefox/default" && \
+    timeout 30s firefox --headless --no-remote --profile /config/.mozilla/firefox/default about:blank || true
 
-RUN env \
- && env -u DISPLAY \
-   firefox -CreateProfile "default /config/.mozilla/firefox/default" \
- && env -u DISPLAY \
-   firefox --headless --no-remote \
-           --profile /config/.mozilla/firefox/default \
-           about:blank & \
-   sleep 5
+# Cleanup
+RUN rm -rf /config/.cache/* /config/.mozilla/firefox/default/lock /config/.mozilla/firefox/default/.parentlock
 
 
 # Install WhiteSur Themes and Wallpapers
