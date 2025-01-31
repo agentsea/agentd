@@ -257,5 +257,5 @@ RUN echo 'abc' > /etc/s6-overlay/s6-rc.d/redis/user
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
 
-Expose Redis Port, we don't need to because it should only be used internally but this is there just incase
+# Expose Redis Port, we don't need to because it should only be used internally but this is there just incase
 EXPOSE 6379
