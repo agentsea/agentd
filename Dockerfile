@@ -257,6 +257,7 @@ RUN echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/user
 RUN echo 'abc' > /etc/s6-overlay/s6-rc.d/redis/user
 
 ENV TASKARA_DEBUG=true
+ENV AGENTSEA_HOME=/config/.agentsea
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
