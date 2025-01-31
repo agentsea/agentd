@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# 1) Make sure HOME points to the user’s config directory
+export HOME=/config
+export USER=abc
+
+# 2) Run xfconf-query as user "abc" (using su-exec if the container uses that)
+exec s6-setuidgid abc xfconf-query -c xfwm4 -p /general/use_compositing -s true
