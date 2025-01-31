@@ -82,16 +82,25 @@ ENV FONTCONFIG_PATH=/etc/fonts
 ENV FONTCONFIG_FILE=/etc/fonts/fonts.conf
 ENV FONTCONFIG_CACHE=$XDG_CACHE_HOME/fontconfig
 ENV MOZ_HEADLESS=1
-ENV DISPLAY=
 ENV MOZ_DISABLE_GLX_TEST=1
+ENV MOZ_HEADLESS=1
+ENV MOZ_DISABLE_GLX_TEST=1
+ENV MOZ_DISABLE_RDD_SANDBOX=1
+ENV MOZ_DISABLE_GPU_SANDBOX=1
+ENV MOZ_X11=0
+ENV DISPLAY=
 
 RUN firefox --version
 
-RUN env -u DISPLAY \
-    firefox -CreateProfile "default /config/.mozilla/firefox/default" && \
-    env -u DISPLAY \
-    firefox --headless --profile /config/.mozilla/firefox/default & \
-    sleep 5 && killall firefox
+RUN env \
+ && env -u DISPLAY \
+   firefox -CreateProfile "default /config/.mozilla/firefox/default" \
+ && env -u DISPLAY \
+   firefox --headless --no-remote \
+           --profile /config/.mozilla/firefox/default \
+           about:blank & \
+   sleep 5 && \
+   killall firefox
 
 
 # Install WhiteSur Themes and Wallpapers
