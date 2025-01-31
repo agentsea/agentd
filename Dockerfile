@@ -49,6 +49,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     glib-dev \
     libxml2-utils \
     mesa-gl \
+    xvfb \
     redis
 
 # RUN echo $USER
@@ -76,6 +77,7 @@ RUN chown -R abc:abc /config/.config/glib-2.0
 USER abc
 RUN env
 
+# Set environment variables
 ENV HOME=/config \
     XDG_RUNTIME_DIR=/tmp/runtime-abc \
     XDG_CACHE_HOME=/config/.cache \
@@ -86,15 +88,16 @@ ENV HOME=/config \
     MOZ_DISABLE_GLX_TEST=1 \
     MOZ_DISABLE_RDD_SANDBOX=1 \
     MOZ_DISABLE_GPU_SANDBOX=1 \
-    MOZ_X11=1 \
-    DISPLAY=:99 \
-    DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus.socket
+    DISPLAY=:99
 
-# Initialize Firefox profile
+# Initialize D-Bus and Firefox
 RUN mkdir -p /tmp/runtime-abc && \
     chmod 700 /tmp/runtime-abc && \
-    dbus-daemon --session --print-address=3 --fork && \
-    firefox --headless --createprofile "default /config/.mozilla/firefox/default" && \
+    dbus-daemon --session --address=unix:path=/tmp/dbus.sock --nofork --print-address & \
+    export DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus.sock && \
+    Xvfb :99 -screen 0 1024x768x24 & \
+    sleep 2 && \
+    firefox --createprofile "default /config/.mozilla/firefox/default" && \
     timeout 30s firefox --headless --no-remote --profile /config/.mozilla/firefox/default about:blank || true
 
 # Cleanup
