@@ -99,8 +99,7 @@ RUN env \
    firefox --headless --no-remote \
            --profile /config/.mozilla/firefox/default \
            about:blank & \
-   sleep 5 && \
-   killall firefox
+   sleep 5
 
 
 # Install WhiteSur Themes and Wallpapers
