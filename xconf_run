@@ -4,7 +4,9 @@
 export HOME=/config
 export USER=abc
 
+sleep 15
+
 # 2) Run xfconf-query as user "abc" (using su-exec if the container uses that)
 exec s6-setuidgid abc xfconf-query -c xfwm4 -p /general/use_compositing -s true
 
-exec s6-setuidgid abc xfwm4 --replace &
+# exec s6-setuidgid abc xfwm4 --replace &
