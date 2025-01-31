@@ -62,13 +62,13 @@
     <property name="theme" type="string" value="WhiteSur-Light"/>
     <property name="tile_on_move" type="bool" value="true"/>
     <property name="title_alignment" type="string" value="center"/>
-    <property name="title_font" type="string" value="Ubuntu 11"/>
+    <property name="title_font" type="string" value="Sans Bold 9"/>
     <property name="title_horizontal_offset" type="int" value="0"/>
-    <property name="title_vertical_offset_active" type="int" value="0"/>
-    <property name="title_vertical_offset_inactive" type="int" value="0"/>
     <property name="titleless_maximize" type="bool" value="false"/>
     <property name="title_shadow_active" type="string" value="false"/>
     <property name="title_shadow_inactive" type="string" value="false"/>
+    <property name="title_vertical_offset_active" type="int" value="0"/>
+    <property name="title_vertical_offset_inactive" type="int" value="0"/>
     <property name="toggle_workspaces" type="bool" value="false"/>
     <property name="unredirect_overlays" type="bool" value="true"/>
     <property name="urgent_blink" type="bool" value="false"/>

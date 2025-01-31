@@ -88,21 +88,21 @@ RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
 RUN chown -R abc:abc /config/.themes /config/.icons /config/.local /config/.wallpapers
 
 # Copy (and overwrite) the Xfce desktop XML (wallpaper settings)
-# COPY --chown=abc:abc ./theme/xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+COPY --chown=abc:abc ./theme/xfce4-desktop.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
 
-# # Copy in xsettings.xml to set GTK theme, icon theme, cursor, and fonts
-# COPY --chown=abc:abc ./theme/xsettings.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
+# Copy in xsettings.xml to set GTK theme, icon theme, cursor, and fonts
+COPY --chown=abc:abc ./theme/xsettings.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
 
-# # Copy in xfwm4.xml to set the window manager theme and titlebar font
-# COPY --chown=abc:abc ./theme/xfwm4.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
+# Copy in xfwm4.xml to set the window manager theme and titlebar font
+COPY --chown=abc:abc ./theme/xfwm4.xml /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml
 
 # TODO: ?
 # VOLUME /config
 
 # Set the GTK and Icon theme for user 'abc'
-RUN echo '[Settings]' > /config/.config/gtk-3.0/settings.ini && \
-    echo 'gtk-theme-name=WhiteSur-Light' >> /config/.config/gtk-3.0/settings.ini && \
-    echo 'gtk-icon-theme-name=WhiteSur' >> /config/.config/gtk-3.0/settings.ini
+# RUN echo '[Settings]' > /config/.config/gtk-3.0/settings.ini && \
+#     echo 'gtk-theme-name=WhiteSur-Light' >> /config/.config/gtk-3.0/settings.ini && \
+#     echo 'gtk-icon-theme-name=WhiteSur' >> /config/.config/gtk-3.0/settings.ini
 
 # # Set environment variables for Python installation
 # ENV PYTHON_VERSION=3.12.1
