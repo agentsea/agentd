@@ -69,12 +69,12 @@ RUN mkdir -p /config/.cache/fontconfig && \
     # Pre-generate font caches (optional but helps)
     fc-cache -fv
 
+RUN mkdir -p /config/.config/glib-2.0
+RUN chown -R abc:abc /config/.config/glib-2.0
+
 # Switch to user 'abc'
 USER abc
 RUN env
-
-RUN mkdir -p /config/.config/glib-2.0
-RUN chown -R abc:abc /config/.config/glib-2.0
 
 ENV HOME=/config
 ENV XDG_CACHE_HOME=/config/.cache
