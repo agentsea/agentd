@@ -87,10 +87,11 @@ ENV MOZ_DISABLE_GLX_TEST=1
 
 RUN firefox --version
 
-RUN firefox -CreateProfile "default /config/.mozilla/firefox/default" && \
+RUN env -u DISPLAY \
+    firefox -CreateProfile "default /config/.mozilla/firefox/default" && \
+    env -u DISPLAY \
     firefox --headless --profile /config/.mozilla/firefox/default & \
-    sleep 5 && \
-    killall firefox
+    sleep 5 && killall firefox
 
 
 # Install WhiteSur Themes and Wallpapers
