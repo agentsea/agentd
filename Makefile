@@ -70,7 +70,7 @@ run-latest:
 		-p 3001:3001 \
 		-p 8000:8000 \
 		--restart unless-stopped \
-		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:865413b
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:f000d14
 
 # us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest
 
