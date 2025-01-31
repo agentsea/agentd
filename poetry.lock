@@ -3649,13 +3649,13 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 
 [[package]]
 name = "taskara"
-version = "0.1.216"
+version = "0.1.217"
 description = "Task management for AI agents"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "taskara-0.1.216-py3-none-any.whl", hash = "sha256:92762975c5e2a5d63a66a90890a19f75aee70b5cf5db16f7c806ffd7369b3f4d"},
-    {file = "taskara-0.1.216.tar.gz", hash = "sha256:f68a1565d41d5cdc99825f1f0b100a4d42175f373567a3611ef6573160826aa6"},
+    {file = "taskara-0.1.217-py3-none-any.whl", hash = "sha256:09ea5b12c6c63c349ce1be377b1d3a2872f554fc1cce2e9088bdf435b0818c6c"},
+    {file = "taskara-0.1.217.tar.gz", hash = "sha256:3321f6b629dae9a6e12de57e4aa02ee363091f4220ea6aa2f869f3662e1c1139"},
 ]
 
 [package.dependencies]
@@ -4397,4 +4397,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "d7519854027f458e4d550e50c59013531000f4e0f8433fe0491e3e867696b2a2"
+content-hash = "2fa9dfc96368c25d67e804b82fd39631e2175a654301fb825d2de156d130ec74"
