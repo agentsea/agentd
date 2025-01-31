@@ -190,7 +190,7 @@ ENV S6_VERBOSITY=2
 ENV S6_KEEP_ENV=1
 ENV S6_RC_VERBOSE=1
 
-COPY xconf_run /etc/s6-overlay/s6-rc.d/xconf/run
+COPY xconf_run /etc/s6-overlay/s6-rc.d/xconf/up
 RUN echo 'oneshot' > /etc/s6-overlay/s6-rc.d/xconf/type
 
 
