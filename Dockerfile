@@ -50,6 +50,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     libxml2-utils \
     mesa-gl \
     xvfb \
+    mesa-dri-gallium \
     redis
 
 # RUN echo $USER
@@ -63,7 +64,9 @@ RUN which readlink && readlink --version
 
 # Set up X11 directories as root
 RUN mkdir -p /tmp/.X11-unix && \
-    chmod 1777 /tmp/.X11-unix
+    chmod 1777 /tmp/.X11-unix && \
+    mkdir -p /var/lib/dbus && \
+    dbus-uuidgen > /var/lib/dbus/machine-id
 
 RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0 && \
     chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0
@@ -97,15 +100,19 @@ ENV HOME=/config \
     MOZ_DISABLE_GLX_TEST=1 \
     MOZ_DISABLE_RDD_SANDBOX=1 \
     MOZ_DISABLE_GPU_SANDBOX=1 \
+    MOZ_X11_EGL=1 \
+    LIBGL_ALWAYS_SOFTWARE=1 \
     DISPLAY=:99 \
     DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus.sock
 
+# Initialize D-Bus and X server
 RUN dbus-daemon --session --address=unix:path=/tmp/dbus.sock --print-address --nopidfile && \
-    Xvfb :99 -screen 0 1024x768x24 & \
-    sleep 5 && \
-    firefox --createprofile "default /config/.mozilla/firefox/default"
+    (Xvfb :99 -screen 0 1024x768x24 -nolisten tcp -nolisten unix & sleep 2 && \
+    xauth add :99 MIT-MAGIC-COOKIE-1 $(mcookie))
 
-RUN timeout 30s firefox --headless --no-remote --profile /config/.mozilla/firefox/default about:blank || true
+# Initialize Firefox profile
+RUN firefox --createprofile "default /config/.mozilla/firefox/default" && \
+    timeout 30s firefox --headless --no-remote --profile /config/.mozilla/firefox/default about:blank || true
 
 # Cleanup
 RUN rm -rf /config/.cache/* /config/.mozilla/firefox/default/lock /config/.mozilla/firefox/default/.parentlock
