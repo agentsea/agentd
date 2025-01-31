@@ -49,8 +49,6 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repo
     glib-dev \
     libxml2-utils \
     mesa-gl \
-    xvfb \
-    mesa-dri-gallium \
     redis
 
 # RUN echo $USER
@@ -62,25 +60,8 @@ RUN echo $SHELL
 
 RUN which readlink && readlink --version
 
-# Set up X11 directories as root
-RUN mkdir -p /tmp/.X11-unix && \
-    chmod 1777 /tmp/.X11-unix && \
-    mkdir -p /var/lib/dbus && \
-    dbus-uuidgen > /var/lib/dbus/machine-id
-
 RUN mkdir -p /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0 && \
     chown -R abc:abc /config/.themes /config/.icons /config/.wallpapers /config/.local /config/.config/gtk-3.0
-
-# Set up runtime directory
-RUN mkdir -p /tmp/runtime-abc && \
-    chown abc:abc /tmp/runtime-abc && \
-    chmod 700 /tmp/runtime-abc
-
-
-RUN mkdir -p /config/.cache/fontconfig && \
-    chown -R abc:abc /config/.cache && \
-    # Pre-generate font caches (optional but helps)
-    fc-cache -fv
 
 RUN mkdir -p /config/.config/glib-2.0
 RUN chown -R abc:abc /config/.config/glib-2.0
@@ -89,40 +70,12 @@ RUN chown -R abc:abc /config/.config/glib-2.0
 USER abc
 RUN env
 
-# Set environment variables
-ENV HOME=/config \
-    XDG_RUNTIME_DIR=/tmp/runtime-abc \
-    XDG_CACHE_HOME=/config/.cache \
-    FONTCONFIG_PATH=/etc/fonts \
-    FONTCONFIG_FILE=/etc/fonts/fonts.conf \
-    FONTCONFIG_CACHE=/config/.cache/fontconfig \
-    MOZ_HEADLESS=1 \
-    MOZ_DISABLE_GLX_TEST=1 \
-    MOZ_DISABLE_RDD_SANDBOX=1 \
-    MOZ_DISABLE_GPU_SANDBOX=1 \
-    MOZ_X11_EGL=1 \
-    LIBGL_ALWAYS_SOFTWARE=1 \
-    DISPLAY=:99 \
-    DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus.sock
-
-# Initialize Firefox profile
-RUN set -e; \
-    sh -c "dbus-daemon --session --address=unix:path=/tmp/dbus.sock --print-address --nopidfile & \
-    Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render & \
-    sleep 2 && \
-    firefox --createprofile 'default /config/.mozilla/firefox/default' && \
-    ( timeout 30s firefox --headless --no-remote --profile /config/.mozilla/firefox/default about:blank || true ) && \
-    pkill -f Xvfb; \
-    pkill -f dbus-daemon"; \
-    rm -rf /config/.cache/* /config/.mozilla/firefox/default/lock /config/.mozilla/firefox/default/.parentlock
-
-
 # Install WhiteSur Themes and Wallpapers
 RUN export HOME=/config USER=abc LOGNAME=abc SHELL=/bin/bash && \
     \
     # Install WhiteSur GTK Theme
     git clone https://github.com/vinceliuice/WhiteSur-gtk-theme.git --depth=1 /config/.themes/WhiteSur-gtk-theme && \
-    /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/install.sh -d /config/.themes && /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/tweaks.sh -f -r && \
+    /bin/bash -ex /config/.themes/WhiteSur-gtk-theme/install.sh -d /config/.themes && \
     rm -rf /config/.themes/WhiteSur-gtk-theme && \
     \
     # Install WhiteSur Icon Theme
