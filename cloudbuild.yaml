@@ -34,7 +34,7 @@ steps:
 
   # Build and push for amd64 with caching
   - name: "gcr.io/cloud-builders/docker"
-    id: Build and Push
+    id: Build and Push Loaded
     entrypoint: "bash"
     args:
       - "-c"
