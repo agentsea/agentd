@@ -32,6 +32,23 @@ steps:
           --push \
           .
 
+  # Build and push for amd64 with caching
+  - name: "gcr.io/cloud-builders/docker"
+    id: Build and Push
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker buildx build \
+          --platform linux/arm64,linux/amd64 \
+          -f Dockerfile.loaded \
+          -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:${SHORT_SHA} \
+          --build-arg PYTHON_VERSION=3.12.0 \
+          --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:buildcache \
+          --cache-to type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:buildcache,mode=max \
+          --push \
+          .
+
   # - name: "gcr.io/cloud-builders/docker"
   #   id: Build and Push AMD
   #   entrypoint: "bash"

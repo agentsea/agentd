@@ -71,7 +71,7 @@ run-latest-auth:
 		-p 8000:8000 \
 		--restart unless-stopped \
 		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:efc7aed
-d
+
 .PHONY: run-latest
 run-latest:
 	docker run -d \
@@ -83,7 +83,7 @@ run-latest:
 		-p 3001:3001 \
 		-p 8000:8000 \
 		--restart unless-stopped \
-		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:efc7aed
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:eef46c4
 
 
 # us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest
