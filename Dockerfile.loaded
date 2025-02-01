@@ -262,22 +262,15 @@ ENV AGENTSEA_HOME=/config/.agentsea
 RUN apk add --no-cache \
     libreoffice \
     gimp \
-    firefox \
     inkscape \
     vlc \
     thunderbird \
     audacity \
     filezilla \
-    chromium-bsu \
     evolution \
-    kazam \
-    steam \
     kodi \
-    openshot \
     handbrake \
-    soundconverter \
-    openmpi-dev \
-    pkgconfig
+    openmpi-dev
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
