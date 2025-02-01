@@ -78,7 +78,7 @@ steps:
 
   # Verify the multi-arch image
   - name: "gcr.io/cloud-builders/docker"
-    id: Verify Images
+    id: Verify Images Loaded
     entrypoint: "bash"
     args:
       - "-c"
