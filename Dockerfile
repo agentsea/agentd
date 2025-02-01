@@ -256,14 +256,10 @@ RUN echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/user
 # Set the user for Redis service
 RUN echo 'abc' > /etc/s6-overlay/s6-rc.d/redis/user
 
-ENV TASKARA_DEBUG=true
 ENV AGENTSEA_HOME=/config/.agentsea
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
-
-RUN echo $HOME
-RUN chown -R abc:abc /config/.agentsea
 
 # Expose Redis Port, we don't need to because it should only be used internally but this is there just incase
 # EXPOSE 6379

@@ -55,8 +55,8 @@ push-latest:
 exp-deps:
 	poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-.PHONY: run-latest
-run-latest:
+.PHONY: run-latest-auth
+run-latest-auth:
 	docker run -d \
 		--platform linux/arm64 \
 		--name=webtop \
@@ -70,7 +70,21 @@ run-latest:
 		-p 3001:3001 \
 		-p 8000:8000 \
 		--restart unless-stopped \
-		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:13252b5
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:efc7aed
+d
+.PHONY: run-latest
+run-latest:
+	docker run -d \
+		--platform linux/arm64 \
+		--name=webtop \
+		--security-opt seccomp=unconfined \
+		-e TZ=Etc/UTC \
+		-p 3000:3000 \
+		-p 3001:3001 \
+		-p 8000:8000 \
+		--restart unless-stopped \
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:efc7aed
+
 
 # us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest
 
@@ -81,8 +95,6 @@ dev:
 		--platform linux/arm64 \
 		--name=webtop \
 		--security-opt seccomp=unconfined \
-		-e PUID=1000 \
-		-e PGID=1000 \
 		-e TZ=Etc/UTC \
 		-p 3000:3000 \
 		-p 3001:3001 \
