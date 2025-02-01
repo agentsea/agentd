@@ -76,6 +76,18 @@ steps:
           docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest
         fi
 
+  # Verify the multi-arch image
+  - name: "gcr.io/cloud-builders/docker"
+    id: Verify Images
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:${SHORT_SHA}
+        if [ "$BRANCH_NAME" == "main" ]; then
+          docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:latest
+        fi
+
 timeout: "3600s"
 
 options:
