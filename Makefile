@@ -79,12 +79,11 @@ run-latest:
 		--name=webtop \
 		--security-opt seccomp=unconfined \
 		-e TZ=Etc/UTC \
-		-e CUSTOM_RESOLUTION=1920x1080 \
 		-p 3000:3000 \
 		-p 3001:3001 \
 		-p 8000:8000 \
 		--restart unless-stopped \
-		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop-loaded:d287712
+		us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:773b6aa
 # us-docker.pkg.dev/agentsea-dev/agentd/desktop-webtop:latest
 
 
