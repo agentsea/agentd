@@ -353,6 +353,8 @@ if __name__ == "__main__":
 
     def _record_mouse_move_action(self, x, y, end_screenshot_path=None):
         """Records the mouse movement action."""
+
+        print("_record_mouse_move_action starting", flush=True)
         if not self.mouse_moving:
             return  # Already recorded or not moving
 
@@ -365,21 +367,39 @@ if __name__ == "__main__":
         # Use the most recent valid coordinates
         final_x, final_y = x, y
         if self.movement_buffer:
+            print("_record_mouse_move_action setting movement buffer", flush=True)
             final_x, final_y, _ = self.movement_buffer[-1]
+
+        # Ensure start state has two images
+        print("_record_mouse_move_action checking start state images", flush=True)
+        if self.mouse_move_start_state and len(self.mouse_move_start_state.images) < 2:
+            # Get an additional screenshot to have two before images
+            print("_record_mouse_move_action getting start state screenshots", flush=True)
+            additional_screenshots = self._get_latest_screenshots(2)
+            if additional_screenshots:
+                self.mouse_move_start_state.images.insert(
+                    0, self.encode_image_to_base64(additional_screenshots[0])
+                )
+                print("_record_mouse_move_action getting start state screenshots completed", flush=True)
 
         # Use the provided end screenshot, or take new ones
         if end_screenshot_path is None:
+            print("_record_mouse_move_action taking new end screenshots", flush=True)
             # Take two screenshots after movement
             end_screenshots = []
             end_screenshots.append(self.take_screenshot("mouse_move_end"))
             time.sleep(0.05)
             end_screenshots.append(self.take_screenshot("mouse_move_end"))
+            print("_record_mouse_move_action taking new end screenshots completed", flush=True)
         else:
             # Ensure we have two end screenshots
+            print("_record_mouse_move_action taking additional end screenshot", flush=True)
             additional_screenshot = self.take_screenshot("mouse_move_end")
             end_screenshots = [end_screenshot_path, additional_screenshot]
+            print("_record_mouse_move_action taking additional end screenshot completed", flush=True)
 
         # Prepare end state
+        print("_record_mouse_move_action setting end state", flush=True)
         end_state = EnvState(
             images=[
                 self.encode_image_to_base64(screenshot)
@@ -388,15 +408,7 @@ if __name__ == "__main__":
             coordinates=(int(x), int(y)),
         )
 
-        # Ensure start state has two images
-        if self.mouse_move_start_state and len(self.mouse_move_start_state.images) < 2:
-            # Get an additional screenshot to have two before images
-            additional_screenshots = self._get_latest_screenshots(2)
-            if additional_screenshots:
-                self.mouse_move_start_state.images.insert(
-                    0, self.encode_image_to_base64(additional_screenshots[0])
-                )
-
+        print("_record_mouse_move_action setting action", flush=True)
         # Create and record the action event
         action = V1Action(
             name="move_mouse",
@@ -405,7 +417,7 @@ if __name__ == "__main__":
                 "y": int(final_y),
             },
         )
-
+        print("_record_mouse_move_action setting action event", flush=True)
         action_event = ActionEvent(
             state=self.mouse_move_start_state,
             action=action,
@@ -417,6 +429,7 @@ if __name__ == "__main__":
         self.actions.append(action_event)
 
         # Send the action to Celery (or your task queue)
+        print("_record_mouse_move_action sending action to celery", flush=True)
         send_action.delay(
             self._task.id,
             self._task.auth_token,
@@ -426,10 +439,12 @@ if __name__ == "__main__":
         )
 
         # Reset movement tracking variables
+        print("_record_mouse_move_action Reset movement tracking variables", flush=True)
         self.mouse_move_start_pos = None
         self.mouse_move_start_state = None
         self.mouse_move_timer = None
         self.last_mouse_position = (x, y)
+        print("_record_mouse_move_action completed", flush=True)
 
     def on_move(self, x, y):
         """Handles mouse movement events."""
