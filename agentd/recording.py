@@ -429,14 +429,17 @@ if __name__ == "__main__":
         self.actions.append(action_event)
 
         # Send the action to Celery (or your task queue)
+        print("_record_mouse_move_action building action payload", flush=True)
+        action_payload = {
+            "task_id": self._task.id,
+            "auth_token": self._task.auth_token,
+            "owner_id": self._task.owner_id,
+            "task_data": self._task.to_v1().model_dump(),
+            "action_data": action_event.to_v1().model_dump(),
+        }
+        # Use dictionary unpacking to pass arguments
         print("_record_mouse_move_action sending action to celery", flush=True)
-        send_action.delay(
-            self._task.id,
-            self._task.auth_token,
-            self._task.owner_id,
-            self._task.to_v1().model_dump(),
-            action_event.to_v1().model_dump(),
-        )
+        send_action.delay(**action_payload)
 
         # Reset movement tracking variables
         print("_record_mouse_move_action Reset movement tracking variables", flush=True)
