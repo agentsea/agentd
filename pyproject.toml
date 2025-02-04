@@ -21,6 +21,7 @@ celery = "^5.4.0"
 celery-types = "^0.22.0"
 redis = "^5.2.1"
 taskara = "^0.1.217"
+skillpacks = "^0.1.113"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.0"

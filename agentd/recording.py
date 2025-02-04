@@ -598,7 +598,7 @@ if __name__ == "__main__":
                     # This is too slow, we need to duplicate one back
                     start_screenshot_path = self._get_latest_screenshots(1, 1)
                     start_screenshot_path.append(start_screenshot_path[0])
-
+                    print('creating state', flush=True)
                     state = EnvState(
                         images=[
                             self.encode_image_to_base64(screenShot)
@@ -609,6 +609,7 @@ if __name__ == "__main__":
                     end_screenshot_path = []
                     end_screenshot_path.append(self.take_screenshot())
                     end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
+                    print('creating end state', flush=True)
                     end_state = EnvState(
                         images=[
                             self.encode_image_to_base64(screenShot)
@@ -618,9 +619,11 @@ if __name__ == "__main__":
                     )
 
                     # Record special key event as an action
+                    print('creating action', flush=True)
                     action = V1Action(
                         name="press_key", parameters={"key": pyautogui_key}
                     )
+                    print('creating action event', flush=True)
                     action_event = ActionEvent(
                         state=state,
                         action=action,
