@@ -630,6 +630,7 @@ if __name__ == "__main__":
                     )
                     self.actions.append(action_event)
                     # kicking off celery job for sending the action
+                    print('on_press sending action', flush=True)
                     send_action.delay(
                         self._task.id,
                         self._task.auth_token,
@@ -771,6 +772,7 @@ if __name__ == "__main__":
                 )
                 self.actions.append(action_event)
                 # kicking off celery job
+                print('on_click sending action', flush=True)
                 send_action.delay(
                     self._task.id,
                     self._task.auth_token,
@@ -901,6 +903,7 @@ if __name__ == "__main__":
                 )
                 self.actions.append(action_event)
                 # kicking off celery job
+                print('send_final_action sending action', flush=True)
                 send_action.delay(
                     self._task.id,
                     self._task.auth_token,
@@ -968,7 +971,7 @@ if __name__ == "__main__":
             )
 
             self.actions.append(action_event)
-
+            print('_send_scroll_action sending action', flush=True)
             # Send the action to Celery
             send_action.delay(
                 self._task.id,
@@ -1030,6 +1033,7 @@ if __name__ == "__main__":
             )
             self.actions.append(action_event)
             # kicking off celery job
+            print('record_text_action sending action', flush=True)
             send_action.delay(
                 self._task.id,
                 self._task.auth_token,
