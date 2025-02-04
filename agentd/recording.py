@@ -630,13 +630,16 @@ if __name__ == "__main__":
                     )
                     self.actions.append(action_event)
                     # kicking off celery job for sending the action
-                    print('on_press sending action', flush=True)
+                    action_payload = {
+                        "task_id": self._task.id,
+                        "auth_token": self._task.auth_token,
+                        "owner_id": self._task.owner_id,
+                        "task_data": self._task.to_v1().model_dump(),
+                        "action_data": action_event.to_v1().model_dump(),
+                    }
+                    print(f'on_press sending action {action_payload}', flush=True)
                     send_action.delay(
-                        self._task.id,
-                        self._task.auth_token,
-                        self._task.owner_id,
-                        self._task.to_v1().model_dump(),
-                        action_event.to_v1().model_dump(),
+                        **action_payload
                     )
             print(
                 f"on_press releasing lock with key {key} count of actions {len(self.actions)}",
