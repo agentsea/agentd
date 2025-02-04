@@ -16,23 +16,6 @@ steps:
         docker buildx create --name mybuilder --use
         docker buildx inspect --bootstrap
 
-  # # Build and push for multiple architectures with caching
-  # - name: "gcr.io/cloud-builders/docker"
-  #   id: Build and Push
-  #   entrypoint: "bash"
-  #   args:
-  #     - "-c"
-  #     - |
-  #       docker buildx build \
-  #         --platform linux/amd64,linux/arm64 \
-  #         -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest \
-  #         -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
-  #         --build-arg PYTHON_VERSION=3.12.0 \
-  #         --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache \
-  #         --cache-to type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache,mode=max \
-  #         --push \
-  #         .
-
   # Build and push for amd64 with caching
   - name: "gcr.io/cloud-builders/docker"
     id: Build and Push
@@ -41,13 +24,45 @@ steps:
       - "-c"
       - |
         docker buildx build \
-          --platform linux/amd64 \
+          --platform linux/arm64,linux/amd64 \
           -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
           --build-arg PYTHON_VERSION=3.12.0 \
           --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache \
           --cache-to type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache,mode=max \
           --push \
           .
+
+  # Build and push for amd64 with caching
+  - name: "gcr.io/cloud-builders/docker"
+    id: Build and Push Loaded
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker buildx build \
+          --platform linux/arm64,linux/amd64 \
+          -f Dockerfile.loaded \
+          -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:${SHORT_SHA} \
+          --build-arg PYTHON_VERSION=3.12.0 \
+          --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:buildcache \
+          --cache-to type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:buildcache,mode=max \
+          --push \
+          .
+
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: Build and Push AMD
+  #   entrypoint: "bash"
+  #   args:
+  #     - "-c"
+  #     - |
+  #       docker buildx build \
+  #         --platform linux/amd64 \
+  #         -t us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA} \
+  #         --build-arg PYTHON_VERSION=3.12.0 \
+  #         --cache-from type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache \
+  #         --cache-to type=registry,ref=us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:buildcache,mode=max \
+  #         --push \
+  #         .
 
   # Verify the multi-arch image
   - name: "gcr.io/cloud-builders/docker"
@@ -59,6 +74,18 @@ steps:
         docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:${SHORT_SHA}
         if [ "$BRANCH_NAME" == "main" ]; then
           docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop:latest
+        fi
+
+  # Verify the multi-arch image
+  - name: "gcr.io/cloud-builders/docker"
+    id: Verify Images Loaded
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:${SHORT_SHA}
+        if [ "$BRANCH_NAME" == "main" ]; then
+          docker buildx imagetools inspect us-docker.pkg.dev/$PROJECT_ID/agentd/desktop-webtop-loaded:latest
         fi
 
 timeout: "3600s"
