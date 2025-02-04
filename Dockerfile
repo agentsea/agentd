@@ -247,6 +247,8 @@ RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 RUN chown -R abc:abc /config/.agentsea/data
 
+COPY conf/kasm/run /etc/s6-overlay/s6-rc.d/svc-kasmvnc/run
+
 # Create the 'data' directory for the service and set the user
 # RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/data && \
 #     echo 'abc' > /etc/s6-overlay/s6-rc.d/uvicorn/data/user
