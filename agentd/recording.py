@@ -640,7 +640,7 @@ if __name__ == "__main__":
                         self._task.to_v1().model_dump(),
                         action_event.to_v1().model_dump(),
                     ]
-                    print(f'on_press sending action {action_payload}', flush=True)
+                    # print(f'on_press sending action {action_payload}', flush=True)
                     send_action.delay(
                         *action_payload
                     )
