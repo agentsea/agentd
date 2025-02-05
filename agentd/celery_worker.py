@@ -9,7 +9,7 @@ Task.__class_getitem__ = classmethod(lambda cls, *args, **kwargs: cls) # type: i
 
 
 # Create a new Celery application instance with the filesystem as the broker
-celery_app = Celery('send_actions', broker='redis://localhost:6379/0',  backend='redis://localhost:6379/0')
+celery_app = Celery('send_actions', broker='redis://localhost:6379/0',  backend='file:///config/app/celery')
 
 celery_app.conf.update(
     worker_concurrency=1,  # Set concurrency to 1 we need to either change the data model or enable object locking to do this.
