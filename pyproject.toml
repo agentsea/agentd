@@ -20,7 +20,7 @@ tiktoken = "0.7.0"
 celery = "^5.4.0"
 celery-types = "^0.22.0"
 redis = "^5.2.1"
-taskara = "^0.1.217"
+taskara = "^0.1.220"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.0"
