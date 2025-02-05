@@ -14,6 +14,7 @@ celery_app = Celery('send_actions', broker='redis://localhost:6379/0',  backend=
 celery_app.conf.update(
     worker_concurrency=1,  # Set concurrency to 1 we need to either change the data model or enable object locking to do this.
     task_serializer='json', # Specify the task serializer if needed
+    worker_max_memory_per_child=512000000
 )
 
 
