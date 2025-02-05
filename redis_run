@@ -10,4 +10,4 @@ env > /config/app/logs/redis_env.log
 LOG_LEVEL=${LOG_LEVEL:-debug}
 LOG_FILE=${LOG_FILE:-/config/app/logs/redis.log}
 
-exec redis-server --bind 0.0.0.0 --maxmemory ${MAXMEMORY:-256mb} --maxmemory-policy allkeys-lru --loglevel $LOG_LEVEL --logfile $LOG_FILE
+exec redis-server --bind 0.0.0.0 --maxmemory ${MAXMEMORY:-512mb} --maxmemory-policy allkeys-lru --loglevel $LOG_LEVEL --logfile $LOG_FILE
