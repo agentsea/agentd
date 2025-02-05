@@ -642,7 +642,11 @@ if __name__ == "__main__":
                     }
                     print(f'on_press sending action {action_payload}', flush=True)
                     send_action.delay(
-                        **action_payload
+                        self._task.id,
+                        self._task.auth_token,
+                        self._task.owner_id,
+                        self._task.to_v1().model_dump(),
+                        action_event.to_v1().model_dump(),
                     )
             print(
                 f"on_press releasing lock with key {key} count of actions {len(self.actions)}",
