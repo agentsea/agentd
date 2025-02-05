@@ -25,7 +25,7 @@ def send_action(taskID, auth_token, owner_id, v1Task: dict, v1actionEvent: dict)
     print(f"send_action: action {action.id} variable created in worker process")
     v1Task.pop("owner_id", None)
     v1Task.pop("auth_token", None)
-    task = App_task.from_v1_remote_actions(V1Task(**v1Task, owner_id=owner_id, auth_token=auth_token))
+    task = App_task.from_v1(V1Task(**v1Task, owner_id=owner_id, auth_token=auth_token))
     print(f"send_action: task {task.id} variable created in worker process")
     try:
         task.record_action_event(action)
