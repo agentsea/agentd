@@ -6,7 +6,10 @@ echo "Test log message from redis_run script" >&2
 # Log the environment variables
 env > /config/app/logs/redis_env.log
 
-# Set default log level and log file path
-LOG_LEVEL=${LOG_LEVEL:-debug}
-
-exec redis-server --bind 0.0.0.0 --maxmemory ${MAXMEMORY:-512mb} --maxmemory-policy allkeys-lru --loglevel $LOG_LEVEL
+# exec a shell to Run Redis and pipe to sed to hack a prefix
+exec sh -c "redis-server \
+  --bind 0.0.0.0 \
+  --maxmemory ${MAXMEMORY:-512mb} \
+  --maxmemory-policy allkeys-lru \
+  --loglevel ${LOG_LEVEL:-debug} \
+  2>&1 | sed 's/^/[redis] /'"
