@@ -236,15 +236,6 @@ RUN ln -s ../uvicorn /etc/s6-overlay/s6-rc.d/user/contents.d/uvicorn
 # Enable Redis service by creating a symlink in the 'user' bundle
 RUN ln -s ../redis /etc/s6-overlay/s6-rc.d/user/contents.d/redis
 
-# Set up logging for the service
-RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/log
-
-# make the log run script executable
-COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
-
-# make the log run script executable
-RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
-
 RUN chown -R abc:abc /config/.agentsea/data
 
 COPY conf/kasm/run /etc/s6-overlay/s6-rc.d/svc-kasmvnc/run
