@@ -62,7 +62,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 api_logger = logging.getLogger("api")
 
 current_user: str = getpass.getuser()
-api_logger.info("current user: ", current_user)
+api_logger.info(f"current user: {current_user}")
 
 active_session: Optional[RecordingSession] = None
 

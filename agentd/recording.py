@@ -517,7 +517,7 @@ if __name__ == "__main__":
             recording_logger.info(
                 f"on_press acquired lock with key {key} count of actions {len(self.actions)}"
             )
-            recording_logger.info("\npressed key: ", key)
+            recording_logger.info(f"\npressed key: {key}")
 
             if self.mouse_move_timer:
                 self.mouse_move_timer.cancel()
@@ -675,7 +675,7 @@ if __name__ == "__main__":
 
             # We replicate the screenshot beforw which mimics more of what the agent will see
             start_screenshot_path = self._get_latest_screenshots(1)
-            recording_logger.info("got screenshots: ", start_screenshot_path)
+            recording_logger.info(f"got screenshots: {start_screenshot_path}")
             start_screenshot_path.append(start_screenshot_path[0])
 
             # If there was mouse movement, record it with the current position
@@ -700,7 +700,7 @@ if __name__ == "__main__":
             self.last_click_time = current_time
             self.last_click_button = button
 
-            recording_logger.info("clicked button: ", x, y, button, pressed)
+            recording_logger.info(f"clicked button: {x}, {y}, {button}, {pressed}", )
 
             try:
                 if self.typing_in_progress:
