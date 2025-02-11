@@ -73,7 +73,7 @@ PYNPUT_TO_PYAUTOGUI: Dict[KeyCode, str] = {
     Key.menu: "apps",
     Key.num_lock: "numlock",
     Key.scroll_lock: "scrolllock",
-    Key.recording_logger.info_screen: "recording_logger.infoscreen",
+    Key.print_screen: "printscreen",
     Key.pause: "pause",
     # Function keys
     Key.f1: "f1",
