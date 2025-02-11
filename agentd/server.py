@@ -52,19 +52,21 @@ from .models import (
 )
 from .recording import RecordingSession, lock
 
+import logging
+import logging.config
+from .logging_config import LOGGING_CONFIG  # or wherever you store the config
+
+logging.config.dictConfig(LOGGING_CONFIG)
+
+# Create logger instances
+api_logger = logging.getLogger("api")
+
 current_user: str = getpass.getuser()
-print("current user: ", current_user)
+api_logger.info("current user: ", current_user)
 
 active_session: Optional[RecordingSession] = None
 
 app = FastAPI()
-
-logging.basicConfig(
-    filename="audit.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,7 +80,7 @@ app.add_middleware(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     # Log the request details
-    logging.info(f"Method: {request.method} Path: {request.url.path}")
+    api_logger.info(f"Method: {request.method} Path: {request.url.path}")
     response = await call_next(request)
     return response
 
@@ -154,11 +156,11 @@ async def open_url(request: OpenURLModel):
     try:
         firefox_pids = is_firefox_running()
         if firefox_pids:
-            print("Firefox is running. Restarting it...")
+            api_logger.info("Firefox is running. Restarting it...")
             gracefully_terminate_firefox(firefox_pids)
             time.sleep(5)
 
-        print("Starting Firefox...")
+        api_logger.info("Starting Firefox...")
         subprocess.Popen(
             [
                 "firefox",
@@ -170,7 +172,7 @@ async def open_url(request: OpenURLModel):
 
         while not is_firefox_window_open():
             time.sleep(1)
-            print("Waiting for the Firefox window to open...")
+            api_logger.info("Waiting for the Firefox window to open...")
 
         maximize_firefox_window()
 
@@ -360,7 +362,7 @@ async def exec_command(command: str = Body(..., embed=True)):
 @app.post("/v1/use_secret")
 async def use_secret(request: useSecretRequest):
     global active_session
-    print(f"using secret {request.name} and applying {request.field}")
+    api_logger.info(f"using secret {request.name} and applying {request.field}")
     try:
         # Get the secret
         url = f"{request.server_address}/v1/secrets/search"
@@ -369,14 +371,14 @@ async def use_secret(request: useSecretRequest):
         response = requests.post(url, json=json_data, headers=headers)
          # Check the response status
         if response.status_code != 200:
-            print(f"secret fetch failed, name: {request.name}, status_code: {response.status_code} detail: {response.text}")
+            api_logger.info(f"secret fetch failed, name: {request.name}, status_code: {response.status_code} detail: {response.text}")
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"Failed to fetch secret: {response.text}",
             )
         secrets = response.json()
         secret = secrets["secrets"][0]
-        print(f"secret fetched: {secret['name']}")
+        api_logger.info(f"secret fetched: {secret['name']}")
         
         try:
             #TODO will encrypt secret values in transit. Will want to use a private key in the system env to decrypt.
@@ -396,7 +398,7 @@ async def use_secret(request: useSecretRequest):
                 )
                 # time.sleep(random.uniform(request.min_interval, request.max_interval))
             pyperclip.copy(password) # TODO consider copy paste instead of writing
-            print("secret Text copied to clipboard.")
+            api_logger.info("secret Text copied to clipboard.")
             if active_session:
                 active_session.send_useSecret_action(secret_name=secret['name'], field=request.field)
 
@@ -409,7 +411,7 @@ async def use_secret(request: useSecretRequest):
 
 @app.post("/v1/get_secrets")
 async def get_secret(request: getSecretRequest):
-    print(f"geting secrets: {request.model_dump_json()}")
+    api_logger.info(f"geting secrets: {request.model_dump_json()}")
     try:
         # Get the secret
         url = f"{request.server_address}/v1/secrets"
@@ -431,7 +433,7 @@ async def get_secret(request: getSecretRequest):
                 detail=f"Error: {error_message}"
             )
         secrets = response.json()
-        print(f"in get secret response is: {secrets}")
+        api_logger.info(f"in get secret response is: {secrets}")
         result = [{"name": secret["name"], "fields": list(secret["value"].keys())} for secret in secrets["secrets"]]
         return result
 
@@ -520,7 +522,7 @@ async def stop_recording(request: StopRequest):
         if not active_session:
             raise HTTPException(status_code=404, detail="Session not found")
         active_session.stop(result=request.result, comment=request.comment )
-        print("Stopped recording session")
+        api_logger.info("Stopped recording session")
 
         active_session = None
     return

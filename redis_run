@@ -11,5 +11,5 @@ exec sh -c "redis-server \
   --bind 0.0.0.0 \
   --maxmemory ${MAXMEMORY:-512mb} \
   --maxmemory-policy allkeys-lru \
-  --loglevel ${LOG_LEVEL:-debug} \
+  --loglevel ${LOG_LEVEL:-notice} \
   2>&1 | sed 's/^/[redis] /'"
