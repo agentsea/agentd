@@ -196,9 +196,7 @@ ENV S6_RC_VERBOSE=1
 
 
 RUN touch /config/app/audit.log && chown abc:abc /config/app/audit.log && chmod 644 /config/app/audit.log
-RUN touch /config/app/logs/uvicorn_env.log && chown abc:abc /config/app/logs/uvicorn_env.log && chmod 644 /config/app/logs/uvicorn_env.log
 RUN touch /config/app/logs/redis_env.log && chown abc:abc /config/app/logs/redis_env.log && chmod 644 /config/app/logs/redis_env.log
-RUN touch /config/app/logs/redis.log && chown abc:abc /config/app/logs/redis.log && chmod 644 /config/app/logs/redis.log
 
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
 
@@ -235,15 +233,6 @@ RUN ln -s ../uvicorn /etc/s6-overlay/s6-rc.d/user/contents.d/uvicorn
 
 # Enable Redis service by creating a symlink in the 'user' bundle
 RUN ln -s ../redis /etc/s6-overlay/s6-rc.d/user/contents.d/redis
-
-# Set up logging for the service
-RUN mkdir -p /etc/s6-overlay/s6-rc.d/uvicorn/log
-
-# make the log run script executable
-COPY uvicorn_log_run /etc/s6-overlay/s6-rc.d/uvicorn/log/run
-
-# make the log run script executable
-RUN chmod +x /etc/s6-overlay/s6-rc.d/uvicorn/log/run
 
 RUN chown -R abc:abc /config/.agentsea/data
 

@@ -29,6 +29,14 @@ from .models import (
     Recording,
 )
 
+import logging
+import logging.config
+from .logging_config import LOGGING_CONFIG  # or wherever you store the config
+
+logging.config.dictConfig(LOGGING_CONFIG)
+
+recording_logger = logging.getLogger("recording")
+
 DESKTOP_TOOL_REF = V1ToolRef(
     module="agentdesk.device", type="Desktop", package="agentdesk"
 )
@@ -101,9 +109,8 @@ def wait_for_celery_tasks():
         list(chain(*active_tasks.values())) if active_tasks else None
     )  # merge all the arrays
     while active_tasks or reserved_tasks:
-        print(
-            f"waiting for celery worker to finish tasks... reserved_tasks: {len(reserved_tasks) if reserved_tasks else 0} active_tasks: {len(active_tasks) if active_tasks else 0}",
-            flush=True,
+        recording_logger.info(
+            f"waiting for celery worker to finish tasks... reserved_tasks: {len(reserved_tasks) if reserved_tasks else 0} active_tasks: {len(active_tasks) if active_tasks else 0}"
         )
         time.sleep(1)
         # no need for a sleep function as the inspect functions do take time
@@ -116,7 +123,7 @@ def wait_for_celery_tasks():
             list(chain(*active_tasks.values())) if active_tasks else None
         )  # merge all the arrays
 
-    print("celery worker completed all tasks", flush=True)
+    recording_logger.info("celery worker completed all tasks")
     return {"active_tasks": active_tasks, "reserved_tasks": reserved_tasks}
 
 
@@ -182,20 +189,15 @@ class RecordingSession:
         atexit.register(self.stop)
     
     def send_useSecret_action(self, secret_name, field):
-        print(f"send use secret action: {secret_name} with field {field} to celery", flush=True)
-        print(
-            f"send_useSecret_action waiting lock with name: {secret_name} count of actions {len(self.actions)}",
-            flush=True,
-        )
+        recording_logger.info(f"send use secret action: {secret_name} with field {field} to celery")
+        recording_logger.info(
+            f"send_useSecret_action waiting lock with name: {secret_name} count of actions {len(self.actions)}")
         with self.lock:
-            print(
-                f"send_useSecret_action acquired lock with name: {secret_name} count of actions {len(self.actions)}",
-                flush=True,
-            )
+            recording_logger.info(f"send_useSecret_action acquired lock with name: {secret_name} count of actions {len(self.actions)}")
 
             try:
                 if self.typing_in_progress:
-                    print("Finalizing text event due to use secret...", flush=True)
+                    recording_logger.info("Finalizing text event due to use secret...")
                     self.record_text_action()
 
                 x, y = pyautogui.position()
@@ -248,14 +250,11 @@ class RecordingSession:
                 )
 
             except Exception as e:
-                print(f"Error recording send_useSecret_action event: {e}", flush=True)
-            print(
-                f"send_useSecret_action releasing lock with name: {secret_name} count of actions {len(self.actions)}",
-                flush=True,
-            )
+                recording_logger.info(f"Error recording send_useSecret_action event: {e}")
+            recording_logger.info(f"send_useSecret_action releasing lock with name: {secret_name} count of actions {len(self.actions)}")
 
     def stop(self, result, comment):
-        print("send update_task to celery for finished", flush=True)
+        recording_logger.info("send update_task to celery for finished")
         self.send_final_action(result, comment)
         update_task.delay(
             self._task.id,
@@ -354,12 +353,12 @@ if __name__ == "__main__":
     def _record_mouse_move_action(self, x, y, end_screenshot_path=None):
         """Records the mouse movement action."""
 
-        print("_record_mouse_move_action starting", flush=True)
+        recording_logger.info("_record_mouse_move_action starting")
         if not self.mouse_moving:
             return  # Already recorded or not moving
 
         if not self.mouse_move_start_pos:
-            print("Warning: No start position for mouse movement", flush=True)
+            recording_logger.warning("Warning: No start position for mouse movement")
             return
 
         self.mouse_moving = False
@@ -367,39 +366,39 @@ if __name__ == "__main__":
         # Use the most recent valid coordinates
         final_x, final_y = x, y
         if self.movement_buffer:
-            print("_record_mouse_move_action setting movement buffer", flush=True)
+            recording_logger.info("_record_mouse_move_action setting movement buffer")
             final_x, final_y, _ = self.movement_buffer[-1]
 
         # Ensure start state has two images
-        print("_record_mouse_move_action checking start state images", flush=True)
+        recording_logger.info("_record_mouse_move_action checking start state images")
         if self.mouse_move_start_state and len(self.mouse_move_start_state.images) < 2:
             # Get an additional screenshot to have two before images
-            print("_record_mouse_move_action getting start state screenshots", flush=True)
+            recording_logger.info("_record_mouse_move_action getting start state screenshots")
             additional_screenshots = self._get_latest_screenshots(2)
             if additional_screenshots:
                 self.mouse_move_start_state.images.insert(
                     0, self.encode_image_to_base64(additional_screenshots[0])
                 )
-                print("_record_mouse_move_action getting start state screenshots completed", flush=True)
+                recording_logger.info("_record_mouse_move_action getting start state screenshots completed")
 
         # Use the provided end screenshot, or take new ones
         if end_screenshot_path is None:
-            print("_record_mouse_move_action taking new end screenshots", flush=True)
+            recording_logger.info("_record_mouse_move_action taking new end screenshots")
             # Take two screenshots after movement
             end_screenshots = []
             end_screenshots.append(self.take_screenshot("mouse_move_end"))
             time.sleep(0.05)
             end_screenshots.append(self.take_screenshot("mouse_move_end"))
-            print("_record_mouse_move_action taking new end screenshots completed", flush=True)
+            recording_logger.info("_record_mouse_move_action taking new end screenshots completed")
         else:
             # Ensure we have two end screenshots
-            print("_record_mouse_move_action taking additional end screenshot", flush=True)
+            recording_logger.info("_record_mouse_move_action taking additional end screenshot")
             additional_screenshot = self.take_screenshot("mouse_move_end")
             end_screenshots = [end_screenshot_path, additional_screenshot]
-            print("_record_mouse_move_action taking additional end screenshot completed", flush=True)
+            recording_logger.info("_record_mouse_move_action taking additional end screenshot completed")
 
         # Prepare end state
-        print("_record_mouse_move_action setting end state", flush=True)
+        recording_logger.info("_record_mouse_move_action setting end state")
         end_state = EnvState(
             images=[
                 self.encode_image_to_base64(screenshot)
@@ -408,7 +407,7 @@ if __name__ == "__main__":
             coordinates=(int(x), int(y)),
         )
 
-        print("_record_mouse_move_action setting action", flush=True)
+        recording_logger.info("_record_mouse_move_action setting action")
         # Create and record the action event
         action = V1Action(
             name="move_mouse",
@@ -417,7 +416,7 @@ if __name__ == "__main__":
                 "y": int(final_y),
             },
         )
-        print("_record_mouse_move_action setting action event", flush=True)
+        recording_logger.info("_record_mouse_move_action setting action event")
         action_event = ActionEvent(
             state=self.mouse_move_start_state,
             action=action,
@@ -429,7 +428,7 @@ if __name__ == "__main__":
         self.actions.append(action_event)
 
         # Send the action to Celery (or your task queue)
-        print("_record_mouse_move_action building action payload", flush=True)
+        recording_logger.info("_record_mouse_move_action building action payload")
         action_payload = [
             self._task.id,
             self._task.auth_token,
@@ -438,23 +437,23 @@ if __name__ == "__main__":
             action_event.to_v1().model_dump(),
         ]
         # Use dictionary unpacking to pass arguments
-        print("_record_mouse_move_action sending action to celery", flush=True)
+        recording_logger.info("_record_mouse_move_action sending action to celery")
         send_action.delay(*action_payload)
 
         # Reset movement tracking variables
-        print("_record_mouse_move_action Reset movement tracking variables", flush=True)
+        recording_logger.info("_record_mouse_move_action Reset movement tracking variables")
         self.mouse_move_start_pos = None
         self.mouse_move_start_state = None
         self.mouse_move_timer = None
         self.last_mouse_position = (x, y)
-        print("_record_mouse_move_action completed", flush=True)
+        recording_logger.info("_record_mouse_move_action completed")
 
     def on_move(self, x, y):
         """Handles mouse movement events."""
-        print(f"Mouse moved to ({x}, {y})", flush=True)
+        recording_logger.info(f"Mouse moved to ({x}, {y})")
         with self.lock:
             if self.typing_in_progress:
-                print("Finalizing text event due to mouse movement...", flush=True)
+                recording_logger.info("Finalizing text event due to mouse movement...")
                 self.record_text_action()
 
             current_time = time.time()
@@ -503,25 +502,22 @@ if __name__ == "__main__":
 
     def on_mouse_stop(self, x, y):
         """Called when the mouse stops moving."""
-        print(f"Mouse stopped at ({x}, {y})", flush=True)
+        recording_logger.info(f"Mouse stopped at ({x}, {y})")
         with self.lock:
             if not self.mouse_moving:
-                print("Mouse movement already recorded", flush=True)
+                recording_logger.info("Mouse movement already recorded")
                 return
             # Mouse movement has stopped
             self._record_mouse_move_action(x, y)
 
     def on_press(self, key: Key):
-        print(
-            f"on_press waiting for lock with key {key} count of actions {len(self.actions)}",
-            flush=True,
-        )
+        recording_logger.info(f"on_press waiting for lock with key {key} count of actions {len(self.actions)}")
+
         with self.lock:
-            print(
-                f"on_press acquired lock with key {key} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"on_press acquired lock with key {key} count of actions {len(self.actions)}"
             )
-            print("\npressed key: ", key, flush=True)
+            recording_logger.info(f"\npressed key: {key}")
 
             if self.mouse_move_timer:
                 self.mouse_move_timer.cancel()
@@ -530,7 +526,7 @@ if __name__ == "__main__":
             if self.mouse_moving:
                 # Get the latest two screenshots before the key press
                 key_start_screenshots = self._get_latest_screenshots(2)
-                print("Recording mouse movement before handling key press", flush=True)
+                recording_logger.info("Recording mouse movement before handling key press")
                 mouse_x, mouse_y = pyautogui.position()
                 end_screenshot = (
                     key_start_screenshots[-1] if key_start_screenshots else None
@@ -589,7 +585,7 @@ if __name__ == "__main__":
                 ]:
                     # If typing is in progress, record the text action first
                     if self.typing_in_progress:
-                        print("Finalizing text event due to special key...", flush=True)
+                        recording_logger.info("Finalizing text event due to special key...")
                         self.record_text_action()
 
                     x, y = pyautogui.position()
@@ -598,7 +594,7 @@ if __name__ == "__main__":
                     # This is too slow, we need to duplicate one back
                     start_screenshot_path = self._get_latest_screenshots(1, 1)
                     start_screenshot_path.append(start_screenshot_path[0])
-                    print('creating state', flush=True)
+                    recording_logger.info('creating state')
                     state = EnvState(
                         images=[
                             self.encode_image_to_base64(screenShot)
@@ -609,7 +605,7 @@ if __name__ == "__main__":
                     end_screenshot_path = []
                     end_screenshot_path.append(self.take_screenshot())
                     end_screenshot_path.append(self.take_screenshot("delayed_end_shot"))
-                    print('creating end state', flush=True)
+                    recording_logger.info('creating end state')
                     end_state = EnvState(
                         images=[
                             self.encode_image_to_base64(screenShot)
@@ -619,11 +615,11 @@ if __name__ == "__main__":
                     )
 
                     # Record special key event as an action
-                    print('creating action', flush=True)
+                    recording_logger.info('creating action')
                     action = V1Action(
                         name="press_key", parameters={"key": pyautogui_key}
                     )
-                    print('creating action event', flush=True)
+                    recording_logger.info('creating action event')
                     action_event = ActionEvent(
                         state=state,
                         action=action,
@@ -640,44 +636,38 @@ if __name__ == "__main__":
                         self._task.to_v1().model_dump(),
                         action_event.to_v1().model_dump(),
                     ]
-                    # print(f'on_press sending action {action_payload}', flush=True)
+                    # recording_logger.info(f'on_press sending action {action_payload}')
                     send_action.delay(
                         *action_payload
                     )
-            print(
-                f"on_press releasing lock with key {key} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"on_press releasing lock with key {key} count of actions {len(self.actions)}"
             )
 
     def on_release(self, key):
-        print(
-            f"on_release waiting lock with key {key} count of actions {len(self.actions)}",
-            flush=True,
+        recording_logger.info(
+            f"on_release waiting lock with key {key} count of actions {len(self.actions)}"            
         )
         with self.lock:
-            print(
-                f"on_release acquired lock with key {key} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"on_release acquired lock with key {key} count of actions {len(self.actions)}"                
             )
             if key in [Key.shift, Key.shift_r, Key.shift_l]:
                 self.shift_pressed = False
-            print(
-                f"on_release releasing lock with key {key} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"on_release releasing lock with key {key} count of actions {len(self.actions)}"                
             )
 
     def on_click(self, x, y, button, pressed):
         if not pressed:
-            print("skipping button up event", flush=True)
+            recording_logger.info("skipping button up event")
             return
-        print(
-            f"on_click waiting lock with x,y: {x}, {y} count of actions {len(self.actions)}",
-            flush=True,
+        recording_logger.info(
+            f"on_click waiting lock with x,y: {x}, {y} count of actions {len(self.actions)}"            
         )
         with self.lock:
-            print(
-                f"on_click acquired lock with x,y: {x}, {y} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"on_click acquired lock with x,y: {x}, {y} count of actions {len(self.actions)}"                
             )
             # Cancel any pending mouse movement recording
             if self.mouse_move_timer:
@@ -685,7 +675,7 @@ if __name__ == "__main__":
 
             # We replicate the screenshot beforw which mimics more of what the agent will see
             start_screenshot_path = self._get_latest_screenshots(1)
-            print("got screenshots: ", start_screenshot_path, flush=True)
+            recording_logger.info(f"got screenshots: {start_screenshot_path}")
             start_screenshot_path.append(start_screenshot_path[0])
 
             # If there was mouse movement, record it with the current position
@@ -710,15 +700,15 @@ if __name__ == "__main__":
             self.last_click_time = current_time
             self.last_click_button = button
 
-            print("clicked button: ", x, y, button, pressed, flush=True)
+            recording_logger.info(f"clicked button: {x}, {y}, {button}, {pressed}", )
 
             try:
                 if self.typing_in_progress:
-                    print("Finalizing text event due to click...", flush=True)
+                    recording_logger.info("Finalizing text event due to click...")
                     self.record_text_action()
 
                 if self.mouse_moving:
-                    print("Recording mouse movement before handling click", flush=True)
+                    recording_logger.info("Recording mouse movement before handling click")
                     # Use the last screenshot as the end screenshot for mouse movement
                     end_screenshot = (
                         start_screenshot_path[-1] if start_screenshot_path else None
@@ -757,7 +747,7 @@ if __name__ == "__main__":
                             "button": button._name_,
                         },
                     )
-                    print("Double-click detected", flush=True)
+                    recording_logger.info("Double-click detected")
                 else:
                     # Record regular click event as an action
                     action = V1Action(
@@ -778,7 +768,7 @@ if __name__ == "__main__":
                 )
                 self.actions.append(action_event)
                 # kicking off celery job
-                print('on_click sending action', flush=True)
+                recording_logger.info('on_click sending action')
                 send_action.delay(
                     self._task.id,
                     self._task.auth_token,
@@ -788,26 +778,23 @@ if __name__ == "__main__":
                 )
 
             except Exception as e:
-                print(f"Error recording click event: {e}", flush=True)
-            print(
-                f"on_click releasing lock with x,y: {x}, {y} count of actions {len(self.actions)}",
-                flush=True,
+                recording_logger.info(f"Error recording click event: {e}")
+            recording_logger.info(
+                f"on_click releasing lock with x,y: {x}, {y} count of actions {len(self.actions)}"                
             )
 
     def on_scroll(self, x, y, dx, dy):
-        print(
-            f"on_scroll waiting lock with x,y: {x}, {y}; dx, dy: {dx} count of actions {len(self.actions)}",
-            flush=True,
+        recording_logger.info(
+            f"on_scroll waiting lock with x,y: {x}, {y}; dx, dy: {dx} count of actions {len(self.actions)}"            
         )
         with self.lock:
-            print(
-                f"on_scroll acquired lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"on_scroll acquired lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}"                
             )
 
             # Before recording the scroll, check if there is pending text
             if self.typing_in_progress:
-                print("Finalizing text event due to scroll...", flush=True)
+                recording_logger.info("Finalizing text event due to scroll...")
                 self.record_text_action()
 
             if self.mouse_move_timer:
@@ -817,7 +804,7 @@ if __name__ == "__main__":
             if self.mouse_moving:
                 # Get the latest two screenshots before the key press
                 key_start_screenshots = self._get_latest_screenshots(2)
-                print("Recording mouse movement before handling key press", flush=True)
+                recording_logger.info("Recording mouse movement before handling key press")
                 mouse_x, mouse_y = pyautogui.position()
                 end_screenshot = (
                     key_start_screenshots[-1] if key_start_screenshots else None
@@ -847,25 +834,22 @@ if __name__ == "__main__":
                 0.25, self._send_scroll_action, args=(x, y, len(self.actions))
             )
             self.scroll_timer.start()
-            print(
-                f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {len(self.actions)}"                
             )
 
     def send_final_action(self, result, comment):
-        print(
-            f"send_final_action waiting lock with result, comment: {result}, {comment} count of actions {len(self.actions)}",
-            flush=True,
+        recording_logger.info(
+            f"send_final_action waiting lock with result, comment: {result}, {comment} count of actions {len(self.actions)}"            
         )
         with self.lock:
-            print(
-                f"send_final_action acquired lock with result, comment: {result}, {comment} count of actions {len(self.actions)}",
-                flush=True,
+            recording_logger.info(
+                f"send_final_action acquired lock with result, comment: {result}, {comment} count of actions {len(self.actions)}"                
             )
 
             try:
                 if self.typing_in_progress:
-                    print("Finalizing text event due to end recording...", flush=True)
+                    recording_logger.info("Finalizing text event due to end recording...")
                     self.record_text_action()
 
                 x, y = pyautogui.position()
@@ -909,7 +893,7 @@ if __name__ == "__main__":
                 )
                 self.actions.append(action_event)
                 # kicking off celery job
-                print('send_final_action sending action', flush=True)
+                recording_logger.info('send_final_action sending action')
                 send_action.delay(
                     self._task.id,
                     self._task.auth_token,
@@ -919,28 +903,24 @@ if __name__ == "__main__":
                 )
 
             except Exception as e:
-                print(f"Error recording final end event: {e}", flush=True)
-            print(
-                f"send_final_action releasing lock with result, comment: {result}, {comment} count of actions {len(self.actions)}",
-                flush=True,
+                recording_logger.info(f"Error recording final end event: {e}")
+            recording_logger.info(
+                f"send_final_action releasing lock with result, comment: {result}, {comment} count of actions {len(self.actions)}"                
             )
 
     def _send_scroll_action(self, x, y, action_order):
-        print(
-            f"_send_scroll_action waiting lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}",
-            flush=True,
+        recording_logger.info(
+            f"_send_scroll_action waiting lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}"            
         )
         with self.lock:
-            print(
-                f"_send_scroll_action acquired lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}",
-                flush=True,
+            recording_logger.info(
+                f"_send_scroll_action acquired lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}"                
             )
 
             state = self.scroll_start_state
             if state is None:
-                print(
-                    "_send_scroll_action: scroll_start_state is None, setting state here.",
-                    flush=True,
+                recording_logger.info(
+                    "_send_scroll_action: scroll_start_state is None, setting state here."                    
                 )
                 start_screenshot_path = self._get_latest_screenshots(2)
                 mouse_x, mouse_y = pyautogui.position()
@@ -977,7 +957,7 @@ if __name__ == "__main__":
             )
 
             self.actions.append(action_event)
-            print('_send_scroll_action sending action', flush=True)
+            recording_logger.info('_send_scroll_action sending action')
             # Send the action to Celery
             send_action.delay(
                 self._task.id,
@@ -992,9 +972,8 @@ if __name__ == "__main__":
             self.scroll_dy = 0
             self.scroll_start_state = None
             self.scroll_timer = None
-            print(
-                f"_send_scroll_action releasing lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}",
-                flush=True,
+            recording_logger.info(
+                f"_send_scroll_action releasing lock with x,y: {x}, {y}; dx, dy: {self.scroll_dx}, {self.scroll_dy} count of actions {action_order}"                
             )
 
     def start_typing_sequence(self):
@@ -1010,7 +989,7 @@ if __name__ == "__main__":
         self.typing_in_progress = True
 
     def record_text_action(self):
-        print("recording text action", flush=True)
+        recording_logger.info("recording text action")
         if self.text_buffer.strip():
             x, y = pyautogui.position()
 
@@ -1039,7 +1018,7 @@ if __name__ == "__main__":
             )
             self.actions.append(action_event)
             # kicking off celery job
-            print('record_text_action sending action', flush=True)
+            recording_logger.info('record_text_action sending action')
             send_action.delay(
                 self._task.id,
                 self._task.auth_token,
@@ -1047,7 +1026,7 @@ if __name__ == "__main__":
                 self._task.to_v1().model_dump(),
                 action_event.to_v1().model_dump(),
             )
-            print(f"Recorded text action: {self.text_buffer}", flush=True)
+            recording_logger.info(f"Recorded text action: {self.text_buffer}")
 
             # Reset the typing state
             self.text_buffer = ""
@@ -1153,18 +1132,16 @@ if __name__ == "__main__":
                     os.rename(temp_file_path, file_path)
                     return file_path
                 except Exception as e:
-                    print(
+                    recording_logger.info(
                         f"Verification failed for {temp_file_path}, "
-                        f"attempt {attempt_num + 1}, retry {retry_num + 1}: {e}",
-                        flush=True,
+                        f"attempt {attempt_num + 1}, retry {retry_num + 1}: {e}"                        
                     )
                     time.sleep(delay)  # Small delay before retrying verification
 
             # If verification failed after retries, remove the temp file and try again
-            print(
+            recording_logger.info(
                 f"Verification failed after {max_retries_per_attempt} retries for "
-                f"screenshot {temp_file_path}, taking a new screenshot...",
-                flush=True,
+                f"screenshot {temp_file_path}, taking a new screenshot..."                
             )
             # Remove the invalid temp file
             if os.path.exists(temp_file_path):
@@ -1193,14 +1170,12 @@ if __name__ == "__main__":
                 return f"data:{mime_type};base64,{encoded_image}"
 
             except Exception as e:
-                print(
-                    f"Error encoding image {image_path} on attempt {attempt + 1}: {e}",
-                    flush=True,
+                recording_logger.info(
+                    f"Error encoding image {image_path} on attempt {attempt + 1}: {e}"                    
                 )
                 time.sleep(delay)
 
-        print(
-            f"Failed to encode image {image_path} after {max_retries} attempts",
-            flush=True,
+        recording_logger.info(
+            f"Failed to encode image {image_path} after {max_retries} attempts"            
         )
         return None
