@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional
-
+from skillpacks import ActionEvent, EnvState, V1Action, V1ToolRef
 from pydantic import BaseModel
 
 
@@ -108,6 +108,13 @@ class ScrollData(BaseModel):
     dx: int
     dy: int
 
+class ActionDetails(BaseModel):
+    x: float
+    y: float
+    action: V1Action
+    end_stamp: Optional[float]
+    start_state: Optional[EnvState]
+    event_order: int
 
 class RecordedEvent(BaseModel):
     id: str
