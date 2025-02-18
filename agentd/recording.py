@@ -237,6 +237,7 @@ class RecordingSession:
                     for screenShot in start_screenshot_path
                 ],
                 coordinates=(int(x), int(y)),
+                timestamp=event_time
             )
 
             end_screenshot_path = []
@@ -248,6 +249,7 @@ class RecordingSession:
                     for screenShot in end_screenshot_path
                 ],
                 coordinates=(int(x), int(y)),
+                timestamp=event_time
             )
 
             # Record final end event as an action
@@ -559,6 +561,7 @@ if __name__ == "__main__":
                 for screenshot in end_screenshots
             ],
             coordinates=(int(final_x), int(final_y)),
+            timestamp=mouse_move_details.end_stamp
         )
 
         recording_logger.info("_send_mouse_move_action setting action")
@@ -895,6 +898,7 @@ if __name__ == "__main__":
                             for screenShot in start_screenshot_path
                         ],
                         coordinates=(int(x), int(y)),
+                        timestamp=before_time
                     )
 
                 end_screenshot_path = self._get_screenshots_by_time(2, event_time, "after")
@@ -904,6 +908,7 @@ if __name__ == "__main__":
                         for screenShot in end_screenshot_path
                     ],
                     coordinates=(int(x), int(y)),
+                    timestamp=event_time
                 )
 
                 action_event = ActionEvent(
@@ -927,8 +932,7 @@ if __name__ == "__main__":
                 raise ValueError(f"No action defined due to previous errors, could not record click event")
 
         except Exception as e:
-            recording_logger.info(f"Error recording click event: {e}")
-            
+            recording_logger.info(f"Error recording click event: {e}")        
 
     def on_scroll(self, x, y, dx, dy):
         event_time = time.time()
@@ -988,6 +992,14 @@ if __name__ == "__main__":
             recording_logger.info(
                 f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {event_order}"                
             )
+        if mouse_move_details or text_action_details:
+            time.sleep(action_delay)
+            if mouse_move_details:
+                # waiting for screenshots to finish writing
+                mouse_move_end_screenshots = self._get_screenshots_by_time(2, before_time, "before")
+                self._send_mouse_move_action(mouse_move_details, mouse_move_end_screenshots)
+            if text_action_details:
+                self.send_text_action(text_action_details)
 
     def send_final_action(self, result, comment):
         recording_logger.info(
@@ -1018,6 +1030,7 @@ if __name__ == "__main__":
                         for screenShot in start_screenshot_path
                     ],
                     coordinates=(int(x), int(y)),
+                    timestamp=event_time
                 )
 
                 end_screenshot_path = self._get_screenshots_by_time(2, event_time, "after")
@@ -1028,6 +1041,7 @@ if __name__ == "__main__":
                         for screenShot in end_screenshot_path
                     ],
                     coordinates=(int(x), int(y)),
+                    timestamp=event_time
                 )
 
                 # Record final end event as an action
@@ -1084,7 +1098,7 @@ if __name__ == "__main__":
                 state = EnvState(
                     images=None,
                     coordinates=(int(mouse_x), int(mouse_y)),
-                    timestamp=time.time()
+                    timestamp=event_time
                 )
             scroll_dx = self.scroll_dx
             scroll_dy = self.scroll_dy
@@ -1096,7 +1110,7 @@ if __name__ == "__main__":
             recording_logger.info(
                 f"_send_scroll_action releasing lock with x,y: {x}, {y}; dx, dy: {scroll_dx}, {scroll_dy} count of actions {action_order}"                
             )
-
+        time.sleep(action_delay)
         if (state.images is None or len(state.images) < 2) and state.timestamp:
             before_time = state.timestamp - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the click
             start_screenshot_path = self._get_screenshots_by_time(2, before_time, "before")
@@ -1113,6 +1127,7 @@ if __name__ == "__main__":
                 for screenShot in end_screenshot_path
             ],
             coordinates=(int(x), int(y)),
+            timestamp=end_stamp
         )
 
         clicks = -int(scroll_dy)
@@ -1283,74 +1298,6 @@ if __name__ == "__main__":
             Recording.model_validate(data)
             recording = Recording(**data)
             return cls.from_schema(recording)
-
-    def take_screenshot(
-        self,
-        name: Optional[str] = None,
-        max_attempts: int = 3,
-        max_retries_per_attempt: int = 3,
-        delay: float = 0.05,
-    ) -> str:
-        # Get the temp and session directories and create them if they don't exist
-        temp_dir = self._temp_dir()
-        os.makedirs(temp_dir, exist_ok=True)
-        session_dir = self._dir()
-        os.makedirs(session_dir, exist_ok=True)
-
-        for attempt_num in range(max_attempts):
-            # Generate a unique temporary file name to avoid overwriting
-            temp_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            temp_filename = (
-                f"{name}_screenshot_{temp_timestamp}_attempt{attempt_num}.png"
-                if name
-                else f"screenshot_{temp_timestamp}_attempt{attempt_num}.png"
-            )
-            temp_file_path = os.path.join(temp_dir, temp_filename)
-
-            # Take a screenshot and write it to the temp directory
-            subprocess.run(["scrot", "-z", "-p", temp_file_path], check=True)
-
-            # Try to verify the image up to max_retries_per_attempt times
-            for retry_num in range(max_retries_per_attempt):
-                try:
-                    with open(temp_file_path, "rb") as image_file:
-                        image_data = image_file.read()
-                        # Validate image using PIL
-                        image = Image.open(io.BytesIO(image_data))
-                        image.verify()  # Raises an exception if the image is invalid
-
-                    # After successful verification, generate the final filename
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = (
-                        f"{name}_screenshot_{timestamp}.png"
-                        if name
-                        else f"screenshot_{timestamp}.png"
-                    )
-                    file_path = os.path.join(session_dir, filename)
-
-                    # Move the file to the session directory with the final filename
-                    os.rename(temp_file_path, file_path)
-                    return file_path
-                except Exception as e:
-                    recording_logger.info(
-                        f"Verification failed for {temp_file_path}, "
-                        f"attempt {attempt_num + 1}, retry {retry_num + 1}: {e}"                        
-                    )
-                    time.sleep(delay)  # Small delay before retrying verification
-
-            # If verification failed after retries, remove the temp file and try again
-            recording_logger.info(
-                f"Verification failed after {max_retries_per_attempt} retries for "
-                f"screenshot {temp_file_path}, taking a new screenshot..."                
-            )
-            # Remove the invalid temp file
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
-
-        # If all attempts fail, raise an exception or handle the failure accordingly
-        raise Exception(
-            f"Failed to take a valid screenshot after {max_attempts} attempts"
-        )
 
     def encode_image_to_base64(
         self, image_path: str, max_retries: int = 3, delay: float = 0.1
