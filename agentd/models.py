@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional
-from skillpacks import ActionEvent, EnvState, V1Action, V1ToolRef
+from skillpacks import V1EnvState, V1Action
 from pydantic import BaseModel
 
 
@@ -113,7 +113,7 @@ class ActionDetails(BaseModel):
     y: float
     action: V1Action
     end_stamp: Optional[float]
-    start_state: Optional[EnvState]
+    start_state: Optional[V1EnvState]
     event_order: int
 
 class RecordedEvent(BaseModel):

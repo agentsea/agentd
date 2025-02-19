@@ -44,7 +44,7 @@ DESKTOP_TOOL_REF = V1ToolRef(
     module="agentdesk.device", type="Desktop", package="agentdesk"
 )
 
-PYNPUT_TO_PYAUTOGUI: Dict[KeyCode, str] = {
+PYNPUT_TO_PYAUTOGUI: Dict[Key, str] = {
     Key.tab: "tab",
     Key.enter: "enter",
     Key.space: "space",
@@ -504,7 +504,7 @@ if __name__ == "__main__":
                     x=x,
                     y=y,
                     action=action,
-                    start_state=start_state,
+                    start_state=start_state.to_v1(),
                     end_stamp=event_time,
                     event_order=event_order
                 )
@@ -515,7 +515,6 @@ if __name__ == "__main__":
         end_screenshot_path: list[str] | None = None
     ):
         """Records the mouse movement action."""
-
         recording_logger.info("_send_mouse_move_action starting")
         if not mouse_move_details.start_state:
             raise ValueError(f"_send_mouse_move_action failure mouse_move_details.start_state not set {mouse_move_details.model_dump_json()}")
@@ -569,7 +568,7 @@ if __name__ == "__main__":
         action = mouse_move_details.action
         recording_logger.info("_send_mouse_move_action setting action event")
         action_event = ActionEvent(
-            state=mouse_move_details.start_state,
+            state=EnvState.from_v1(mouse_move_details.start_state),
             action=action,
             tool=DESKTOP_TOOL_REF,
             end_state=end_state,
@@ -1188,7 +1187,7 @@ if __name__ == "__main__":
                     x=x,
                     y=y,
                     action=action,
-                    start_state=text_start_state,
+                    start_state=text_start_state.to_v1(),
                     end_stamp=end_stamp,
                     event_order=event_order
                 )
@@ -1229,7 +1228,7 @@ if __name__ == "__main__":
                 recording_logger.info("send_text_action getting start state screenshots completed")                    
 
         action_event = ActionEvent(
-            state=text_action_details.start_state,
+            state=EnvState.from_v1(text_action_details.start_state),
             action=text_action_details.action,
             tool=DESKTOP_TOOL_REF,
             end_state=end_state,
