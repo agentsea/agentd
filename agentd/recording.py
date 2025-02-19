@@ -98,8 +98,8 @@ lock = Lock()
 
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
-SCREENSHOT_INTERVAL = 0.15
-action_delay = .4
+SCREENSHOT_INTERVAL = 0.2
+action_delay = .6
 before_screenshot_offset = .03 # offset from the event_time to make sure we can get a true before screenshot
 
 
