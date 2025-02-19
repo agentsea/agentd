@@ -318,7 +318,7 @@ def take_screenshots():
         filename = f"screenshot_{{timestamp}}.png"
         file_path = os.path.join(SESSION_DIR, filename)
         # Use scrot to take a screenshot with the cursor (-p flag)
-        subprocess.Popen(["scrot", "-z", "-p", file_path])
+        subprocess.Popen(["maim", "-u", file_path])
         time.sleep(SCREENSHOT_INTERVAL)
 
 if __name__ == "__main__":
