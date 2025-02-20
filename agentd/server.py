@@ -571,13 +571,13 @@ async def start_video_recording(request: VideoRecordRequest):
             [
                 "ffmpeg",
                 "-video_size",
-                "1920x1080",
+                "1280x800", # TODO we need to make this configurable like framerate
                 "-framerate",
                 f"{request.framerate}",
                 "-f",
                 "x11grab",
                 "-i",
-                ":0.0",
+                ":1",
                 file_path,
             ]
         )

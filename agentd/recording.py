@@ -99,7 +99,7 @@ lock = Lock()
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.2
-action_delay = .6
+action_delay = .8
 before_screenshot_offset = .03 # offset from the event_time to make sure we can get a true before screenshot
 
 
@@ -318,7 +318,7 @@ def take_screenshots():
         filename = f"screenshot_{{timestamp}}.png"
         file_path = os.path.join(SESSION_DIR, filename)
         # Use scrot to take a screenshot with the cursor (-p flag)
-        subprocess.Popen(["maim", "-u", file_path])
+        subprocess.Popen(["scrot", "-z", "-p", file_path])
         time.sleep(SCREENSHOT_INTERVAL)
 
 if __name__ == "__main__":
