@@ -400,7 +400,7 @@ async def use_secret(request: useSecretRequest):
             pyperclip.copy(password) # TODO consider copy paste instead of writing
             api_logger.info("secret Text copied to clipboard.")
             if active_session:
-                active_session.send_useSecret_action(secret_name=secret['name'], field=request.field)
+                active_session.record_useSecret_action(secret_name=secret['name'], field=request.field)
 
             return {"status": "success"}
         except Exception as e:
@@ -571,13 +571,13 @@ async def start_video_recording(request: VideoRecordRequest):
             [
                 "ffmpeg",
                 "-video_size",
-                "1920x1080",
+                "1280x800", # TODO we need to make this configurable like framerate
                 "-framerate",
                 f"{request.framerate}",
                 "-f",
                 "x11grab",
                 "-i",
-                ":0.0",
+                ":1",
                 file_path,
             ]
         )
