@@ -192,17 +192,17 @@ RUN mkdir -p /config/.mozilla/firefox && \
     ln -s /config/.mozilla /home/abc/.mozilla
 
 # Create a user.js file with first-run preferences
-RUN echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");
-user_pref("browser.startup.homepage", "about:blank");
-user_pref("browser.shell.checkDefaultBrowser", false);
-user_pref("browser.tabs.warnOnClose", false);
-user_pref("browser.rights.3.shown", true);
-user_pref("browser.startup.firstrunSkipsHomepage", true);
-user_pref("browser.startup.lastColdStartupCheck", 1);
-user_pref("browser.startup.page", 0);
-user_pref("datareporting.policy.dataSubmissionEnabled", false);
-user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);
-user_pref("trailhead.firstrun.didSeeAboutWelcome", true);' > /config/.mozilla/firefox/default-release/user.js
+RUN echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");\
+    user_pref("browser.startup.homepage", "about:blank");\
+    user_pref("browser.shell.checkDefaultBrowser", false);\
+    user_pref("browser.tabs.warnOnClose", false);\
+    user_pref("browser.rights.3.shown", true);\
+    user_pref("browser.startup.firstrunSkipsHomepage", true);\
+    user_pref("browser.startup.lastColdStartupCheck", 1);\
+    user_pref("browser.startup.page", 0);\
+    user_pref("datareporting.policy.dataSubmissionEnabled", false);\
+    user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);\
+    user_pref("trailhead.firstrun.didSeeAboutWelcome", true);' > /config/.mozilla/firefox/default-release/user.js
 
 # Switch back to root for any remaining operations
 USER root
