@@ -180,6 +180,7 @@ COPY --chown=abc:abc . /config/app/
 RUN mkdir -p /config/app/logs && chown -R abc:abc /config/app/logs
 RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
 
+USER root
 # Create Firefox config directory and profile
 RUN mkdir -p /config/.mozilla && \
     chown -R abc:abc /config/.mozilla
