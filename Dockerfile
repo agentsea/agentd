@@ -181,33 +181,36 @@ RUN mkdir -p /config/app/logs && chown -R abc:abc /config/app/logs
 RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
 
 USER root
-# Create Firefox config directory and profile
-RUN mkdir -p /config/.mozilla && \
-    chown -R abc:abc /config/.mozilla
 
-USER abc
-RUN mkdir -p "/config/.mozilla/firefox/default-release" && \
-    echo '[Profile0]\n\
-Name=default-release\n\
-IsRelative=1\n\
-Path=default-release\n\
-Default=1\n\
-\n\
-[General]\n\
-StartWithLastProfile=1\n\
-Version=2' > "/config/.mozilla/firefox/profiles.ini" && \
-    # Create user.js with preferences
-    echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");\
-    user_pref("browser.startup.homepage", "about:blank");\
-    user_pref("browser.shell.checkDefaultBrowser", false);\
-    user_pref("browser.tabs.warnOnClose", false);\
-    user_pref("browser.rights.3.shown", true);\
-    user_pref("browser.startup.firstrunSkipsHomepage", true);\
-    user_pref("browser.startup.lastColdStartupCheck", 1);\
-    user_pref("browser.startup.page", 0);\
-    user_pref("datareporting.policy.dataSubmissionEnabled", false);\
-    user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);\
-    user_pref("trailhead.firstrun.didSeeAboutWelcome", true);' > "/config/.mozilla/firefox/default-release/user.js"
+RUN ls -lad /config/.mozilla || echo ".mozilla not found"
+RUN stat /config/.mozilla || true
+# Create Firefox config directory and profile
+# RUN mkdir -p /config/.mozilla && \
+#     chown -R abc:abc /config/.mozilla
+
+# USER abc
+# RUN mkdir -p "/config/.mozilla/firefox/default-release" && \
+#     echo '[Profile0]\n\
+# Name=default-release\n\
+# IsRelative=1\n\
+# Path=default-release\n\
+# Default=1\n\
+# \n\
+# [General]\n\
+# StartWithLastProfile=1\n\
+# Version=2' > "/config/.mozilla/firefox/profiles.ini" && \
+#     # Create user.js with preferences
+#     echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");\
+#     user_pref("browser.startup.homepage", "about:blank");\
+#     user_pref("browser.shell.checkDefaultBrowser", false);\
+#     user_pref("browser.tabs.warnOnClose", false);\
+#     user_pref("browser.rights.3.shown", true);\
+#     user_pref("browser.startup.firstrunSkipsHomepage", true);\
+#     user_pref("browser.startup.lastColdStartupCheck", 1);\
+#     user_pref("browser.startup.page", 0);\
+#     user_pref("datareporting.policy.dataSubmissionEnabled", false);\
+#     user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);\
+#     user_pref("trailhead.firstrun.didSeeAboutWelcome", true);' > "/config/.mozilla/firefox/default-release/user.js"
 
 # Switch back to root for any remaining operations
 USER root
