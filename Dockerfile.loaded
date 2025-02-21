@@ -183,6 +183,8 @@ RUN mkdir -p /config/app/recordings && chown -R abc:abc /config/app/recordings
 # # Switch back to root to set up the s6-overlay v3 service
 USER root
 
+COPY --chown=abc:abc ./firefox/.mozilla /config/.mozilla
+
 ENV S6_LOGGING=1
 ENV S6_VERBOSITY=2
 ENV S6_KEEP_ENV=1

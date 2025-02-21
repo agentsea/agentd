@@ -184,9 +184,6 @@ USER root
 
 COPY --chown=abc:abc ./firefox/.mozilla /config/.mozilla
 
-RUN ls -lad /config/.mozilla || echo ".mozilla not found"
-RUN stat /config/.mozilla || true
-
 ENV S6_LOGGING=1
 ENV S6_VERBOSITY=2
 ENV S6_KEEP_ENV=1
