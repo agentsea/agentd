@@ -186,14 +186,20 @@ RUN mkdir -p /config/.mozilla && \
     chown -R abc:abc /config/.mozilla
 
 USER abc
-RUN mkdir -p /config/.mozilla/firefox && \
-    # Initialize Firefox profile
-    firefox -headless -CreateProfile "default-release /config/.mozilla/firefox/default-release" && \
-    # Create symbolic link from home directory to config
-    ln -s /config/.mozilla /home/abc/.mozilla
-
-# Create a user.js file with first-run preferences
-RUN echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");\
+RUN mkdir -p "/config/.mozilla/firefox/default-release" && \
+    ln -s /config/.mozilla /home/abc/.mozilla && \
+    # Create profiles.ini
+    echo '[Profile0]\n\
+Name=default-release\n\
+IsRelative=1\n\
+Path=default-release\n\
+Default=1\n\
+\n\
+[General]\n\
+StartWithLastProfile=1\n\
+Version=2' > "/config/.mozilla/firefox/profiles.ini" && \
+    # Create user.js with preferences
+    echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");\
     user_pref("browser.startup.homepage", "about:blank");\
     user_pref("browser.shell.checkDefaultBrowser", false);\
     user_pref("browser.tabs.warnOnClose", false);\
@@ -203,7 +209,7 @@ RUN echo 'user_pref("browser.startup.homepage_override.mstone", "ignore");\
     user_pref("browser.startup.page", 0);\
     user_pref("datareporting.policy.dataSubmissionEnabled", false);\
     user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);\
-    user_pref("trailhead.firstrun.didSeeAboutWelcome", true);' > /config/.mozilla/firefox/default-release/user.js
+    user_pref("trailhead.firstrun.didSeeAboutWelcome", true);' > "/config/.mozilla/firefox/default-release/user.js"
 
 # Switch back to root for any remaining operations
 USER root
