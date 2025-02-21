@@ -187,8 +187,6 @@ RUN mkdir -p /config/.mozilla && \
 
 USER abc
 RUN mkdir -p "/config/.mozilla/firefox/default-release" && \
-    ln -s /config/.mozilla /home/abc/.mozilla && \
-    # Create profiles.ini
     echo '[Profile0]\n\
 Name=default-release\n\
 IsRelative=1\n\
