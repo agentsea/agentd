@@ -14,7 +14,6 @@ import subprocess
 import threading
 import time
 from .util import OrderLock
-from datetime import datetime
 from itertools import chain
 from threading import Lock
 from typing import Dict, List, Optional, Set
@@ -98,8 +97,8 @@ lock = Lock()
 
 RECORDINGS_DIR = os.getenv("RECORDINGS_DIR", ".recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
-SCREENSHOT_INTERVAL = 0.2
-action_delay = .8
+SCREENSHOT_INTERVAL = 0.15
+action_delay = .6
 before_screenshot_offset = .03 # offset from the event_time to make sure we can get a true before screenshot
 
 
@@ -281,7 +280,7 @@ class RecordingSession:
         except Exception as e:
             recording_logger.info(f"Error recording send_useSecret_action event: {e}")   
 
-    def stop(self, result, comment):
+    def stop(self, result = None, comment = None):
         recording_logger.info("send update_task to celery for finished")
         self.send_final_action(result, comment)
         update_task.delay(
@@ -315,7 +314,7 @@ SESSION_DIR = "{self._dir()}"
 def take_screenshots():
     while True:
         timestamp = time.time()
-        filename = f"screenshot_{{timestamp}}.png"
+        filename = f"screenshot_{{timestamp}}.bmp"
         file_path = os.path.join(SESSION_DIR, filename)
         # Use scrot to take a screenshot with the cursor (-p flag)
         subprocess.Popen(["scrot", "-z", "-p", file_path])
@@ -340,6 +339,15 @@ if __name__ == "__main__":
             os.kill(self.screenshot_process.pid, signal.SIGTERM)
             self.screenshot_process.wait()
 
+    def _convert_bmp_to_png(self, bmp_path: str) -> str:
+        """
+        Converts a BMP file to PNG and returns the path of the converted PNG file.
+        """
+        png_path = bmp_path.replace(".bmp", ".png")
+        with Image.open(bmp_path) as img:
+            img.save(png_path, "PNG")
+        return png_path
+
     def _get_screenshots_by_time(self, n: int, target_timestamp: float, mode: str = "closest") -> list[str]:
         """
         Return the file paths for the n screenshots based on the given mode relative to the target timestamp.
@@ -349,19 +357,22 @@ if __name__ == "__main__":
           - "before":  Returns the n screenshots taken before target_timestamp.
           - "after":   Returns the n screenshots taken after target_timestamp.
 
-        Screenshots must be named in the format "screenshot_{timestamp}.png" where {timestamp} is a float.
+        Screenshots must be named in the format "screenshot_{timestamp}.bmp" where {timestamp} is a float.
         The returned list is always sorted in chronological order (oldest to newest).
+
+        The function will convert all selected BMP files to PNG and return the PNG file paths.
         """
         session_dir = self._dir()
+        # Collect all .bmp screenshot files
         screenshot_files = [
             f for f in os.listdir(session_dir)
-            if f.startswith("screenshot_") and f.endswith(".png")
+            if f.startswith("screenshot_") and f.endswith(".bmp")
         ]
         if not screenshot_files:
             return []
 
-        # Use a regex to extract the timestamp from the filename.
-        timestamp_pattern = re.compile(r"screenshot_(\d+\.\d+)\.png")
+        # Regex to extract the timestamp from the filename
+        timestamp_pattern = re.compile(r"screenshot_(\d+\.\d+)\.bmp")
         screenshots = []
         for filename in screenshot_files:
             match = timestamp_pattern.match(filename)
@@ -369,18 +380,20 @@ if __name__ == "__main__":
                 continue
             try:
                 file_timestamp = float(match.group(1))
+                screenshots.append((filename, file_timestamp))
             except ValueError:
                 continue
-            screenshots.append((filename, file_timestamp))
 
         selected_paths: list[str] = []
 
+        # Select screenshots based on the mode
         if mode == "closest":
-            # Compute the absolute difference from target_timestamp.
+            # Calculate absolute difference from target_timestamp
             screenshots_with_diff = [
                 (abs(file_timestamp - target_timestamp), filename, file_timestamp)
                 for filename, file_timestamp in screenshots
             ]
+            # Sort by difference (ascending)
             screenshots_with_diff.sort(key=lambda x: x[0])
             selected = screenshots_with_diff[:n]
             # Sort selected screenshots in chronological order.
@@ -393,68 +406,70 @@ if __name__ == "__main__":
                 for filename, file_timestamp in screenshots
                 if file_timestamp < target_timestamp
             ]
-            if not filtered:
-                selected_paths = []
-            else:
+            if filtered:
                 # Sort descending so that the screenshot immediately before target time is first.
                 filtered.sort(key=lambda x: x[1], reverse=True)
                 selected = filtered[:n]
-                # Finally, sort the selected ones in chronological (ascending) order.
+                # Sort final selection by timestamp ascending for chronological order
                 selected.sort(key=lambda x: x[1])
                 selected_paths = [os.path.join(session_dir, filename) for filename, _ in selected]
         elif mode == "after":
-            # Filter for screenshots taken after target_timestamp.
-            filtered = [
-                (filename, file_timestamp)
-                for filename, file_timestamp in screenshots
-                if file_timestamp > target_timestamp
-            ]
-            if not filtered:
-                selected_paths = []
-            else:
-                # Sort ascending so that the one immediately after target time is first.
+            # Filter screenshots taken after target_timestamp
+            filtered = [(fname, ts) for (fname, ts) in screenshots if ts > target_timestamp]
+            if filtered:
+                # Sort ascending by timestamp so the one immediately after is first
                 filtered.sort(key=lambda x: x[1])
                 selected = filtered[:n]
-                selected_paths = [os.path.join(session_dir, filename) for filename, _ in selected]
+                selected_paths = [os.path.join(session_dir, fname) for fname, _ in selected]
+
         else:
             raise ValueError("Invalid mode: must be 'closest', 'before', or 'after'")
 
-        self.used_screenshots.update(selected_paths)
-        return selected_paths
+        # Convert BMP files to PNG and collect PNG paths
+        png_paths = [self._convert_bmp_to_png(path) for path in selected_paths]
+
+        # Update the used_screenshots set with PNG files
+        self.used_screenshots.update(png_paths)
+
+        return png_paths
 
     def _get_latest_screenshots(self, n: int, start_index: int = 0) -> List[str]:
-        session_dir = self._dir()
-        screenshot_files = [
-            f
-            for f in os.listdir(session_dir)
-            if f.startswith("screenshot_") and f.endswith(".png")
-        ]
+        """
+        Return the n latest screenshots (by modification time), optionally skipping some at the start.
+        Screenshots must be named in the format "screenshot_{timestamp}.bmp".
 
+        The function will convert all selected BMP files to PNG and return the PNG file paths.
+        """
+        session_dir = self._dir()
+        # Get all .bmp screenshot files
+        screenshot_files = [
+            f for f in os.listdir(session_dir)
+            if f.startswith("screenshot_") and f.endswith(".bmp")
+        ]
         if not screenshot_files:
             return []
 
-        # Step 1: Sort from newest to oldest
+        # Sort files from newest to oldest by modification time
         sorted_screenshots = sorted(
             screenshot_files,
             key=lambda f: os.path.getmtime(os.path.join(session_dir, f)),
-            reverse=True,
+            reverse=True
         )
 
-        # Step 2: Select the n latest screenshots starting from start_index
+        # Select the n latest screenshots, then reverse for chronological order (oldest->newest)
         selected_screenshots = sorted_screenshots[start_index : start_index + n]
-
-        # Step 3: Reverse to have them in ascending order (oldest to newest)
         selected_screenshots = selected_screenshots[::-1]
 
-        # Get the full paths of the screenshots
-        selected_paths = [
-            os.path.join(session_dir, screenshot) for screenshot in selected_screenshots
-        ]
+        # Get full paths of screenshots
+        selected_paths = [os.path.join(session_dir, screenshot) for screenshot in selected_screenshots]
 
-        # Add the screenshots to the used_screenshots set
-        self.used_screenshots.update(selected_paths)
+        # Convert BMP files to PNG
+        png_paths = [self._convert_bmp_to_png(path) for path in selected_paths]
 
-        return selected_paths
+        # Track which files we've used
+        self.used_screenshots.update(png_paths)
+
+        return png_paths
 
     def _cleanup_unused_screenshots(self):
         session_dir = self._dir()
@@ -782,7 +797,7 @@ if __name__ == "__main__":
                     coordinates=(int(special_key_details.x), int(special_key_details.y)),
                     timestamp=event_time
                 )
-                special_key_details.start_state = start_state
+                special_key_details.start_state = start_state.to_v1()
                 self.send_text_action(special_key_details)
 
     def on_release(self, key):
@@ -1047,8 +1062,8 @@ if __name__ == "__main__":
                 action = V1Action(
                     name="end",
                     parameters={
-                        "result": result,
-                        "comment": comment
+                        "result": result if result else '',
+                        "comment": comment if comment else ''
                     },
                 )
                 
