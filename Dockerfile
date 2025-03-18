@@ -175,6 +175,23 @@ RUN XDG_CACHE_HOME=/config/app/.cache \
 
 # Copy the rest of your application code
 COPY --chown=abc:abc . /config/app/
+ENV HOME=/config
+
+# Install Rust as 'abc' user
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+
+# Set Rust environment variables globally for abc
+ENV PATH="/config/.cargo/bin:${PATH}"
+
+# Compile Rust script and move the binary into place
+RUN cd /config/app/recordings-rust && \
+    cargo build --release && \
+    mkdir -p /config/app/bin && \
+    mv target/release/bmp_to_png /config/app/bin/bmp_to_png && \
+    chmod +x /config/app/bin/bmp_to_png
+
+# Clean cargo caches after build
+RUN rm -rf /config/.cargo/registry /config/app/recordings-rust/target
 
 # Create the logs and recordings directories and set ownership to 'abc'
 RUN mkdir -p /config/app/logs && chown -R abc:abc /config/app/logs

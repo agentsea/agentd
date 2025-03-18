@@ -344,8 +344,12 @@ if __name__ == "__main__":
         Converts a BMP file to PNG and returns the path of the converted PNG file.
         """
         png_path = bmp_path.replace(".bmp", ".png")
-        with Image.open(bmp_path) as img:
-            img.save(png_path, "PNG")
+        if os.path.exists(png_path):
+            return png_path
+        rust_binary = "/config/app/bin/bmp_to_png"
+        result = subprocess.run([rust_binary, bmp_path], check=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Rust script failed on: {bmp_path}")
         return png_path
 
     def _get_screenshots_by_time(self, n: int, target_timestamp: float, mode: str = "closest") -> list[str]:
