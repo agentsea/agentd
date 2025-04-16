@@ -396,14 +396,14 @@ async def use_secret(request: useSecretRequest):
             else:
                 api_logger.error("secret used but without active session")
 
-                for char in password: 
-                    pyautogui.write(
-                        char,
-                        # interval=random.uniform(request.min_interval, request.max_interval),
-                    )
-                    # time.sleep(random.uniform(request.min_interval, request.max_interval))
-                pyperclip.copy(password) # TODO consider copy paste instead of writing
-                api_logger.info("secret Text copied to clipboard.")
+            for char in password: 
+                pyautogui.write(
+                    char,
+                    # interval=random.uniform(request.min_interval, request.max_interval),
+                )
+                # time.sleep(random.uniform(request.min_interval, request.max_interval))
+            pyperclip.copy(password) # TODO consider copy paste instead of writing
+            api_logger.info("secret Text copied to clipboard.")
 
             if active_session:
                 active_session.resume_listeners()
