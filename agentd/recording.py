@@ -374,6 +374,8 @@ if __name__ == "__main__":
         if self.screenshot_process:
             os.kill(self.screenshot_process.pid, signal.SIGTERM)
             self.screenshot_process.wait()
+            # Give scrot (and OS) a moment to finish cleaning up
+            time.sleep(.1)
 
     def _convert_bmp_to_png(self, bmp_path: str) -> str:
         """
