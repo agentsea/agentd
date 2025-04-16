@@ -173,6 +173,7 @@ class RecordingSession:
         self.MOVEMENT_BUFFER_TIME = 3
         self.last_movement_time = None
         self.MOVEMENT_THRESHOLD = 5
+        self.pause = False
         # Replace the standard lock with a FairLock
         self.lock = OrderLock()
 
@@ -608,6 +609,8 @@ if __name__ == "__main__":
 
     def on_move(self, x, y):
         """Handles mouse movement events."""
+        if self.pause:
+            return
         event_time = time.time()
         text_action_details = None
         recording_logger.info(f"Mouse moved to ({x}, {y})")
@@ -684,6 +687,8 @@ if __name__ == "__main__":
             self._send_mouse_move_action(mouse_move_details)
 
     def on_press(self, key: Key):
+        if self.pause:
+            return
         recording_logger.info(f"on_press waiting for lock with key {key} count of actions {len(self.actions)}")
         event_time = time.time()
         before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the keypress
@@ -801,6 +806,8 @@ if __name__ == "__main__":
                 self.send_text_action(special_key_details)
 
     def on_release(self, key):
+        if self.pause:
+            return
         recording_logger.info(
             f"on_release waiting lock with key {key} count of actions {len(self.actions)}"            
         )
@@ -815,6 +822,8 @@ if __name__ == "__main__":
             )
 
     def on_click(self, x, y, button, pressed):
+        if self.pause:
+            return
         event_time = time.time()
         before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the click
         mouse_move_details = None
@@ -949,6 +958,8 @@ if __name__ == "__main__":
             recording_logger.info(f"Error recording click event: {e}")        
 
     def on_scroll(self, x, y, dx, dy):
+        if self.pause:
+            return
         event_time = time.time()
         before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the click
         mouse_move_details = None
