@@ -325,7 +325,7 @@ class RecordingSession:
             on_press=self.on_press, # type: ignore
             on_release=self.on_release
         )
-        time.sleep(.1)
+
         self.mouse_listener = mouse.Listener(
             on_move=self.on_move,
             on_click=self.on_click,
@@ -333,6 +333,7 @@ class RecordingSession:
         )
         
         self.keyboard_listener.start()
+        time.sleep(.1)
         self.mouse_listener.start()
         
         self._status = "running"
