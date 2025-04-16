@@ -196,8 +196,8 @@ class RecordingSession:
         )
         atexit.register(self.stop)
     
-    def record_useSecret_action(self, secret_name, field):
-        event_time = time.time()
+    def record_useSecret_action(self, secret_name, field, event_time = None):
+        event_time = event_time if event_time else time.time()
 
         # These are so I can get the details I need from self while locked and then send the action outside of the lock
         text_action_details = None
@@ -374,6 +374,8 @@ if __name__ == "__main__":
         if self.screenshot_process:
             os.kill(self.screenshot_process.pid, signal.SIGTERM)
             self.screenshot_process.wait()
+            # Give scrot (and OS) a moment to finish cleaning up
+            time.sleep(.1)
 
     def _convert_bmp_to_png(self, bmp_path: str) -> str:
         """

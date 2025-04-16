@@ -379,7 +379,7 @@ async def use_secret(request: useSecretRequest):
         secrets = response.json()
         secret = secrets["secrets"][0]
         api_logger.info(f"secret fetched: {secret['name']}")
-        
+        event_time = time.time()
         try:
             #TODO will encrypt secret values in transit. Will want to use a private key in the system env to decrypt.
             # We can rotate the private key every so often. We are already using https but would be good to have another layer
@@ -407,7 +407,7 @@ async def use_secret(request: useSecretRequest):
 
             if active_session:
                 active_session.resume_listeners()
-                active_session.record_useSecret_action(secret_name=secret['name'], field=request.field)
+                active_session.record_useSecret_action(secret_name=secret['name'], field=request.field, event_time=event_time)
             else:
                 api_logger.error("secret used but without active session")
 
