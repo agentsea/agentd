@@ -196,8 +196,8 @@ class RecordingSession:
         )
         atexit.register(self.stop)
     
-    def record_useSecret_action(self, secret_name, field):
-        event_time = time.time()
+    def record_useSecret_action(self, secret_name, field, event_time = None):
+        event_time = event_time if event_time else time.time()
 
         # These are so I can get the details I need from self while locked and then send the action outside of the lock
         text_action_details = None
