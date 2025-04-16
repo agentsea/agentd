@@ -392,7 +392,7 @@ async def use_secret(request: useSecretRequest):
                     detail=f"Field '{request.field}' not found in the secret."
                 )
             if active_session:
-                active_session.pause = True
+                active_session.pause_listeners()
             else:
                 api_logger.error("secret used but without active session")
 
@@ -406,7 +406,7 @@ async def use_secret(request: useSecretRequest):
                 api_logger.info("secret Text copied to clipboard.")
 
             if active_session:
-                active_session.pause = False
+                active_session.resume_listeners()
                 active_session.record_useSecret_action(secret_name=secret['name'], field=request.field)
             else:
                 api_logger.error("secret used but without active session")
@@ -414,7 +414,7 @@ async def use_secret(request: useSecretRequest):
             return {"status": "success"}
         except Exception as e:
             if active_session:
-                active_session.pause = False
+                active_session.resume_listeners()
             raise HTTPException(status_code=500, detail=str(e))
 
     except Exception as e:
