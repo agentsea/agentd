@@ -391,19 +391,30 @@ async def use_secret(request: useSecretRequest):
                     status_code=400,
                     detail=f"Field '{request.field}' not found in the secret."
                 )
-            for char in password: 
-                pyautogui.write(
-                    char,
-                    # interval=random.uniform(request.min_interval, request.max_interval),
-                )
-                # time.sleep(random.uniform(request.min_interval, request.max_interval))
-            pyperclip.copy(password) # TODO consider copy paste instead of writing
-            api_logger.info("secret Text copied to clipboard.")
             if active_session:
+                active_session.pause = True
+            else:
+                api_logger.error("secret used but without active session")
+
+                for char in password: 
+                    pyautogui.write(
+                        char,
+                        # interval=random.uniform(request.min_interval, request.max_interval),
+                    )
+                    # time.sleep(random.uniform(request.min_interval, request.max_interval))
+                pyperclip.copy(password) # TODO consider copy paste instead of writing
+                api_logger.info("secret Text copied to clipboard.")
+
+            if active_session:
+                active_session.pause = False
                 active_session.record_useSecret_action(secret_name=secret['name'], field=request.field)
+            else:
+                api_logger.error("secret used but without active session")
 
             return {"status": "success"}
         except Exception as e:
+            if active_session:
+                active_session.pause = False
             raise HTTPException(status_code=500, detail=str(e))
 
     except Exception as e:
