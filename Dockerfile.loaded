@@ -196,7 +196,7 @@ ENV S6_RC_VERBOSE=1
 
 
 RUN touch /config/app/audit.log && chown abc:abc /config/app/audit.log && chmod 644 /config/app/audit.log
-RUN touch /config/app/logs/redis.log && chown abc:abc /config/app/logs/redis.log && chmod 644 /config/app/logs/redis.log
+RUN touch /config/app/logs/redis_env.log && chown abc:abc /config/app/logs/redis_env.log && chmod 644 /config/app/logs/redis_env.log
 
 RUN mkdir -p /config/app/logs/uvicorn && chown -R abc:abc /config/app/logs/uvicorn
 
@@ -262,6 +262,47 @@ RUN apk add --no-cache \
     kodi \
     handbrake \
     openmpi-dev
+
+    RUN set -e; \
+    mkdir -p /config/Desktop; \
+    # Copy any .desktop files provided by installed packages
+    for file in /usr/share/applications/*.desktop; do \
+        name=$(basename "$file"); \
+        target="/config/Desktop/$name"; \
+        [ -f "$target" ] || cp "$file" "$target"; \
+    done; \
+    \
+    # Manually add VLC (if missing)
+    [ -f /config/Desktop/vlc.desktop ] || \
+    printf '%s\n' \
+'[Desktop Entry]' \
+'Name=VLC media player' \
+'GenericName=Media player' \
+'Comment=Play multimedia files' \
+'Exec=vlc %%U' \
+'Icon=/usr/share/icons/Faenza/apps/64/vlc.png' \
+'Terminal=false' \
+'Type=Application' \
+'Categories=AudioVideo;Player;Recorder;' \
+    > /config/Desktop/vlc.desktop; \
+    \
+    # Manually add Evolution (if missing)
+    [ -f /config/Desktop/evolution.desktop ] || \
+    printf '%s\n' \
+'[Desktop Entry]' \
+'Name=Evolution' \
+'GenericName=Mail and Calendar' \
+'Comment=Mail, calendar and address book suite' \
+'Exec=evolution' \
+'Icon=/usr/share/icons/Faenza/apps/64/evolution.png' \
+'Terminal=false' \
+'Type=Application' \
+'Categories=Office;Email;' \
+    > /config/Desktop/evolution.desktop; \
+    \
+    # Final permissions
+    chmod +x /config/Desktop/*.desktop; \
+    chown -R abc:abc /config/Desktop
 
 # Expose the port uvicorn is running on (if needed)
 EXPOSE 8000
