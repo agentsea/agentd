@@ -264,16 +264,24 @@ RUN apk add --no-cache \
     openmpi-dev
 
 RUN set -e; \
-    mkdir -p /config/Desktop; \
+    mkdir -p /config/Desktop && \
     \
-    ##### 1) Copy existing .desktop files for the chosen apps #####
-    for file in libreoffice-*.desktop gimp*.desktop inkscape*.desktop audacity.desktop kodi.desktop firefox.desktop mousepad.desktop; do \
+    ##### 1) Copy the selected launchers if they exist #####
+    for file in /usr/share/applications/libreoffice-*.desktop \
+                /usr/share/applications/gimp*.desktop \
+                /usr/share/applications/inkscape*.desktop \
+                /usr/share/applications/audacity.desktop \
+                /usr/share/applications/kodi.desktop \
+                /usr/share/applications/firefox.desktop \
+                /usr/share/applications/mousepad.desktop; do \
+        [ -e "$file" ] || continue; \
         name=$(basename "$file"); \
         target="/config/Desktop/$name"; \
         [ -f "$target" ] || cp "$file" "$target"; \
-    done; \
-    ##### 3) Final permissions #####
-    chmod +x /config/Desktop/*.desktop; \
+    done && \
+    \
+    ##### 2) Final permissions #####
+    chmod +x /config/Desktop/*.desktop && \
     chown -R abc:abc /config/Desktop
 
 # Expose the port uvicorn is running on (if needed)
