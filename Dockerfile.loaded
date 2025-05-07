@@ -263,44 +263,59 @@ RUN apk add --no-cache \
     handbrake \
     openmpi-dev
 
-    RUN set -e; \
+RUN set -e; \
     mkdir -p /config/Desktop; \
-    # Copy any .desktop files provided by installed packages
-    for file in /usr/share/applications/*.desktop; do \
-        name=$(basename "$file"); \
-        target="/config/Desktop/$name"; \
-        [ -f "$target" ] || cp "$file" "$target"; \
+    \
+    ##### 1) Copy existing .desktop files for the chosen apps #####
+    for f in \
+        libreoffice-*.desktop \
+        audacity.desktop \
+        inkscape*.desktop \
+        gimp*.desktop \
+        kodi.desktop \
+        firefox.desktop \
+        mousepad.desktop; do \
+      [ -f "/usr/share/applications/$f" ] && cp "/usr/share/applications/$f" /config/Desktop/; \
     done; \
     \
-    # Manually add VLC (if missing)
-    [ -f /config/Desktop/vlc.desktop ] || \
-    printf '%s\n' \
+    ##### 2) Manual fall‑backs if any of the key files were missing #####
+    [ -f /config/Desktop/kodi.desktop ] || \
+      printf '%s\n' \
 '[Desktop Entry]' \
-'Name=VLC media player' \
-'GenericName=Media player' \
-'Comment=Play multimedia files' \
-'Exec=vlc %%U' \
-'Icon=/usr/share/icons/Faenza/apps/64/vlc.png' \
+'Name=Kodi' \
+'GenericName=Media Center' \
+'Exec=kodi' \
+'Icon=kodi' \
 'Terminal=false' \
 'Type=Application' \
-'Categories=AudioVideo;Player;Recorder;' \
-    > /config/Desktop/vlc.desktop; \
+'Categories=AudioVideo;Player;TV;' \
+      > /config/Desktop/kodi.desktop; \
     \
-    # Manually add Evolution (if missing)
-    [ -f /config/Desktop/evolution.desktop ] || \
-    printf '%s\n' \
+    [ -f /config/Desktop/audacity.desktop ] || \
+      printf '%s\n' \
 '[Desktop Entry]' \
-'Name=Evolution' \
-'GenericName=Mail and Calendar' \
-'Comment=Mail, calendar and address book suite' \
-'Exec=evolution' \
-'Icon=/usr/share/icons/Faenza/apps/64/evolution.png' \
+'Name=Audacity' \
+'GenericName=Audio Editor' \
+'Exec=audacity' \
+'Icon=audacity' \
 'Terminal=false' \
 'Type=Application' \
-'Categories=Office;Email;' \
-    > /config/Desktop/evolution.desktop; \
+'Categories=AudioVideo;Audio;Recorder;' \
+      > /config/Desktop/audacity.desktop; \
     \
-    # Final permissions
+    [ -f /config/Desktop/mousepad.desktop ] || \
+      printf '%s\n' \
+'[Desktop Entry]' \
+'Name=Mousepad' \
+'GenericName=Text Editor' \
+'Exec=mousepad %F' \
+'Icon=mousepad' \
+'Terminal=false' \
+'Type=Application' \
+'Categories=Utility;TextEditor;' \
+      > /config/Desktop/mousepad.desktop; \
+    \
+    ##### 3) Final permissions #####
     chmod +x /config/Desktop/*.desktop; \
     chown -R abc:abc /config/Desktop
 
