@@ -267,54 +267,11 @@ RUN set -e; \
     mkdir -p /config/Desktop; \
     \
     ##### 1) Copy existing .desktop files for the chosen apps #####
-    for f in \
-        libreoffice-*.desktop \
-        audacity.desktop \
-        inkscape*.desktop \
-        gimp*.desktop \
-        kodi.desktop \
-        firefox.desktop \
-        mousepad.desktop; do \
-      [ -f "/usr/share/applications/$f" ] && cp "/usr/share/applications/$f" /config/Desktop/; \
+    for file in libreoffice-*.desktop gimp*.desktop inkscape*.desktop audacity.desktop kodi.desktop firefox.desktop mousepad.desktop; do \
+        name=$(basename "$file"); \
+        target="/config/Desktop/$name"; \
+        [ -f "$target" ] || cp "$file" "$target"; \
     done; \
-    \
-    ##### 2) Manual fall‑backs if any of the key files were missing #####
-    [ -f /config/Desktop/kodi.desktop ] || \
-      printf '%s\n' \
-'[Desktop Entry]' \
-'Name=Kodi' \
-'GenericName=Media Center' \
-'Exec=kodi' \
-'Icon=kodi' \
-'Terminal=false' \
-'Type=Application' \
-'Categories=AudioVideo;Player;TV;' \
-      > /config/Desktop/kodi.desktop; \
-    \
-    [ -f /config/Desktop/audacity.desktop ] || \
-      printf '%s\n' \
-'[Desktop Entry]' \
-'Name=Audacity' \
-'GenericName=Audio Editor' \
-'Exec=audacity' \
-'Icon=audacity' \
-'Terminal=false' \
-'Type=Application' \
-'Categories=AudioVideo;Audio;Recorder;' \
-      > /config/Desktop/audacity.desktop; \
-    \
-    [ -f /config/Desktop/mousepad.desktop ] || \
-      printf '%s\n' \
-'[Desktop Entry]' \
-'Name=Mousepad' \
-'GenericName=Text Editor' \
-'Exec=mousepad %F' \
-'Icon=mousepad' \
-'Terminal=false' \
-'Type=Application' \
-'Categories=Utility;TextEditor;' \
-      > /config/Desktop/mousepad.desktop; \
-    \
     ##### 3) Final permissions #####
     chmod +x /config/Desktop/*.desktop; \
     chown -R abc:abc /config/Desktop
