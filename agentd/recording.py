@@ -893,13 +893,13 @@ if __name__ == "__main__":
                     0.3  # Time threshold for double-click detection (in seconds)
                 )
 
-                if self.last_click_time and self.last_click_button == button:
+                if self.last_click_time and self.last_click_button == button._name_:
                     time_since_last_click = event_time - self.last_click_time
                     if time_since_last_click <= DOUBLE_CLICK_THRESHOLD:
                         is_double_click = True
-
+                recording_logger.info(f"last_click_time {self.last_click_time}, last_click_button {self.last_click_button}, button {button}")
                 self.last_click_time = event_time
-                self.last_click_button = button
+                self.last_click_button = button._name_
                 # Record double-click event as an action if detected
                 if is_double_click:
                     action = V1Action(
