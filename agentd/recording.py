@@ -895,9 +895,10 @@ if __name__ == "__main__":
 
                 if self.last_click_time and self.last_click_button == button._name_:
                     time_since_last_click = event_time - self.last_click_time
+                    recording_logger.info(f"event_time {event_time}, diff {time_since_last_click}, last_click_time {self.last_click_time}, last_click_button {self.last_click_button}, button {button._name_}")
                     if time_since_last_click <= DOUBLE_CLICK_THRESHOLD:
                         is_double_click = True
-                recording_logger.info(f"last_click_time {self.last_click_time}, last_click_button {self.last_click_button}, button {button}")
+
                 self.last_click_time = event_time
                 self.last_click_button = button._name_
                 # Record double-click event as an action if detected
@@ -930,6 +931,32 @@ if __name__ == "__main__":
             recording_logger.info(
                 f"on_click releasing lock with x,y: {x}, {y} count of actions {len(self.actions)}"                
             )
+        threading.Thread(
+            target=self._send_click,
+            args=(
+                mouse_move_details,
+                text_action_details,
+                action,
+                event_order,
+                before_time,
+                event_time,
+                x,
+                y,
+            ),
+            daemon=False
+        ).start()
+
+    def _send_click(
+        self,
+        mouse_move_details: Optional[ActionDetails],
+        text_action_details: Optional[ActionDetails],
+        action: V1Action,
+        event_order: int,
+        before_time: float,
+        event_time: float,
+        x: float,
+        y: float,
+    ):
         try:
             time.sleep(action_delay)
             if mouse_move_details:
