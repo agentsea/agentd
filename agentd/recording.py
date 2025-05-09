@@ -693,7 +693,9 @@ if __name__ == "__main__":
             self.mouse_move_timer.start()
         
         # if there is a text action due to mouse movement go ahead and send it outside lock
+        recording_logger.info("got here in on move!")
         if text_action_details:
+            recording_logger.info("sending text_action_details in new thread")
             threading.Thread(
                     target=self.send_text_action,
                     args=[text_action_details],
@@ -1306,6 +1308,7 @@ if __name__ == "__main__":
             raise ValueError(f"text_buffer_error cannot strip text_buffer: {text_buffer_error}")
 
     def send_text_action(self, text_action_details: ActionDetails):
+        recording_logger.info(f'send text action fired with {text_action_details.model_dump_json()}')
         if not text_action_details.start_state or not text_action_details.end_stamp:
             raise ValueError(f"start_state or end_stamp in text_action_details is None! text_action_details: {text_action_details.model_dump_json()}")
         time.sleep(action_delay)
