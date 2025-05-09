@@ -648,6 +648,12 @@ if __name__ == "__main__":
             if self.typing_in_progress:
                 recording_logger.info("Finalizing text event due to mouse movement...")
                 text_action_details = self.record_text_action_details()
+                recording_logger.info("sending text_action_details in new thread")
+                threading.Thread(
+                        target=self.send_text_action,
+                        args=[text_action_details],
+                        daemon=False
+                    ).start()
             self._flush_click_timer()
             current_time = time.time()
 
@@ -692,15 +698,10 @@ if __name__ == "__main__":
             self.mouse_move_timer = threading.Timer(4, self.on_mouse_stop, args=(x, y))
             self.mouse_move_timer.start()
         
-        # if there is a text action due to mouse movement go ahead and send it outside lock
-        recording_logger.info("got here in on move!")
-        if text_action_details:
-            recording_logger.info("sending text_action_details in new thread")
-            threading.Thread(
-                    target=self.send_text_action,
-                    args=[text_action_details],
-                    daemon=False
-                ).start()
+        # # if there is a text action due to mouse movement go ahead and send it outside lock
+        # recording_logger.info("got here in on move!")
+        # if text_action_details:
+            
 
     def on_mouse_stop(self, x, y):
         """Called when the mouse stops moving."""
