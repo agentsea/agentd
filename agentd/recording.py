@@ -227,7 +227,7 @@ class RecordingSession:
                 threading.Thread(
                     target=self.send_text_action,
                     args=(
-                        text_action_details
+                        text_action_details,
                     ),
                     daemon=False
                 ).start()
@@ -699,7 +699,7 @@ if __name__ == "__main__":
             threading.Thread(
                     target=self.send_text_action,
                     args=(
-                        text_action_details
+                        text_action_details,
                     ),
                     daemon=False
                 ).start()
@@ -815,7 +815,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self._send_mouse_move_action,
                     args=(
-                        mouse_move_details
+                        mouse_move_details,
                     ),
                     daemon=False
                 ).start()
@@ -823,7 +823,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self.send_text_action,
                     args=(
-                        text_action_details
+                        text_action_details,
                     ),
                     daemon=False
                 ).start()
@@ -838,7 +838,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self.send_text_action,
                     args=(
-                        special_key_details
+                        special_key_details,
                     ),
                     daemon=False
                 ).start()
@@ -942,7 +942,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self._send_mouse_move_action,
                     args=(
-                        mouse_move_details
+                        mouse_move_details,
                     ),
                     daemon=False
                 ).start()
@@ -950,7 +950,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self.send_text_action,
                     args=(
-                        text_action_details
+                        text_action_details,
                     ),
                     daemon=False
                 ).start()
@@ -959,7 +959,7 @@ if __name__ == "__main__":
                     threading.Thread(
                         target=self._send_click_action,
                         args=(
-                            click_details
+                            click_details,
                         ),
                         daemon=False
                     ).start()
@@ -968,7 +968,7 @@ if __name__ == "__main__":
                         DOUBLE_CLICK_THRESHOLD,
                         self._send_click_action,
                         args=(
-                            click_details
+                            click_details,
                         )
                     )
                     self.last_click_timer.daemon = False
@@ -993,7 +993,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self._send_click_action,
                     args=(
-                        self.last_click_args
+                        self.last_click_args,
                     ),
                     daemon=False
                 ).start()
@@ -1117,7 +1117,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self._send_mouse_move_action,
                     args=(
-                        mouse_move_details
+                        mouse_move_details,
                     ),
                     daemon=False
                 ).start()
@@ -1125,7 +1125,7 @@ if __name__ == "__main__":
                 threading.Thread(
                     target=self.send_text_action,
                     args=(
-                        text_action_details
+                        text_action_details,
                     ),
                     daemon=False
                 ).start()
