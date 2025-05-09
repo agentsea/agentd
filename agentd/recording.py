@@ -226,9 +226,7 @@ class RecordingSession:
             if text_action_details:
                 threading.Thread(
                     target=self.send_text_action,
-                    args=(
-                        text_action_details,
-                    ),
+                    args=[text_action_details],
                     daemon=False
                 ).start()
             # Not currently worried about blocking this thread since this is called elsewhere.
@@ -698,9 +696,7 @@ if __name__ == "__main__":
         if text_action_details:
             threading.Thread(
                     target=self.send_text_action,
-                    args=(
-                        text_action_details,
-                    ),
+                    args=[text_action_details],
                     daemon=False
                 ).start()
 
@@ -814,17 +810,13 @@ if __name__ == "__main__":
             if mouse_move_details:
                 threading.Thread(
                     target=self._send_mouse_move_action,
-                    args=(
-                        mouse_move_details,
-                    ),
+                    args=[mouse_move_details],
                     daemon=False
                 ).start()
             if text_action_details:
                 threading.Thread(
                     target=self.send_text_action,
-                    args=(
-                        text_action_details,
-                    ),
+                    args=[text_action_details],
                     daemon=False
                 ).start()
             if special_key_details:
@@ -837,9 +829,7 @@ if __name__ == "__main__":
                 special_key_details.start_state = start_state.to_v1()
                 threading.Thread(
                     target=self.send_text_action,
-                    args=(
-                        special_key_details,
-                    ),
+                    args=[special_key_details],
                     daemon=False
                 ).start()
 
@@ -941,35 +931,27 @@ if __name__ == "__main__":
             if mouse_move_details:
                 threading.Thread(
                     target=self._send_mouse_move_action,
-                    args=(
-                        mouse_move_details,
-                    ),
+                    args=[mouse_move_details],
                     daemon=False
                 ).start()
             if text_action_details:
                 threading.Thread(
                     target=self.send_text_action,
-                    args=(
-                        text_action_details,
-                    ),
+                    args=[text_action_details],
                     daemon=False
                 ).start()
             if action:
                 if is_double_click and click_details:
                     threading.Thread(
                         target=self._send_click_action,
-                        args=(
-                            click_details,
-                        ),
+                        args=[click_details],
                         daemon=False
                     ).start()
                 else:
                     self.last_click_timer = threading.Timer(
                         DOUBLE_CLICK_THRESHOLD,
                         self._send_click_action,
-                        args=(
-                            click_details,
-                        )
+                        args=[click_details]
                     )
                     self.last_click_timer.daemon = False
                     self.last_click_timer.start()
@@ -992,9 +974,7 @@ if __name__ == "__main__":
             if self.last_click_args:
                 threading.Thread(
                     target=self._send_click_action,
-                    args=(
-                        self.last_click_args,
-                    ),
+                    args=[self.last_click_args],
                     daemon=False
                 ).start()
             else:
@@ -1116,17 +1096,13 @@ if __name__ == "__main__":
             if mouse_move_details:
                 threading.Thread(
                     target=self._send_mouse_move_action,
-                    args=(
-                        mouse_move_details,
-                    ),
+                    args=[mouse_move_details],
                     daemon=False
                 ).start()
             if text_action_details:
                 threading.Thread(
                     target=self.send_text_action,
-                    args=(
-                        text_action_details,
-                    ),
+                    args=[text_action_details],
                     daemon=False
                 ).start()
 
