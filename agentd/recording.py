@@ -100,6 +100,7 @@ os.makedirs(RECORDINGS_DIR, exist_ok=True)
 SCREENSHOT_INTERVAL = 0.15
 action_delay = .6
 before_screenshot_offset = .03 # offset from the event_time to make sure we can get a true before screenshot
+DOUBLE_CLICK_THRESHOLD = 0.45  # Time threshold for double-click detection (in seconds)
 
 
 def wait_for_celery_tasks():
@@ -155,7 +156,9 @@ class RecordingSession:
         self.test_start_time = None
         self.typing_in_progress = False
         self.text_start_state = None
+        self.last_click_args: ActionDetails | None = None
         self.last_click_time = None
+        self.last_click_timer = None
         self.last_click_button = None
         self.scroll_timer = None
         self.scroll_dx = 0
@@ -220,13 +223,15 @@ class RecordingSession:
                 x, y = pyautogui.position()
                 recording_logger.info(f"releasing lock with name: {secret_name} count of actions {event_order}")
 
-            # moving most logic outside lock to avoid locking too long
-            # waiting for screenshots to finish writing
-            time.sleep(action_delay)
-
             if text_action_details:
-                self.send_text_action(text_action_details)
-
+                threading.Thread(
+                    target=self.send_text_action,
+                    args=(
+                        text_action_details
+                    ),
+                    daemon=False
+                ).start()
+            # Not currently worried about blocking this thread since this is called elsewhere.
             before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get true before screenshots
             start_screenshot_path = self._get_screenshots_by_time(2, before_time, "before")
             recording_logger.info(f"task: {self._task.id} event_order: {event_order} start_screenshot_path: {start_screenshot_path}")
@@ -565,10 +570,11 @@ if __name__ == "__main__":
     def _send_mouse_move_action(
         self, 
         mouse_move_details: ActionDetails, 
-        end_screenshot_path: list[str] | None = None
+        # end_screenshot_path: list[str] | None = None
     ):
         """Records the mouse movement action."""
         recording_logger.info("_send_mouse_move_action starting")
+        time.sleep(action_delay)
         if not mouse_move_details.start_state:
             raise ValueError(f"_send_mouse_move_action failure mouse_move_details.start_state not set {mouse_move_details.model_dump_json()}")
         # Use the most recent valid coordinates
@@ -586,24 +592,14 @@ if __name__ == "__main__":
                 recording_logger.info("_send_mouse_move_action getting start state screenshots completed")
 
         # Use the provided end screenshot, or take new ones
-        if end_screenshot_path is None:
-            recording_logger.info("_send_mouse_move_action taking new end screenshots")
-            # Take two screenshots after movement
-            end_screenshots = []
-            if mouse_move_details.end_stamp:
-                end_screenshots = self._get_screenshots_by_time(2, mouse_move_details.end_stamp, "after")
-            else:
-                raise ValueError("End_stamp required for _send_mouse_move_action")
-            recording_logger.info(f"_send_mouse_move_action taking new end screenshots completed {end_screenshot_path}")
+        recording_logger.info("_send_mouse_move_action taking new end screenshots")
+        # Take two screenshots after movement
+        end_screenshots = []
+        if mouse_move_details.end_stamp:
+            end_screenshots = self._get_screenshots_by_time(2, mouse_move_details.end_stamp, "after")
         else:
-            # shouldn't run
-            # Ensure we have two end screenshots
-            end_screenshots = []
-            if mouse_move_details.end_stamp:
-                recording_logger.info("_send_mouse_move_action adding additional end screenshot")
-                additional_screenshot = self._get_screenshots_by_time(1, mouse_move_details.end_stamp, "after")
-                end_screenshots = end_screenshot_path + additional_screenshot
-            recording_logger.info("_send_mouse_move_action taking additional end screenshot completed")
+            raise ValueError("End_stamp required for _send_mouse_move_action")
+        recording_logger.info(f"_send_mouse_move_action taking new end screenshots completed {end_screenshots}")
 
         # Prepare end state
         recording_logger.info("_send_mouse_move_action setting end state")
@@ -654,7 +650,7 @@ if __name__ == "__main__":
             if self.typing_in_progress:
                 recording_logger.info("Finalizing text event due to mouse movement...")
                 text_action_details = self.record_text_action_details()
-            
+            self._flush_click_timer()
             current_time = time.time()
 
             # Initialize last position if needed
@@ -679,7 +675,7 @@ if __name__ == "__main__":
                 # Not including any images so we can move the encoding outside the lock. 
                 # Look at the _send_mouse_move_action to see how the images are added based on timestamp
                 self.mouse_move_start_state = EnvState(
-                    images=[],
+                    images=None,
                     coordinates=tuple(map(int, self.last_mouse_position)),
                     timestamp=event_time
                 )
@@ -700,9 +696,13 @@ if __name__ == "__main__":
         
         # if there is a text action due to mouse movement go ahead and send it outside lock
         if text_action_details:
-            # waiting for screenshots to finish writing
-            time.sleep(action_delay)
-            self.send_text_action(text_action_details)
+            threading.Thread(
+                    target=self.send_text_action,
+                    args=(
+                        text_action_details
+                    ),
+                    daemon=False
+                ).start()
 
     def on_mouse_stop(self, x, y):
         """Called when the mouse stops moving."""
@@ -717,14 +717,11 @@ if __name__ == "__main__":
             mouse_move_details = self._record_mouse_move_action_details(x, y, event_time)
 
         if mouse_move_details:
-            # waiting for screenshots to finish writing
-            time.sleep(action_delay)
             self._send_mouse_move_action(mouse_move_details)
 
     def on_press(self, key: Key):
         recording_logger.info(f"on_press waiting for lock with key {key} count of actions {len(self.actions)}")
         event_time = time.time()
-        before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the keypress
         mouse_move_details = None
         special_key_details = None
         text_action_details = None
@@ -746,7 +743,7 @@ if __name__ == "__main__":
                 #     key_start_screenshots[-1] if key_start_screenshots else None
                 # )
                 mouse_move_details = self._record_mouse_move_action_details(mouse_x, mouse_y, event_time)
-            
+            self._flush_click_timer()
             event_order = self.event_order
             self.event_order += 1
 
@@ -814,29 +811,37 @@ if __name__ == "__main__":
             )
 
         if mouse_move_details or special_key_details or text_action_details:
-            time.sleep(action_delay)
             if mouse_move_details:
-                # waiting for screenshots to finish writing
-                mouse_move_end_screenshots = self._get_screenshots_by_time(2, before_time, "before")
-                self._send_mouse_move_action(mouse_move_details, mouse_move_end_screenshots)
+                threading.Thread(
+                    target=self._send_mouse_move_action,
+                    args=(
+                        mouse_move_details
+                    ),
+                    daemon=False
+                ).start()
             if text_action_details:
-                self.send_text_action(text_action_details)
+                threading.Thread(
+                    target=self.send_text_action,
+                    args=(
+                        text_action_details
+                    ),
+                    daemon=False
+                ).start()
             if special_key_details:
-                # This is too slow, we need to duplicate one back
-                # start_screenshot_path = self._get_latest_screenshots(1, 1)
-                # start_screenshot_path.append(start_screenshot_path[0])
-                start_screenshot_path = self._get_screenshots_by_time(2, before_time, "before")
                 recording_logger.info('creating state')
                 start_state = EnvState(
-                    images=[
-                        self.encode_image_to_base64(screenShot)
-                        for screenShot in start_screenshot_path
-                    ],
+                    images=None,
                     coordinates=(int(special_key_details.x), int(special_key_details.y)),
                     timestamp=event_time
                 )
                 special_key_details.start_state = start_state.to_v1()
-                self.send_text_action(special_key_details)
+                threading.Thread(
+                    target=self.send_text_action,
+                    args=(
+                        special_key_details
+                    ),
+                    daemon=False
+                ).start()
 
     def on_release(self, key):
         recording_logger.info(
@@ -859,6 +864,8 @@ if __name__ == "__main__":
         text_action_details = None
         action = None
         event_order = None
+        is_double_click = False
+        click_details = None
         if not pressed:
             recording_logger.info("skipping button up event")
             return
@@ -888,16 +895,14 @@ if __name__ == "__main__":
                 self.movement_buffer = []
                 self.last_mouse_position = (x, y)
 
-                is_double_click = False
-                DOUBLE_CLICK_THRESHOLD = (
-                    0.3  # Time threshold for double-click detection (in seconds)
-                )
-
                 if self.last_click_time and self.last_click_button == button._name_:
                     time_since_last_click = event_time - self.last_click_time
                     recording_logger.info(f"event_time {event_time}, diff {time_since_last_click}, last_click_time {self.last_click_time}, last_click_button {self.last_click_button}, button {button._name_}")
                     if time_since_last_click <= DOUBLE_CLICK_THRESHOLD:
                         is_double_click = True
+                        if self.last_click_timer:
+                            self.last_click_timer.cancel()
+                            self._click_timer = None
 
                 self.last_click_time = event_time
                 self.last_click_button = button._name_
@@ -924,6 +929,7 @@ if __name__ == "__main__":
                     )
                 event_order = self.event_order
                 self.event_order += 1
+                click_details = ActionDetails(x=x, y=y, action=action, event_order=event_order, end_stamp=event_time, start_state=None)
                 recording_logger.info(f"clicked button: {x}, {y}, {button}, {pressed}", )
                 
             except Exception as e:
@@ -931,87 +937,123 @@ if __name__ == "__main__":
             recording_logger.info(
                 f"on_click releasing lock with x,y: {x}, {y} count of actions {len(self.actions)}"                
             )
-        threading.Thread(
-            target=self._send_click,
-            args=(
-                mouse_move_details,
-                text_action_details,
-                action,
-                event_order,
-                before_time,
-                event_time,
-                x,
-                y,
-            ),
-            daemon=False
-        ).start()
-
-    def _send_click(
-        self,
-        mouse_move_details: Optional[ActionDetails],
-        text_action_details: Optional[ActionDetails],
-        action: V1Action,
-        event_order: int,
-        before_time: float,
-        event_time: float,
-        x: float,
-        y: float,
-    ):
         try:
-            time.sleep(action_delay)
             if mouse_move_details:
-                mouse_move_end_screenshots = self._get_screenshots_by_time(2, before_time, "before")
-                self._send_mouse_move_action(mouse_move_details, mouse_move_end_screenshots)
+                threading.Thread(
+                    target=self._send_mouse_move_action,
+                    args=(
+                        mouse_move_details
+                    ),
+                    daemon=False
+                ).start()
             if text_action_details:
-                self.send_text_action(text_action_details)
+                threading.Thread(
+                    target=self.send_text_action,
+                    args=(
+                        text_action_details
+                    ),
+                    daemon=False
+                ).start()
             if action:
-                # We replicate the screenshot beforw which mimics more of what the agent will see
-                # start_screenshot_path = self._get_latest_screenshots(1)
-                start_screenshot_path = self._get_screenshots_by_time(2, before_time, "before")
-                recording_logger.info(f"got screenshots: {start_screenshot_path}")
-                # start_screenshot_path.append(start_screenshot_path[0])
-
-                start_state = EnvState(
-                        images=[
-                            self.encode_image_to_base64(screenShot)
-                            for screenShot in start_screenshot_path
-                        ],
-                        coordinates=(int(x), int(y)),
-                        timestamp=before_time
+                if is_double_click and click_details:
+                    threading.Thread(
+                        target=self._send_click_action,
+                        args=(
+                            click_details
+                        ),
+                        daemon=False
+                    ).start()
+                else:
+                    self._click_timer = threading.Timer(
+                        DOUBLE_CLICK_THRESHOLD,
+                        self._send_click_action,
+                        args=(
+                            click_details
+                        )
                     )
-
-                end_screenshot_path = self._get_screenshots_by_time(2, event_time, "after")
-                end_state = EnvState(
-                    images=[
-                        self.encode_image_to_base64(screenShot)
-                        for screenShot in end_screenshot_path
-                    ],
-                    coordinates=(int(x), int(y)),
-                    timestamp=event_time
-                )
-
-                action_event = ActionEvent(
-                    state=start_state,
-                    action=action,
-                    tool=DESKTOP_TOOL_REF,
-                    end_state=end_state,
-                    event_order=event_order,
-                )
-                self.actions.append(action_event)
-                # kicking off celery job
-                recording_logger.info('on_click sending action')
-                send_action.delay(
-                    self._task.id,
-                    self._task.auth_token,
-                    self._task.owner_id,
-                    self._task.to_v1().model_dump(),
-                    action_event.to_v1().model_dump(),
-                )
+                    self._click_timer.daemon = False
+                    self._click_timer.start()
+                    self.last_click_args = click_details
             else:
                 raise ValueError(f"No action defined due to previous errors, could not record click event")
 
         except Exception as e:
-            recording_logger.info(f"Error recording click event: {e}")        
+            recording_logger.info(f"Error recording click event: {e}")  
+        
+    def _flush_click_timer(self) -> None:
+        """
+        If we're still within the double-click window, cancel the timer
+        and emit the single-click immediately (so it gets sent first).
+        """
+        if self._click_timer and self._click_timer.is_alive():
+            self._click_timer.cancel()
+            self._click_timer = None
+            # Call the single-click path directly
+            if self.last_click_args:
+                threading.Thread(
+                    target=self._send_click_action,
+                    args=(
+                        self.last_click_args
+                    ),
+                    daemon=False
+                ).start()
+            else:
+                raise ValueError("need to flush click timer but no click args")
+
+    def _send_click_action(
+        self,
+        click_details: ActionDetails,
+    ):
+        try:
+            # We replicate the screenshot beforw which mimics more of what the agent will see
+            # start_screenshot_path = self._get_latest_screenshots(1)
+            event_time = click_details.end_stamp if click_details.end_stamp else time.time()
+            before_time = event_time - before_screenshot_offset
+            if click_details.action.name == "double_click" and self.last_click_args is not None and self.last_click_args.end_stamp is not None:
+                before_time = self.last_click_args.end_stamp - before_screenshot_offset
+            start_screenshot_path = self._get_screenshots_by_time(2, before_time, "before")
+            recording_logger.info(f"got screenshots: {start_screenshot_path}")
+            # start_screenshot_path.append(start_screenshot_path[0])
+
+            start_state = EnvState(
+                    images=[
+                        self.encode_image_to_base64(screenShot)
+                        for screenShot in start_screenshot_path
+                    ],
+                    coordinates=(int(click_details.x), int(click_details.y)),
+                    timestamp=before_time
+                )
+
+            end_screenshot_path = self._get_screenshots_by_time(2, event_time, "after")
+            end_state = EnvState(
+                images=[
+                    self.encode_image_to_base64(screenShot)
+                    for screenShot in end_screenshot_path
+                ],
+                coordinates=(int(click_details.x), int(click_details.y)),
+                timestamp=event_time
+            )
+
+            action_event = ActionEvent(
+                state=start_state,
+                action=click_details.action,
+                tool=DESKTOP_TOOL_REF,
+                end_state=end_state,
+                event_order=click_details.event_order,
+            )
+            self.actions.append(action_event)
+            # kicking off celery job
+            recording_logger.info('on_click sending action')
+            send_action.delay(
+                self._task.id,
+                self._task.auth_token,
+                self._task.owner_id,
+                self._task.to_v1().model_dump(),
+                action_event.to_v1().model_dump(),
+            )
+        except Exception as e:
+            recording_logger.info(f"Error recording click event: {e}")
+              
 
     def on_scroll(self, x, y, dx, dy):
         event_time = time.time()
@@ -1047,7 +1089,7 @@ if __name__ == "__main__":
                 # self._record_mouse_move_action(
                 #     mouse_x, mouse_y, end_screenshot_path=end_screenshot
                 # )
-
+            self._flush_click_timer()
             self.scroll_dx += dx
             self.scroll_dy += dy
 
@@ -1072,13 +1114,22 @@ if __name__ == "__main__":
                 f"on_scroll releasing lock with x,y: {x}, {y}; dx, dy: {dx}, {dy} count of actions {event_order}"                
             )
         if mouse_move_details or text_action_details:
-            time.sleep(action_delay)
             if mouse_move_details:
-                # waiting for screenshots to finish writing
-                mouse_move_end_screenshots = self._get_screenshots_by_time(2, before_time, "before")
-                self._send_mouse_move_action(mouse_move_details, mouse_move_end_screenshots)
+                threading.Thread(
+                    target=self._send_mouse_move_action,
+                    args=(
+                        mouse_move_details
+                    ),
+                    daemon=False
+                ).start()
             if text_action_details:
-                self.send_text_action(text_action_details)
+                threading.Thread(
+                    target=self.send_text_action,
+                    args=(
+                        text_action_details
+                    ),
+                    daemon=False
+                ).start()
 
     def send_final_action(self, result, comment):
         recording_logger.info(
@@ -1099,7 +1150,7 @@ if __name__ == "__main__":
                     text_action_details = self.record_text_action_details()
                     # not worried about lock since this is the final action
                     self.send_text_action(text_action_details)
-
+                self._flush_click_timer()
                 x, y = pyautogui.position()
                 start_screenshot_path = self._get_screenshots_by_time(2, before_time, "before")
 
@@ -1282,7 +1333,7 @@ if __name__ == "__main__":
     def send_text_action(self, text_action_details: ActionDetails):
         if not text_action_details.start_state or not text_action_details.end_stamp:
             raise ValueError(f"start_state or end_stamp in text_action_details is None! text_action_details: {text_action_details.model_dump_json()}")
-        
+        time.sleep(action_delay)
 
         end_screenshot_path = []
         end_screenshot_path = self._get_screenshots_by_time(2, text_action_details.end_stamp, "after")
