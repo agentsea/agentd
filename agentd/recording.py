@@ -902,7 +902,7 @@ if __name__ == "__main__":
                         is_double_click = True
                         if self.last_click_timer:
                             self.last_click_timer.cancel()
-                            self._click_timer = None
+                            self.last_click_timer = None
 
                 self.last_click_time = event_time
                 self.last_click_button = button._name_
@@ -964,15 +964,15 @@ if __name__ == "__main__":
                         daemon=False
                     ).start()
                 else:
-                    self._click_timer = threading.Timer(
+                    self.last_click_timer = threading.Timer(
                         DOUBLE_CLICK_THRESHOLD,
                         self._send_click_action,
                         args=(
                             click_details
                         )
                     )
-                    self._click_timer.daemon = False
-                    self._click_timer.start()
+                    self.last_click_timer.daemon = False
+                    self.last_click_timer.start()
                     self.last_click_args = click_details
             else:
                 raise ValueError(f"No action defined due to previous errors, could not record click event")
@@ -985,9 +985,9 @@ if __name__ == "__main__":
         If we're still within the double-click window, cancel the timer
         and emit the single-click immediately (so it gets sent first).
         """
-        if self._click_timer and self._click_timer.is_alive():
-            self._click_timer.cancel()
-            self._click_timer = None
+        if self.last_click_timer and self.last_click_timer.is_alive():
+            self.last_click_timer.cancel()
+            self.last_click_timer = None
             # Call the single-click path directly
             if self.last_click_args:
                 threading.Thread(
@@ -1057,7 +1057,6 @@ if __name__ == "__main__":
 
     def on_scroll(self, x, y, dx, dy):
         event_time = time.time()
-        before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the click
         mouse_move_details = None
         text_action_details = None
         recording_logger.info(
