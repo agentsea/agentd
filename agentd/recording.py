@@ -724,6 +724,7 @@ if __name__ == "__main__":
         mouse_move_details = None
         special_key_details = None
         text_action_details = None
+        event_order = None
         with self.lock:
             recording_logger.info(
                 f"on_press acquired lock with key {key} count of actions {len(self.actions)}"
@@ -743,8 +744,6 @@ if __name__ == "__main__":
                 # )
                 mouse_move_details = self._record_mouse_move_action_details(mouse_x, mouse_y, event_time)
             self._flush_click_timer()
-            event_order = self.event_order
-            self.event_order += 1
 
             # Handle shift and caps lock keys
             if key in [Key.shift, Key.shift_r, Key.shift_l]:
@@ -796,6 +795,8 @@ if __name__ == "__main__":
                     action = V1Action(
                         name="press_key", parameters={"key": pyautogui_key}
                     )
+                    event_order = self.event_order
+                    self.event_order += 1
                     special_key_details = ActionDetails(
                         x=x,
                         y=y,
