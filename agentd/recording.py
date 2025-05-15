@@ -1115,7 +1115,7 @@ if __name__ == "__main__":
             f"send_final_action waiting lock with result, comment: {result}, {comment} count of actions {len(self.actions)}"            
         )
         event_time = time.time()
-        before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the click
+        before_time = event_time - before_screenshot_offset  # 30ms earlier to make sure we get screenshots before the call
 
         with self.lock:
             recording_logger.info(
@@ -1123,14 +1123,19 @@ if __name__ == "__main__":
             )
             event_order = self.event_order
             self.event_order += 1
+            slept = None
             try:
                 if self.typing_in_progress:
                     recording_logger.info("Finalizing text event due to end recording...")
                     text_action_details = self.record_text_action_details()
                     # not worried about lock since this is the final action
+                    time.sleep(0.2)
+                    slept = True
                     self.send_text_action(text_action_details)
                 self._flush_click_timer()
                 x, y = pyautogui.position()
+                if not slept:
+                    time.sleep(0.2)
                 start_screenshot_path = self._get_screenshots_by_time(2, before_time, "before")
 
                 state = EnvState(
@@ -1142,7 +1147,7 @@ if __name__ == "__main__":
                     timestamp=event_time
                 )
 
-                end_screenshot_path = self._get_screenshots_by_time(2, event_time, "after")
+                end_screenshot_path = self._get_screenshots_by_time(2, event_time, "closest")
 
                 end_state = EnvState(
                     images=[
