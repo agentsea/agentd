@@ -491,6 +491,7 @@ async def start_recording(request: RecordRequest):
             remote=request.server_address,
             auth_token=request.token,
             owner_id=request.owner_id,
+            skill=request.skill_id
         )
     else:
         tasks = Task.find(

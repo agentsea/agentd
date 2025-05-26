@@ -78,6 +78,7 @@ class CoordinatesModel(BaseModel):
 class RecordRequest(BaseModel):
     description: Optional[str] = None
     task_id: Optional[str] = None
+    skill_id: Optional[str] = None
     token: str
     server_address: str
     owner_id: str
