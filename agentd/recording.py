@@ -286,6 +286,20 @@ class RecordingSession:
     def stop(self, result = None, comment = None):
         recording_logger.info("send update_task to celery for finished")
         self.send_final_action(result, comment)
+        try:
+            if self._status != "stopped":
+                self._status = "stopping"
+                self.keyboard_listener.stop()
+                self.mouse_listener.stop()
+                self._stop_screenshot_subprocess()
+                self._end_time = time.time()
+                # for action in self.actions:
+                #     self._task.record_action_event(action)
+                self._cleanup_unused_screenshots()
+                self._status = "stopped"
+                atexit.unregister(self.stop)
+        except Exception as e:
+            recording_logger.info(f"Error stopping recording: {e}")
         update_task.delay(
             self._task.id,
             self._task.remote,
@@ -293,17 +307,6 @@ class RecordingSession:
             V1TaskUpdate(status=TaskStatus.FINISHED.value).model_dump(),
         )
         wait_for_celery_tasks()
-        if self._status != "stopped":
-            self._status = "stopping"
-            self.keyboard_listener.stop()
-            self.mouse_listener.stop()
-            self._stop_screenshot_subprocess()
-            self._end_time = time.time()
-            # for action in self.actions:
-            #     self._task.record_action_event(action)
-            self._cleanup_unused_screenshots()
-            self._status = "stopped"
-            atexit.unregister(self.stop)
 
     def pause_listeners(self):
         """
